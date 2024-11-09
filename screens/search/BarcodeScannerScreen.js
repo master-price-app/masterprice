@@ -21,7 +21,7 @@ export default function BarcodeScannerScreen({ navigation }) {
   const handleBarcodeScanned = ({ type, data }) => {
     console.log('Barcode Type:', type);
     console.log('Barcode Scanned:', data);
-    // navigation.navigate('SearchResult', { barcode: data });
+    navigation.navigate('SearchResult', { barcode: data });
   };
 
   return (
