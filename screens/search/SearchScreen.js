@@ -12,3 +12,5 @@ export default function SearchScreen({ navigation }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({})
