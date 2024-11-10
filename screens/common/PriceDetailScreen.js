@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,8 +5,8 @@ import {
   Image,
   ScrollView,
   TextInput,
-  Alert,
 } from "react-native";
+import React, { useState, useEffect } from "react";
 import { Menu } from "react-native-paper";
 import {
   subscribeToPriceDetails,
@@ -16,71 +15,41 @@ import {
 } from "../../services/priceService";
 import PressableButton from "../../components/PressableButton";
 
-
-const PLACEHOLDER_USER_ID = "user123"; // Same as in priceService.js
+const PLACEHOLDER_USER_ID = "user123";
 
 export default function PriceDetailScreen({ navigation, route }) {
   const {
-    priceData: initialPriceData,
-    productName,
-    productQuantity,
-    productUnit,
-    productImage,
-  } = route.params;
+    priceData: initialPriceData = {},
+    productName = "",
+    productQuantity = "",
+    productUnit = "",
+    productImage = null,
+  } = route.params || {};
 
   const [priceData, setPriceData] = useState(initialPriceData);
   const [newComment, setNewComment] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = subscribeToPriceDetails(
-      initialPriceData.id,
-      (updatedPriceData) => {
-        setPriceData(updatedPriceData);
-      }
-    );
+    if (initialPriceData && initialPriceData.id) {
+      const unsubscribe = subscribeToPriceDetails(
+        initialPriceData.id,
+        (updatedPriceData) => {
+          setPriceData(updatedPriceData);
+        }
+      );
 
-    return () => unsubscribe && unsubscribe();
-  }, [initialPriceData.id]);
-
-  const handleDeletePrice = () => {
-    Alert.alert("Delete Price", "Are you sure you want to delete this price?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteData("prices", priceData.id);
-            navigation.goBack();
-          } catch (error) {
-            Alert.alert("Error", "Failed to delete price");
-          }
-        },
-      },
-    ]);
-  };
-
-  const handleEditPrice = () => {
-    navigation.navigate("PriceForm", {
-      code: priceData.code,
-      productName,
-      editMode: true,
-      priceData: priceData,
-    });
-  };
+      return () => unsubscribe && unsubscribe();
+    }
+  }, [initialPriceData]);
 
   const handleSubmitComment = async () => {
-    if (newComment.trim()) {
+    if (newComment.trim() && priceData.id) {
       await writeComment(newComment, priceData.id);
       setNewComment("");
     }
   };
 
-  // Convert comments object to array and sort by creation date
   const commentsArray = priceData.comments
     ? Object.entries(priceData.comments).map(([id, comment]) => ({
         id,
@@ -90,10 +59,17 @@ export default function PriceDetailScreen({ navigation, route }) {
 
   const isCurrentUserPrice = priceData.userId === PLACEHOLDER_USER_ID;
 
+  if (!priceData || !priceData.id) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text>Loading price details...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView>
       <View style={styles.container}>
-        {/* User Management Menu */}
         {isCurrentUserPrice && (
           <View style={styles.menuContainer}>
             <Menu
@@ -106,17 +82,40 @@ export default function PriceDetailScreen({ navigation, route }) {
                 />
               }
             >
-              <Menu.Item onPress={handleEditPrice} title="Edit" />
               <Menu.Item
-                onPress={handleDeletePrice}
+                onPress={() => {
+                  setMenuVisible(false);
+                  navigation.navigate("PriceForm", {
+                    code: priceData.code,
+                    productName,
+                    editMode: true,
+                    priceData: {
+                      id: priceData.id,
+                      price: priceData.price,
+                      store: priceData.store,
+                      code: priceData.code,
+                    },
+                  });
+                }}
+                title="Edit"
+              />
+              <Menu.Item
+                onPress={async () => {
+                  setMenuVisible(false);
+                  try {
+                    await deleteData("prices", priceData.id);
+                    navigation.goBack();
+                  } catch (error) {
+                    console.error("Error deleting price:", error);
+                  }
+                }}
                 title="Delete"
-                style={styles.deleteButton}
+                titleStyle={{ color: "red" }}
               />
             </Menu>
           </View>
         )}
 
-        {/* Price Information */}
         <Text style={styles.productName}>
           {productName} - ${priceData.price}
         </Text>
@@ -134,7 +133,6 @@ export default function PriceDetailScreen({ navigation, route }) {
           <Text>{new Date(priceData.createdAt).toLocaleDateString()}</Text>
         </View>
 
-        {/* Comments Section */}
         <View style={styles.commentsSection}>
           <Text style={styles.commentsHeader}>Comments</Text>
           {commentsArray.map((comment) => (
@@ -168,16 +166,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  centerContent: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
   menuContainer: {
-    position: "absolute",
-    top: 10,
-    right: 10,
+    alignItems: "flex-end",
+    marginBottom: 16,
     zIndex: 1,
   },
   productName: {
     fontSize: 18,
     fontWeight: "bold",
-    marginTop: 50, // Add space for the menu button
   },
   productInfo: {
     fontSize: 16,
@@ -229,8 +229,5 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     minHeight: 40,
-  },
-  deleteButton: {
-    color: "red",
   },
 });
