@@ -49,9 +49,7 @@ export default function SearchResultScreen({ navigation, route }) {
     } catch (err) {
       setError("Failed to fetch products");
       console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   // Rest of your component remains the same
