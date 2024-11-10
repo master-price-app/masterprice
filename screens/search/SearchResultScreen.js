@@ -48,7 +48,7 @@ export default function SearchResultScreen({ navigation, route }) {
         });
         url = `${baseUrl}?${params.toString()}`;
       }
-
+      
       const response = await fetch(url);
       const data = await response.json();
       const products = keyword ? data.products : data.products || [];
@@ -115,5 +115,6 @@ export default function SearchResultScreen({ navigation, route }) {
         )}
       />
     </View>
+
   );
 }
