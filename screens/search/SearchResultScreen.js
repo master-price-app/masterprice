@@ -12,3 +12,5 @@ export default function SearchResultScreen({ navigation, route }) {
     </>
   );
 }
+
+const styles = StyleSheet.create();
