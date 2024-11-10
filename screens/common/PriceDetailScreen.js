@@ -6,12 +6,20 @@ import {
   Image,
   ScrollView,
   TextInput,
-  FlatList,
+  Alert,
 } from "react-native";
-import { subscribeToPriceDetails, writeComment } from "../../services/priceService";
+import { Menu } from "react-native-paper";
+import {
+  subscribeToPriceDetails,
+  writeComment,
+  deleteData,
+} from "../../services/priceService";
 import PressableButton from "../../components/PressableButton";
 
-export default function PriceDetailScreen({ route }) {
+
+const PLACEHOLDER_USER_ID = "user123"; // Same as in priceService.js
+
+export default function PriceDetailScreen({ navigation, route }) {
   const {
     priceData: initialPriceData,
     productName,
@@ -22,6 +30,7 @@ export default function PriceDetailScreen({ route }) {
 
   const [priceData, setPriceData] = useState(initialPriceData);
   const [newComment, setNewComment] = useState("");
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToPriceDetails(
@@ -34,6 +43,36 @@ export default function PriceDetailScreen({ route }) {
     return () => unsubscribe && unsubscribe();
   }, [initialPriceData.id]);
 
+  const handleDeletePrice = () => {
+    Alert.alert("Delete Price", "Are you sure you want to delete this price?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteData("prices", priceData.id);
+            navigation.goBack();
+          } catch (error) {
+            Alert.alert("Error", "Failed to delete price");
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleEditPrice = () => {
+    navigation.navigate("PriceForm", {
+      code: priceData.code,
+      productName,
+      editMode: true,
+      priceData: priceData,
+    });
+  };
+
   const handleSubmitComment = async () => {
     if (newComment.trim()) {
       await writeComment(newComment, priceData.id);
@@ -43,26 +82,41 @@ export default function PriceDetailScreen({ route }) {
 
   // Convert comments object to array and sort by creation date
   const commentsArray = priceData.comments
-    ? Object.entries(priceData.comments)
-        .map(([id, comment]) => ({
-          id,
-          ...comment,
-        }))
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    ? Object.entries(priceData.comments).map(([id, comment]) => ({
+        id,
+        ...comment,
+      }))
     : [];
 
-  const renderComment = ({ item }) => (
-    <View style={styles.commentItem}>
-      <Text>{item.content}</Text>
-      <Text style={styles.commentMeta}>
-        User: {item.userId} • {new Date(item.createdAt).toLocaleDateString()}
-      </Text>
-    </View>
-  );
+  const isCurrentUserPrice = priceData.userId === PLACEHOLDER_USER_ID;
 
   return (
     <ScrollView>
       <View style={styles.container}>
+        {/* User Management Menu */}
+        {isCurrentUserPrice && (
+          <View style={styles.menuContainer}>
+            <Menu
+              visible={menuVisible}
+              onDismiss={() => setMenuVisible(false)}
+              anchor={
+                <PressableButton
+                  pressedHandler={() => setMenuVisible(true)}
+                  text="Manage Post"
+                />
+              }
+            >
+              <Menu.Item onPress={handleEditPrice} title="Edit" />
+              <Menu.Item
+                onPress={handleDeletePrice}
+                title="Delete"
+                style={styles.deleteButton}
+              />
+            </Menu>
+          </View>
+        )}
+
+        {/* Price Information */}
         <Text style={styles.productName}>
           {productName} - ${priceData.price}
         </Text>
@@ -76,18 +130,22 @@ export default function PriceDetailScreen({ route }) {
 
         <View style={styles.priceInfo}>
           <Text>Found At: {priceData.store}</Text>
+          <Text>Shared by: {priceData.userId}</Text>
           <Text>{new Date(priceData.createdAt).toLocaleDateString()}</Text>
         </View>
 
+        {/* Comments Section */}
         <View style={styles.commentsSection}>
           <Text style={styles.commentsHeader}>Comments</Text>
-          <FlatList
-            data={commentsArray}
-            renderItem={renderComment}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            ListEmptyComponent={<Text>Be the first to comment!</Text>}
-          />
+          {commentsArray.map((comment) => (
+            <View key={comment.id} style={styles.commentItem}>
+              <Text>{comment.content}</Text>
+              <Text style={styles.commentMeta}>
+                By: {comment.userId} •{" "}
+                {new Date(comment.createdAt).toLocaleDateString()}
+              </Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.commentInput}>
@@ -110,9 +168,16 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  menuContainer: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
   productName: {
     fontSize: 18,
     fontWeight: "bold",
+    marginTop: 50, // Add space for the menu button
   },
   productInfo: {
     fontSize: 16,
@@ -164,5 +229,8 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     minHeight: 40,
+  },
+  deleteButton: {
+    color: "red",
   },
 });
