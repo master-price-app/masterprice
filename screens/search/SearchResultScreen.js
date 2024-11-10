@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { Text, View, Image, FlatList } from "react-native";
-import PressableButton from "../../components/PressableButton";
+import { useEffect, useState } from "react";
+import { FlatList, Text, View, StyleSheet } from "react-native";
+import ProductListItem from "../../components/ProductListItem";
 
 export default function SearchResultScreen({ navigation, route }) {
   const { barcode, keyword } = route.params;
@@ -70,51 +70,90 @@ export default function SearchResultScreen({ navigation, route }) {
   };
 
   const renderProduct = ({ item }) => (
-    <PressableButton
-      pressedHandler={() => handleProductPress(item.code)}
-      componentStyle={{ marginVertical: 5 }}
-    >
-      <View>
-        <Image
-          source={{ uri: item.image_url }}
-          style={{ width: 80, height: 80 }}
-        />
-        <Text>{item.code}</Text>
-        <Text>{item.product_name}</Text>
-        <Text>{item.brands}</Text>
-        <Text>
-          {item.product_quantity
-            ? `${item.product_quantity}${item.product_quantity_unit}`
-            : "Quantity not specified"}
-        </Text>
-      </View>
-    </PressableButton>
+    <ProductListItem 
+      product={item} 
+      onPress={handleProductPress}
+    />
   );
 
-  if (loading) return <Text>Loading...</Text>;
-  if (error) return <Text>{error}</Text>;
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+  if (error) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
   if (!products.length)
     return (
-      <View>
-        <Text>Didn't find what you are looking for?</Text>
-        <Text>Try another keyword.</Text>
+      <View style={styles.centerContainer}>
+        <Text style={styles.emptyText}>Didn't find what you are looking for?</Text>
+        <Text style={styles.subText}>Try another keyword.</Text>
       </View>
     );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <FlatList
         data={products}
         renderItem={renderProduct}
         keyExtractor={(item) => item.code}
         ListFooterComponent={() => (
-          <View>
-            <Text>Didn't find what you are looking for?</Text>
-            <Text>Try another keyword.</Text>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Didn't find what you are looking for?</Text>
+            <Text style={styles.subText}>Try another keyword.</Text>
           </View>
         )}
       />
     </View>
-
   );
 }
+
+// Temporary styles
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  listContent: {
+    paddingVertical: 8,
+  },
+  footer: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff3b30',
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  subText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+  },
+});
