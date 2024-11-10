@@ -22,7 +22,7 @@ export async function writeToDB(data, collectionName) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
-    console.log("Price document written with ID: ", docRef.id);
+    console.log("Document written with ID: ", docRef.id);
   } catch (err) {
     console.log("Write to db error: ", err);
   }
@@ -67,5 +67,40 @@ export function subscribeToPricesByProduct(code, onPricesUpdate) {
     return unsubscribe;
   } catch (error) {
     console.error("Error in prices listener:", error);
+  }
+}
+
+
+// Function to write a comment to the database
+export async function writeComment(comment, priceId) {
+  return writeToDB(
+    {
+      comment,
+      priceId,
+    },
+    "comments"
+  );
+}
+
+// Function to subscribe to comments for a specific price
+export function subscribeToCommentsByPrice(priceId, onCommentsUpdate) {
+  try {
+    const commentsQuery = query(
+      collection(database, "comments"),
+      where("priceId", "==", priceId),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(commentsQuery, (querySnapshot) => {
+      const comments = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      onCommentsUpdate(comments);
+    });
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error in comments listener:", error);
   }
 }

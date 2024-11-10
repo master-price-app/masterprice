@@ -47,7 +47,18 @@ export default function ProductDetailScreen({ navigation, route }) {
     return () => unsubscribe && unsubscribe();
   }, [code]);
 
-  const renderPriceItem = ({ item }) => (
+const renderPriceItem = ({ item }) => (
+  <PressableButton
+    pressedHandler={() =>
+      navigation.navigate("PriceDetail", {
+        priceData: item,
+        productName: product.product_name,
+        productQuantity: product.product_quantity,
+        productUnit: product.product_quantity_unit,
+        productImage: product.image_url,
+      })
+    }
+  >
     <View
       style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: "#ccc" }}
     >
@@ -55,7 +66,8 @@ export default function ProductDetailScreen({ navigation, route }) {
       <Text>Price: ${item.price}</Text>
       <Text>Date: {new Date(item.createdAt).toLocaleDateString()}</Text>
     </View>
-  );
+  </PressableButton>
+);
 
  const handleAddPrice = () => {
    navigation.navigate("PriceForm", {
