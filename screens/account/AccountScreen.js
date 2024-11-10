@@ -1,4 +1,12 @@
-import { ScrollView, View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function AccountScreen({ navigation }) {
@@ -11,6 +19,20 @@ export default function AccountScreen({ navigation }) {
     address: '123 Main St, Burnaby, Canada',
     joinDate: '2024-01-01',
     contributions: 10,
+  }
+
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Logout', onPress: () => console.log('Logout') },
+    ]);
+  }
+
+  const handleDeleteAccount = () => {
+    Alert.alert('Delete Account', 'Are you sure you want to delete your account?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', onPress: () => console.log('Delete') },
+    ]);
   }
 
   const menuItems = [
@@ -37,7 +59,8 @@ export default function AccountScreen({ navigation }) {
       id: 'notifications',
       icon: 'notifications',
       title: 'Notification Settings',
-      onPress: () => navigation.navigate('NotificationSettings'),
+      // onPress: () => navigation.navigate('NotificationSettings'),
+      onPress: () => Alert.alert('Notification Settings', 'This feature is not available yet.'),
     },
     {
       id: 'terms',
@@ -49,7 +72,8 @@ export default function AccountScreen({ navigation }) {
       id: 'about',
       icon: 'info',
       title: 'About Us',
-      onPress: () => navigation.navigate('About'),
+      // onPress: () => navigation.navigate('About'),
+      onPress: () => Alert.alert('About Us', 'This feature is not available yet.'),
     },
   ];
 
