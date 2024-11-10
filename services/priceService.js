@@ -6,6 +6,10 @@ import {
   doc,
   getDocs,
   updateDoc,
+  query,
+  where,
+  onSnapshot,
+  orderBy,
 } from "firebase/firestore";
 
 /* 
@@ -17,9 +21,9 @@ export async function writeToDB(data, collectionName) {
     const docRef = await addDoc(collection(database, collectionName), {
       ...data,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
-    console.log("Price document written with ID: ", docRef.id);
+    console.log("Price Document written with ID: ", docRef.id);
   } catch (err) {
     console.log("Write to db error: ", err);
   }
@@ -46,13 +50,11 @@ export async function deleteData(collectionName, id) {
   }
 }
 
-
-export function subscribeToPricesByProduct(productId, onPricesUpdate) {
+export function subscribeToPricesByProduct(code, onPricesUpdate) {
   try {
     const pricesQuery = query(
-      collection(db, "prices"),
-      where("productId", "==", productId),
-      orderBy("createdAt", "desc")
+      collection(database, "prices"),
+      where("code", "==", code)
     );
 
     const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
@@ -66,5 +68,39 @@ export function subscribeToPricesByProduct(productId, onPricesUpdate) {
     return unsubscribe;
   } catch (error) {
     console.error("Error in prices listener:", error);
+  }
+}
+
+
+// Function to write a comment to the database
+export async function writeComment(comment, priceId) {
+  return writeToDB(
+    {
+      comment,
+      priceId,
+    },
+    "comments"
+  );
+}
+
+// Function to subscribe to comments for a specific price
+export function subscribeToCommentsByPrice(priceId, onCommentsUpdate) {
+  try {
+    const commentsQuery = query(
+      collection(database, "comments"),
+      where("priceId", "==", priceId),
+    );
+
+    const unsubscribe = onSnapshot(commentsQuery, (querySnapshot) => {
+      const comments = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      onCommentsUpdate(comments);
+    });
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error in comments listener:", error);
   }
 }

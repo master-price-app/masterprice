@@ -1,29 +1,11 @@
 import { StyleSheet, Text, View, TextInput, Button, Alert } from "react-native";
 import React, { useState } from "react";
-import { useNavigation } from "@react-navigation/native";
 import { writeToDB } from "../../services/priceService";
 
-export default function PriceFormScreen() {
-  const navigation = useNavigation();
-  const [productName, setProductName] = useState("");
-  const [barcodeNumber, setBarcodeNumber] = useState("");
+export default function PriceFormScreen({ navigation, route }) {
+  const { code, productName } = route.params;
   const [price, setPrice] = useState("");
-
-  function validateProductName(productName) {
-    if (!productName) {
-      Alert.alert("Error", "Product name is required");
-      return false;
-    }
-    return true;
-  }
-
-  function validateBarcodeNumber(barcodeNumber) {
-    if (isNaN(barcodeNumber)) {
-      Alert.alert("Error", "Barcode number must be a number");
-      return false;
-    }
-    return true;
-  }
+  const [location, setLocation] = useState("");
 
   function validatePrice(price) {
     if (isNaN(price)) {
@@ -33,29 +15,35 @@ export default function PriceFormScreen() {
     return true;
   }
 
+  function validateLocation(location) {
+    if (!location) {
+      Alert.alert("Error", "Location is required");
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = async () => {
     try {
-      if (!validateProductName(productName)) {
-        return;
-      }
-      if (!validateBarcodeNumber(barcodeNumber)) {
-        return;
-      }
       if (!validatePrice(price)) {
+        return;
+      }
+      if (!validateLocation(location)) {
         return;
       }
 
       await writeToDB(
         {
-          productName,
-          barcodeNumber,
+          code, // Using barcode from route params
+          productName, // Using product name from route params
           price: parseFloat(price),
+          store: location,
           createdAt: new Date().toISOString(),
         },
         "prices"
       );
 
-      Alert.alert("Success", "Price submitted successfully");
+      Alert.alert("Success", "New price shared successfully!");
       navigation.goBack();
     } catch (error) {
       console.error("Error submitting price:", error);
@@ -65,25 +53,14 @@ export default function PriceFormScreen() {
 
   return (
     <View>
-      <Text>PriceFormScreen</Text>
-
       <View>
         <Text>Product Name</Text>
-        <TextInput
-          value={productName}
-          onChangeText={setProductName}
-          placeholder="Enter product name"
-        />
+        <Text>{productName}</Text>
       </View>
 
       <View>
         <Text>Barcode Number</Text>
-        <TextInput
-          value={barcodeNumber}
-          onChangeText={setBarcodeNumber}
-          placeholder="Enter barcode number"
-          keyboardType="numeric"
-        />
+        <Text>{code}</Text>
       </View>
 
       <View>
@@ -96,9 +73,16 @@ export default function PriceFormScreen() {
         />
       </View>
 
+      <View>
+        <Text>Location</Text>
+        <TextInput
+          value={location}
+          onChangeText={setLocation}
+          placeholder="Enter store location"
+        />
+      </View>
+
       <Button onPress={handleSubmit} title="Submit" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({});
