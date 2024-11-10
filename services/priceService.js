@@ -6,6 +6,9 @@ import {
   doc,
   getDocs,
   updateDoc,
+  query,
+  where,
+  onSnapshot,
 } from "firebase/firestore";
 
 /* 
@@ -17,7 +20,7 @@ export async function writeToDB(data, collectionName) {
     const docRef = await addDoc(collection(database, collectionName), {
       ...data,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
     console.log("Price document written with ID: ", docRef.id);
   } catch (err) {
@@ -46,13 +49,11 @@ export async function deleteData(collectionName, id) {
   }
 }
 
-
-export function subscribeToPricesByProduct(productId, onPricesUpdate) {
+export function subscribeToPricesByProduct(code, onPricesUpdate) {
   try {
     const pricesQuery = query(
-      collection(db, "prices"),
-      where("productId", "==", productId),
-      orderBy("createdAt", "desc")
+      collection(database, "prices"),
+      where("code", "==", code)
     );
 
     const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
