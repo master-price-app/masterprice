@@ -57,9 +57,12 @@ export default function ProductDetailScreen({ navigation, route }) {
     </View>
   );
 
-  const handleAddPrice = () => {
-    navigation.navigate("PriceForm", { code });
-  };
+ const handleAddPrice = () => {
+   navigation.navigate("PriceForm", {
+     code,
+     productName: product.product_name,
+   });
+ };
 
   if (error) return <Text>{error}</Text>;
   if (!product) return <Text>Loading...</Text>;
