@@ -1,63 +1,61 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
   FlatList,
   ActivityIndicator,
-  StyleSheet
-} from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import PricePostListItem from '../../components/PricePostListItem';
+  StyleSheet,
+} from "react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import PricePostListItem from "../../components/PricePostListItem";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { database } from "../../services/firebaseSetup";
+
+const PLACEHOLDER_USER_ID = "user123";
 
 export default function MyPostsScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Mock posts
-  const mockPosts = [
-    {
-      id: '1',
-      productId: '1234567890',
-      productName: 'Coke Diet 2L',
-      productImageUrl: 'https://images.openfoodfacts.org/images/products/004/900/005/0110/front_fr.3.400.jpg',
-      price: 3.99,
-      martId: '1',
-      martName: 'Walmart',
-      createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
-      expiryDate: Date.now() + 1000 * 60 * 60 * 24 * 2,
-      status: 'active',
-      isMasterPrice: true,
-    },
-    {
-      id: '2',
-      productId: '1234567891',
-      productName: 'Coke 2L',
-      productImageUrl: 'https://images.openfoodfacts.org/images/products/544/900/000/0439/front_en.292.400.jpg',
-      price: 2.49,
-      martId: '2',
-      martName: 'Save-On-Foods',
-      createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3,
-      expiryDate: Date.now() + 1000 * 60 * 60 * 24 * 3,
-      status: 'expired',
-      isMasterPrice: false,
-    },
-    // ... more posts
-  ];
-
   useEffect(() => {
     loadPosts();
   }, []);
 
-  const loadPosts = async () => {
+  const loadPosts = () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetchUserPosts();
-      // setPosts(response.data);
-      setPosts(mockPosts);
+      const pricesQuery = query(
+        collection(database, "prices"),
+        where("userId", "==", PLACEHOLDER_USER_ID)
+      );
+
+      const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
+        const userPosts = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            productId: data.code,
+            productName: data.productName,
+            productImageUrl: null, // You can add image handling later
+            price: data.price,
+            martId: data.storeId,
+            martName: data.store,
+            createdAt: data.createdAt,
+            // Set expiry date to 7 days after creation for demo
+            expiryDate:
+              new Date(data.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000,
+            status: "active",
+            isMasterPrice: false,
+          };
+        });
+        setPosts(userPosts);
+        setLoading(false);
+        setRefreshing(false);
+      });
+
+      return unsubscribe;
     } catch (error) {
-      console.error('Failed to load posts:', error);
-    } finally {
+      console.error("Failed to load posts:", error);
       setLoading(false);
       setRefreshing(false);
     }
@@ -92,7 +90,23 @@ export default function MyPostsScreen({ navigation }) {
       renderItem={({ item }) => (
         <PricePostListItem
           post={item}
-          onPress={() => navigation.navigate('PriceDetail', { postId: item.id })}
+          onPress={() =>
+            navigation.navigate("PriceDetail", {
+              priceData: {
+                id: item.id,
+                code: item.productId,
+                price: item.price,
+                store: item.martName,
+                storeId: item.martId,
+                userId: PLACEHOLDER_USER_ID,
+                createdAt: item.createdAt,
+                updatedAt: item.createdAt, // Using createdAt as updatedAt for now
+                comments: {},
+                inShoppingList: {},
+              },
+              productName: item.productName,
+            })
+          }
         />
       )}
       keyExtractor={(item) => item.id}
@@ -102,26 +116,22 @@ export default function MyPostsScreen({ navigation }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  listContent: {
-    paddingVertical: 8,
+    backgroundColor: "#f5f5f5",
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
     padding: 20,
   },
   emptyText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
   },
 });

@@ -1,11 +1,13 @@
 import { StyleSheet, Text, View, TextInput, Button, Alert } from "react-native";
-import React, { useState } from "react";
-import { writeToDB } from "../../services/priceService";
+import React, { useState, useEffect } from "react";
+import { writeToDB, updateData } from "../../services/priceService";
 
 export default function PriceFormScreen({ navigation, route }) {
-  const { code, productName } = route.params;
-  const [price, setPrice] = useState("");
-  const [location, setLocation] = useState("");
+  const { code, productName, editMode, priceData } = route.params;
+  const [price, setPrice] = useState(
+    editMode ? priceData.price.toString() : ""
+  );
+  const [location, setLocation] = useState(editMode ? priceData.store : "");
 
   function validatePrice(price) {
     if (isNaN(price)) {
@@ -32,40 +34,48 @@ export default function PriceFormScreen({ navigation, route }) {
         return;
       }
 
-      await writeToDB(
-        {
-          code, // Using barcode from route params
-          productName, // Using product name from route params
-          price: parseFloat(price),
-          store: location,
-          createdAt: new Date().toISOString(),
-        },
-        "prices"
-      );
+      const priceData = {
+        code,
+        productName,
+        price: parseFloat(price),
+        store: location,
+        createdAt: new Date().toISOString(),
+      };
 
-      Alert.alert("Success", "New price shared successfully!");
+      if (editMode) {
+        await updateData(priceData, "prices", route.params.priceData.id);
+        Alert.alert("Success", "Price updated successfully!");
+      } else {
+        await writeToDB(priceData, "prices");
+        Alert.alert("Success", "New price shared successfully!");
+      }
+
       navigation.goBack();
     } catch (error) {
       console.error("Error submitting price:", error);
-      Alert.alert("Error", "Failed to submit price");
+      Alert.alert(
+        "Error",
+        editMode ? "Failed to update price" : "Failed to submit price"
+      );
     }
   };
 
   return (
-    <View>
-      <View>
-        <Text>Product Name</Text>
-        <Text>{productName}</Text>
+    <View style={styles.container}>
+      <View style={styles.infoSection}>
+        <Text style={styles.label}>Product Name</Text>
+        <Text style={styles.value}>{productName}</Text>
       </View>
 
-      <View>
-        <Text>Barcode Number</Text>
-        <Text>{code}</Text>
+      <View style={styles.infoSection}>
+        <Text style={styles.label}>Barcode Number</Text>
+        <Text style={styles.value}>{code}</Text>
       </View>
 
-      <View>
-        <Text>Price</Text>
+      <View style={styles.inputSection}>
+        <Text style={styles.label}>Price</Text>
         <TextInput
+          style={styles.input}
           value={price}
           onChangeText={setPrice}
           placeholder="Enter price"
@@ -73,16 +83,48 @@ export default function PriceFormScreen({ navigation, route }) {
         />
       </View>
 
-      <View>
-        <Text>Location</Text>
+      <View style={styles.inputSection}>
+        <Text style={styles.label}>Location</Text>
         <TextInput
+          style={styles.input}
           value={location}
           onChangeText={setLocation}
           placeholder="Enter store location"
         />
       </View>
 
-      <Button onPress={handleSubmit} title="Submit" />
+      <Button
+        onPress={handleSubmit}
+        title={editMode ? "Update Price" : "Submit"}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
+  infoSection: {
+    marginBottom: 16,
+  },
+  inputSection: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  value: {
+    fontSize: 16,
+    color: "#666",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 4,
+    padding: 8,
+    fontSize: 16,
+  },
+});
