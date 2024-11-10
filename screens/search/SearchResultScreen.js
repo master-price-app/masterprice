@@ -16,10 +16,7 @@ export default function SearchResultScreen({ navigation, route }) {
   useEffect(() => {
     if (barcode && products.length === 1) {
       // Navigate to the CommonStack and then to ProductDetail
-      navigation.navigate("Common", {
-        screen: "ProductDetail",
-        params: { code: barcode },
-      });
+      navigation.navigate("ProductDetail", { code: barcode });
     }
   }, [products, barcode]);
 
@@ -63,10 +60,7 @@ export default function SearchResultScreen({ navigation, route }) {
 
   // For search result item press
   const handleProductPress = (code) => {
-    navigation.navigate("Common", {
-      screen: "ProductDetail",
-      params: { code },
-    });
+    navigation.navigate("ProductDetail", { code });
   };
 
   const renderProduct = ({ item }) => (
