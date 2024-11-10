@@ -3,13 +3,11 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { MaterialIcons } from '@expo/vector-icons';
 import { subscribeToPricesByProduct } from "../../services/priceService";
 import PressableButton from "../../components/PressableButton";
 
@@ -69,8 +67,9 @@ export default function ProductDetailScreen({ navigation, route }) {
   }
 
   const renderPriceItem = ({ item }) => (
-    <PressableButton
-      pressedHandler={() =>
+    <PriceListItem
+      price={item}
+      onPress={() =>
         navigation.navigate("PriceDetail", {
           priceData: item,
           productName: product.product_name,
@@ -79,39 +78,7 @@ export default function ProductDetailScreen({ navigation, route }) {
           productImage: product.image_url,
         })
       }
-    >
-      <View style={[
-        styles.priceItem,
-        item.isMasterPrice && styles.masterPriceItem
-      ]}>
-        <View style={styles.priceHeader}>
-          <View style={styles.storeInfo}>
-            <MaterialIcons name="store" size={16} color="#666" />
-            <Text style={styles.storeText}>{item.store}</Text>
-          </View>
-          <View style={styles.priceInfo}>
-            <Text style={[
-              styles.priceText,
-              item.isMasterPrice && styles.masterPriceText
-            ]}>
-              ${item.price.toFixed(2)}
-            </Text>
-            {item.isMasterPrice && (
-              <View style={styles.masterBadge}>
-                <MaterialIcons name="verified" size={14} color="#007AFF" />
-                <Text style={styles.masterText}>Master Price</Text>
-              </View>
-            )}
-          </View>
-        </View>
-        <View style={styles.priceFooter}>
-          <MaterialIcons name="schedule" size={16} color="#666" />
-          <Text style={styles.dateText}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
-        </View>
-      </View>
-    </PressableButton>
+    />
   );
 
  const handleAddPrice = () => {
@@ -248,71 +215,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '500',
-  },
-  priceItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: 'white',
-  },
-  masterPriceItem: {
-    backgroundColor: '#f0f9ff',  // 浅蓝色背景
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007AFF20',  // 半透明蓝色边框
-    marginVertical: 4,
-  },
-  priceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  storeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  priceInfo: {
-    alignItems: 'flex-end',  // 右对齐
-  },
-  priceText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,  // 为 master badge 留出空间
-  },
-  masterPriceText: {
-    color: '#007AFF',  // Master Price 的价格显示为蓝色
-  },
-  masterBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  masterText: {
-    marginLeft: 4,
-    fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  storeText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#333',
-  },
-  priceText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  priceFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666',
   },
   emptyText: {
     textAlign: 'center',
