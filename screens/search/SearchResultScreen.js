@@ -61,20 +61,26 @@ export default function SearchResultScreen({ navigation, route }) {
         source={{ uri: item.image_url }}
         style={{ width: 80, height: 80 }}
       />
-      <Text>{item.product_name || "Unknown Product"}</Text>
-      <Text>{item.brands || "Unknown Brand"}</Text>
+      <Text>{item.code}</Text>
+      <Text>{item.product_name}</Text>
+      <Text>{item.brands}</Text>
       <Text>
         {item.product_quantity
-          ? `${item.product_quantity}${item.product_quantity_unit || ""}`
+          ? `${item.product_quantity}${item.product_quantity_unit}`
           : "Quantity not specified"}
       </Text>
-      <Text>Code: {item.code}</Text>
     </View>
   );
 
-  if (loading) return <Text>Loading...</Text>;
-  if (error) return <Text>{error}</Text>;
-  if (products.length === 0) return <Text>No products found</Text>;
+if (loading) return <Text>Loading...</Text>;
+if (error) return <Text>{error}</Text>;
+if (!products.length)
+  return (
+    <View>
+      <Text>Didn’t find what you are looking for?</Text>
+      <Text>Try another keyword.</Text>
+    </View>
+  );
 
   return (
     <View>
@@ -82,7 +88,14 @@ export default function SearchResultScreen({ navigation, route }) {
         data={products}
         renderItem={renderProduct}
         keyExtractor={(item) => item.code}
+        ListFooterComponent={() => (
+          <View>
+            <Text>Didn't find what you are looking for?</Text>
+            <Text>Try another keyword.</Text>
+          </View>
+        )}
       />
+
     </View>
   );
 }
