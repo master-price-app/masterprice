@@ -34,10 +34,10 @@ export default function PriceFormScreen({ navigation, route }) {
 
       await writeToDB(
         {
-          code, // Using barcode from route params
-          productName, // Using product name from route params
+          code,
+          productName,
           price: parseFloat(price),
-          store: location,
+          store: location, /* TODO: Should store storeID when store and map is implemented */
           createdAt: new Date().toISOString(),
         },
         "prices"

@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,30 +8,31 @@ import {
   TextInput,
   FlatList,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import {
-  subscribeToCommentsByPrice,
-  writeComment,
-} from "../../services/priceService";
+import { subscribeToPriceDetails, writeComment } from "../../services/priceService";
 import PressableButton from "../../components/PressableButton";
 
 export default function PriceDetailScreen({ route }) {
-  const { priceData, productName, productQuantity, productUnit, productImage } =
-    route.params;
+  const {
+    priceData: initialPriceData,
+    productName,
+    productQuantity,
+    productUnit,
+    productImage,
+  } = route.params;
 
-  const [comments, setComments] = useState([]);
+  const [priceData, setPriceData] = useState(initialPriceData);
   const [newComment, setNewComment] = useState("");
 
   useEffect(() => {
-    const unsubscribe = subscribeToCommentsByPrice(
-      priceData.id,
-      (newComments) => {
-        setComments(newComments);
+    const unsubscribe = subscribeToPriceDetails(
+      initialPriceData.id,
+      (updatedPriceData) => {
+        setPriceData(updatedPriceData);
       }
     );
 
     return () => unsubscribe && unsubscribe();
-  }, [priceData.id]);
+  }, [initialPriceData.id]);
 
   const handleSubmitComment = async () => {
     if (newComment.trim()) {
@@ -39,20 +41,32 @@ export default function PriceDetailScreen({ route }) {
     }
   };
 
+  // Convert comments object to array and sort by creation date
+  const commentsArray = priceData.comments
+    ? Object.entries(priceData.comments)
+        .map(([id, comment]) => ({
+          id,
+          ...comment,
+        }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    : [];
+
   const renderComment = ({ item }) => (
     <View style={styles.commentItem}>
-      <Text>{item.comment}</Text>
-      <Text>{new Date(item.createdAt).toLocaleDateString()}</Text>
+      <Text>{item.content}</Text>
+      <Text style={styles.commentMeta}>
+        User: {item.userId} • {new Date(item.createdAt).toLocaleDateString()}
+      </Text>
     </View>
   );
 
   return (
     <ScrollView>
       <View style={styles.container}>
-        <Text>
+        <Text style={styles.productName}>
           {productName} - ${priceData.price}
         </Text>
-        <Text>
+        <Text style={styles.productInfo}>
           {productQuantity} {productUnit}
         </Text>
 
@@ -66,12 +80,13 @@ export default function PriceDetailScreen({ route }) {
         </View>
 
         <View style={styles.commentsSection}>
+          <Text style={styles.commentsHeader}>Comments</Text>
           <FlatList
-            data={comments}
+            data={commentsArray}
             renderItem={renderComment}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
-            ListEmptyComponent={<Text>Leave your comments</Text>}
+            ListEmptyComponent={<Text>Be the first to comment!</Text>}
           />
         </View>
 
@@ -81,6 +96,7 @@ export default function PriceDetailScreen({ route }) {
             onChangeText={setNewComment}
             placeholder="Share your thoughts"
             style={styles.input}
+            multiline
           />
           <PressableButton pressedHandler={handleSubmitComment} text="Post" />
         </View>
@@ -94,21 +110,45 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  productName: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  productInfo: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 4,
+  },
   image: {
     width: "100%",
     height: 200,
     marginVertical: 10,
+    borderRadius: 8,
   },
   priceInfo: {
     marginVertical: 10,
+    padding: 12,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
   },
   commentsSection: {
     marginTop: 20,
   },
+  commentsHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
   commentItem: {
-    padding: 10,
+    padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: "#eee",
+    marginBottom: 8,
+  },
+  commentMeta: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
   },
   commentInput: {
     flexDirection: "row",
@@ -122,6 +162,7 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 4,
+    borderRadius: 8,
+    minHeight: 40,
   },
 });

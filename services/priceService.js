@@ -4,28 +4,30 @@ import {
   addDoc,
   deleteDoc,
   doc,
-  getDocs,
+  getDoc,
   updateDoc,
   query,
   where,
   onSnapshot,
-  orderBy,
 } from "firebase/firestore";
 
-/* 
-  This file contains functions that interact with the Firestore database.
-  The functions are used to write, update, and delete data from the database.
-*/
+const PLACEHOLDER_USER_ID = "user123"; // Temporary until auth is implemented
+
 export async function writeToDB(data, collectionName) {
   try {
     const docRef = await addDoc(collection(database, collectionName), {
       ...data,
-      createdAt: new Date().toISOString(),
+      userId: PLACEHOLDER_USER_ID,
+      storeId: `store_${data.store.replace(/\s+/g, "_").toLowerCase()}`,
+      comments: {},
+      inShoppingList: {},
       updatedAt: new Date().toISOString(),
     });
     console.log("Price Document written with ID: ", docRef.id);
+    return docRef.id;
   } catch (err) {
     console.log("Write to db error: ", err);
+    throw err;
   }
 }
 
@@ -35,9 +37,10 @@ export async function updateData(data, collectionName, id) {
       ...data,
       updatedAt: new Date().toISOString(),
     });
-    console.log("Price document updated", docRef.id);
+    console.log("Price document updated");
   } catch (err) {
     console.log("Update data error: ", err);
+    throw err;
   }
 }
 
@@ -47,6 +50,7 @@ export async function deleteData(collectionName, id) {
     console.log("Document deleted");
   } catch (err) {
     console.log("Delete data error: ", err);
+    throw err;
   }
 }
 
@@ -68,39 +72,50 @@ export function subscribeToPricesByProduct(code, onPricesUpdate) {
     return unsubscribe;
   } catch (error) {
     console.error("Error in prices listener:", error);
+    throw error;
   }
 }
 
-
-// Function to write a comment to the database
-export async function writeComment(comment, priceId) {
-  return writeToDB(
-    {
-      comment,
-      priceId,
-    },
-    "comments"
-  );
-}
-
-// Function to subscribe to comments for a specific price
-export function subscribeToCommentsByPrice(priceId, onCommentsUpdate) {
+// Add subscribeToPriceDetails function
+export function subscribeToPriceDetails(priceId, onPriceUpdate) {
   try {
-    const commentsQuery = query(
-      collection(database, "comments"),
-      where("priceId", "==", priceId),
-    );
+    const priceRef = doc(database, "prices", priceId);
 
-    const unsubscribe = onSnapshot(commentsQuery, (querySnapshot) => {
-      const comments = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      onCommentsUpdate(comments);
+    const unsubscribe = onSnapshot(priceRef, (doc) => {
+      if (doc.exists()) {
+        const priceData = {
+          id: doc.id,
+          ...doc.data(),
+        };
+        onPriceUpdate(priceData);
+      }
     });
 
     return unsubscribe;
   } catch (error) {
-    console.error("Error in comments listener:", error);
+    console.error("Error in price details listener:", error);
+    throw error;
+  }
+}
+
+// Add writeComment function
+export async function writeComment(comment, priceId) {
+  try {
+    const priceRef = doc(database, "prices", priceId);
+    const commentId = `comment_${Date.now()}`;
+
+    const commentData = {
+      [`comments.${commentId}`]: {
+        userId: PLACEHOLDER_USER_ID,
+        content: comment,
+        createdAt: new Date().toISOString(),
+      },
+    };
+
+    await updateDoc(priceRef, commentData);
+    console.log("Comment added successfully");
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    throw error;
   }
 }

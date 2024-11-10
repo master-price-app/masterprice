@@ -118,7 +118,7 @@ export default function ProductDetailScreen({ navigation, route }) {
             pressedHandler={handleAddPrice}
             componentStyle={styles.addButton}
           >
-            <Text style={styles.addButtonText}>Add Price</Text>
+            <Text style={styles.addButtonText}>Share New Price</Text>
           </PressableButton>
         </View>
 
