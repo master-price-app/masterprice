@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { subscribeToPricesByProduct } from "../../services/priceService";
 import PressableButton from "../../components/PressableButton";
+import PriceListItem from "../../components/PriceListItem";
 
 export default function ProductDetailScreen({ navigation, route }) {
   const { code } = route.params;
