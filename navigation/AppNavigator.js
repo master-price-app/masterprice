@@ -10,7 +10,6 @@ const Tab = createBottomTabNavigator();
 export default function AppNavigator() {
   return (
     <Tab.Navigator>
-
       <Tab.Screen
         name="Search"
         component={SearchStack}
@@ -40,7 +39,14 @@ export default function AppNavigator() {
           ),
           headerShown: false,
         }}
-
+      />
+      <Tab.Screen
+        name="Common"
+        component={CommonStack}
+        options={{
+          headerShown: false,
+          tabBarButton: () => null, // Hide the tab bar button
+        }}
       />
     </Tab.Navigator>
   );
