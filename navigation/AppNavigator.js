@@ -3,12 +3,14 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import SearchStack from './stacks/SearchStack';
 import ListStack from './stacks/ListStack';
 import AccountStack from './stacks/AccountStack';
+import CommonStack from './stacks/CommonStack';
 
 const Tab = createBottomTabNavigator();
 
 export default function AppNavigator() {
   return (
     <Tab.Navigator>
+
       <Tab.Screen
         name="Search"
         component={SearchStack}
@@ -38,6 +40,7 @@ export default function AppNavigator() {
           ),
           headerShown: false,
         }}
+
       />
     </Tab.Navigator>
   );
