@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Button, TextInput, View, StyleSheet } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import PressableButton from "../../components/PressableButton";
 
 export default function SearchScreen({ navigation }) {
   const [keyword, setKeyword] = useState("");
@@ -9,29 +11,173 @@ export default function SearchScreen({ navigation }) {
   };
 
   const handleSearch = () => {
-
     if (keyword.trim()) {
-      navigation.navigate("SearchResult", { keyword });
+      navigation.navigate("SearchResult", { keyword: keyword.trim() });
     }
+  };
 
+  const handleClearSearch = () => {
+    setKeyword("");
   };
 
   return (
-    <View>
-      <TextInput
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Master Price</Text>
+        <Text style={styles.subtitle}>Find the Best Deals</Text>
+      </View>
 
-        value={keyword}
-        onChangeText={setKeyword}
-        placeholder="Search an Item"
-        returnKeyType='search'
-        onSubmitEditing={handleSearch}
-      />
+      <View style={styles.searchSection}>
+        <View style={styles.searchContainer}>
+          <MaterialIcons name="search" size={20} color="#666" />
+          <TextInput
+            value={keyword}
+            onChangeText={setKeyword}
+            placeholder="Search for products"
+            placeholderTextColor="#999"
+            returnKeyType="search"
+            onSubmitEditing={handleSearch}
+            style={styles.searchInput}
+          />
+          {keyword.length > 0 && (
+            <PressableButton
+              pressedHandler={handleClearSearch}
+              componentStyle={styles.clearButton}
+              pressedStyle={styles.clearButtonPressed}
+            >
+              <MaterialIcons name="close" size={20} color="#666" />
+            </PressableButton>
+          )}
+        </View>
 
-      <Button title="Search" onPress={handleSearch} />
+        <Text style={styles.orText}>or</Text>
 
-      <Button title="Scan Barcode" onPress={handleScanBarcode} />
+        <PressableButton
+          pressedHandler={handleScanBarcode}
+          componentStyle={styles.scanButton}
+          pressedStyle={styles.scanButtonPressed}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <MaterialIcons name="qr-code-scanner" size={24} color="#fff" />
+            <Text style={styles.scanButtonText}>Scan Barcode</Text>
+          </View>
+        </PressableButton>
+      </View>
+
+      <View style={styles.tipsSection}>
+        <Text style={styles.tipsTitle}>Search Tips</Text>
+        <View style={styles.tipItem}>
+          <MaterialIcons name="info" size={20} color="#666" />
+          <Text style={styles.tipText}>Enter product name or brand to search</Text>
+        </View>
+        <View style={styles.tipItem}>
+          <MaterialIcons name="info" size={20} color="#666" />
+          <Text style={styles.tipText}>Scan barcode for quick product lookup</Text>
+        </View>
+      </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({})
+// Temporary styles
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 16,
+  },
+  header: {
+    marginTop: 20,
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  searchSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: '100%',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    marginRight: 8,
+    fontSize: 16,
+    color: '#333',
+    padding: 0,
+  },
+  clearButton: {
+    padding: 4,
+    borderRadius: 12,
+  },
+  clearButtonPressed: {
+    backgroundColor: '#f0f0f0',
+  },
+  orText: {
+    marginVertical: 16,
+    fontSize: 14,
+    color: '#666',
+  },
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  scanButtonPressed: {
+    backgroundColor: '#0056b3',
+    opacity: 0.9,
+  },
+  scanButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  tipsSection: {
+    padding: 16,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+  },
+  tipsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tipText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#666',
+  },
+});
