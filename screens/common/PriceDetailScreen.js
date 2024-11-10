@@ -1,13 +1,15 @@
+import { useEffect, useState } from "react";
 import {
-  StyleSheet,
-  Text,
-  View,
+  ActivityIndicator,
   Image,
   ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
+  View,
 } from "react-native";
-import React, { useState, useEffect } from "react";
 import { Menu } from "react-native-paper";
+import { MaterialIcons } from '@expo/vector-icons';
 import {
   subscribeToPriceDetails,
   writeComment,
@@ -61,15 +63,15 @@ export default function PriceDetailScreen({ navigation, route }) {
 
   if (!priceData || !priceData.id) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text>Loading price details...</Text>
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
   }
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
         {isCurrentUserPrice && (
           <View style={styles.menuContainer}>
             <Menu
@@ -78,8 +80,10 @@ export default function PriceDetailScreen({ navigation, route }) {
               anchor={
                 <PressableButton
                   pressedHandler={() => setMenuVisible(true)}
-                  text="Manage Post"
-                />
+                  componentStyle={styles.menuButton}
+                >
+                  <MaterialIcons name="more-vert" size={24} color="#666" />
+                </PressableButton>
               }
             >
               <Menu.Item
@@ -98,6 +102,7 @@ export default function PriceDetailScreen({ navigation, route }) {
                   });
                 }}
                 title="Edit"
+                leadingIcon="pencil"
               />
               <Menu.Item
                 onPress={async () => {
@@ -110,124 +115,269 @@ export default function PriceDetailScreen({ navigation, route }) {
                   }
                 }}
                 title="Delete"
-                titleStyle={{ color: "red" }}
+                leadingIcon="delete"
+                titleStyle={{ color: "#ff3b30" }}
               />
             </Menu>
           </View>
         )}
 
-        <Text style={styles.productName}>
-          {productName} - ${priceData.price}
-        </Text>
-        <Text style={styles.productInfo}>
-          {productQuantity} {productUnit}
-        </Text>
-
-        {productImage && (
-          <Image source={{ uri: productImage }} style={styles.image} />
-        )}
-
-        <View style={styles.priceInfo}>
-          <Text>Found At: {priceData.store}</Text>
-          <Text>Shared by: {priceData.userId}</Text>
-          <Text>{new Date(priceData.createdAt).toLocaleDateString()}</Text>
+        <View style={styles.productCard}>
+          {productImage && (
+            <Image
+              source={{ uri: productImage }}
+              style={styles.productImage}
+            />
+          )}
+          <View style={styles.productInfo}>
+            <Text style={styles.productName}>{productName}</Text>
+            <Text style={styles.quantity}>
+              {productQuantity} {productUnit}
+            </Text>
+            <View style={styles.priceInfo}>
+              <Text style={styles.priceLabel}>Price</Text>
+              <Text style={styles.price}>${priceData.price.toFixed(2)}</Text>
+            </View>
+            <View style={styles.storeInfo}>
+              <MaterialIcons name="store" size={16} color="#666" />
+              <PressableButton
+                pressedHandler={() => navigation.navigate("MartDetail", { 
+                  store: priceData.store 
+                })}
+                componentStyle={styles.storeButton}
+              >
+                <Text style={styles.storeText}>{priceData.store}</Text>
+                <MaterialIcons name="chevron-right" size={16} color="#666" />
+              </PressableButton>
+            </View>
+            <View style={styles.dateInfo}>
+              <MaterialIcons name="schedule" size={16} color="#666" />
+              <Text style={styles.dateText}>
+                {new Date(priceData.createdAt).toLocaleDateString()}
+              </Text>
+            </View>
+          </View>
         </View>
+      </View>
 
-        <View style={styles.commentsSection}>
-          <Text style={styles.commentsHeader}>Comments</Text>
-          {commentsArray.map((comment) => (
-            <View key={comment.id} style={styles.commentItem}>
-              <Text>{comment.content}</Text>
-              <Text style={styles.commentMeta}>
-                By: {comment.userId} •{" "}
+      <View style={styles.commentsSection}>
+        <Text style={styles.sectionTitle}>Comments</Text>
+        {commentsArray.map((comment) => (
+          <View key={comment.id} style={styles.commentItem}>
+            <View style={styles.commentHeader}>
+              <View style={styles.commentUser}>
+                <MaterialIcons name="account-circle" size={24} color="#666" />
+                <Text style={styles.commentAuthor}>
+                  {comment.userId || '• Anonymous User'}
+                </Text>
+              </View>
+              <Text style={styles.commentDate}>
                 {new Date(comment.createdAt).toLocaleDateString()}
               </Text>
             </View>
-          ))}
-        </View>
+            <Text style={styles.commentContent}>{comment.content}</Text>
+          </View>
+        ))}
 
         <View style={styles.commentInput}>
           <TextInput
+            style={styles.input}
             value={newComment}
             onChangeText={setNewComment}
-            placeholder="Share your thoughts"
-            style={styles.input}
+            placeholder="Share your thoughts..."
             multiline
           />
-          <PressableButton pressedHandler={handleSubmitComment} text="Post" />
+          <PressableButton
+            pressedHandler={handleSubmitComment}
+            componentStyle={[
+              styles.submitButton,
+              !newComment.trim() && styles.submitButtonDisabled
+            ]}
+            disabled={!newComment.trim()}
+          >
+            <Text style={[
+              styles.submitButtonText,
+              !newComment.trim() && styles.submitButtonTextDisabled
+            ]}>
+              Post
+            </Text>
+          </PressableButton>
         </View>
       </View>
     </ScrollView>
   );
 }
 
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    backgroundColor: '#f5f5f5',
   },
-  centerContent: {
-    justifyContent: "center",
-    alignItems: "center",
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    margin: 16,
+    overflow: 'hidden',
   },
   menuContainer: {
-    alignItems: "flex-end",
-    marginBottom: 16,
+    position: 'absolute',
+    top: 8,
+    right: 8,
     zIndex: 1,
   },
-  productName: {
-    fontSize: 18,
-    fontWeight: "bold",
+  menuButton: {
+    padding: 8,
+  },
+  productCard: {
+    padding: 16,
+  },
+  productImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    marginBottom: 16,
+    backgroundColor: '#f5f5f5',
   },
   productInfo: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 4,
+    flex: 1,
   },
-  image: {
-    width: "100%",
-    height: 200,
-    marginVertical: 10,
-    borderRadius: 8,
-  },
-  priceInfo: {
-    marginVertical: 10,
-    padding: 12,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-  },
-  commentsSection: {
-    marginTop: 20,
-  },
-  commentsHeader: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
-  commentItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+  productName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 8,
   },
-  commentMeta: {
+  quantity: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 16,
+  },
+  priceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  priceLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  storeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  storeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginLeft: 8,
+    paddingVertical: 4,
+  },
+  storeText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  dateInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#666',
+  },
+  commentsSection: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    margin: 16,
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+  },
+  commentItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  commentUser: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  commentAuthor: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  commentDate: {
     fontSize: 12,
-    color: "#666",
-    marginTop: 4,
+    color: '#999',
+  },
+  commentContent: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 32,
+    lineHeight: 22,
   },
   commentInput: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: 16,
+    gap: 8,
   },
   input: {
     flex: 1,
-    marginRight: 10,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
     minHeight: 40,
+    maxHeight: 100,
+    padding: 12,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  submitButtonTextDisabled: {
+    color: '#fff8',
   },
 });

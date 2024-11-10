@@ -1,6 +1,8 @@
-import { StyleSheet, Text, View, TextInput, Button, Alert } from "react-native";
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
+import { MaterialIcons } from '@expo/vector-icons';
 import { writeToDB, updateData } from "../../services/priceService";
+import PressableButton from "../../components/PressableButton";
 
 export default function PriceFormScreen({ navigation, route }) {
   const { code, productName, editMode, priceData } = route.params;
@@ -62,69 +64,119 @@ export default function PriceFormScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.infoSection}>
-        <Text style={styles.label}>Product Name</Text>
-        <Text style={styles.value}>{productName}</Text>
-      </View>
+      <View style={styles.formCard}>
+        <View style={styles.infoSection}>
+          <Text style={styles.label}>Product Name</Text>
+          <Text style={styles.value}>{productName}</Text>
+        </View>
 
-      <View style={styles.infoSection}>
-        <Text style={styles.label}>Barcode Number</Text>
-        <Text style={styles.value}>{code}</Text>
-      </View>
+        <View style={styles.infoSection}>
+          <Text style={styles.label}>Barcode Number</Text>
+          <Text style={styles.value}>{code}</Text>
+        </View>
 
-      <View style={styles.inputSection}>
-        <Text style={styles.label}>Price</Text>
-        <TextInput
-          style={styles.input}
-          value={price}
-          onChangeText={setPrice}
-          placeholder="Enter price"
-          keyboardType="decimal-pad"
-        />
-      </View>
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>Price</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="attach-money" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              value={price}
+              onChangeText={setPrice}
+              placeholder="Enter price"
+              keyboardType="decimal-pad"
+              placeholderTextColor="#999"
+            />
+          </View>
+        </View>
 
-      <View style={styles.inputSection}>
-        <Text style={styles.label}>Location</Text>
-        <TextInput
-          style={styles.input}
-          value={location}
-          onChangeText={setLocation}
-          placeholder="Enter store location"
-        />
-      </View>
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>Location</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="store" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              value={location}
+              onChangeText={setLocation}
+              placeholder="Enter store location"
+              placeholderTextColor="#999"
+            />
+          </View>
+        </View>
 
-      <Button
-        onPress={handleSubmit}
-        title={editMode ? "Update Price" : "Submit"}
-      />
+        <PressableButton
+          pressedHandler={handleSubmit}
+          componentStyle={styles.submitButton}
+        >
+          <Text style={styles.submitButtonText}>
+            {editMode ? "Update Price" : "Share Price"}
+          </Text>
+        </PressableButton>
+      </View>
     </View>
   );
 }
 
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
     padding: 16,
   },
+  formCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
   infoSection: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputSection: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 4,
+    fontWeight: "600",
+    color: '#333',
+    marginBottom: 8,
   },
   value: {
     fontSize: 16,
     color: "#666",
   },
-  input: {
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    padding: 8,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     fontSize: 16,
+    color: '#333',
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
