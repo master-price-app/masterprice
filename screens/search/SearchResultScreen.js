@@ -9,6 +9,10 @@ export default function SearchResultScreen({ navigation, route }) {
         // TODO: Search the barcode with API
       }
       <Text>{barcode}</Text>
+      {
+        // TODO: Search the keyword with API
+      }
+      <Text>{keyword}</Text>
     </>
   );
 }
