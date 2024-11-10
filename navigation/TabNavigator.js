@@ -16,7 +16,6 @@ export default function TabNavigator() {
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name='search' color={color} size={size} />
           ),
-          headerShown: false,
         }}
       />
       <Tab.Screen
@@ -26,7 +25,6 @@ export default function TabNavigator() {
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name='list-alt' color={color} size={size} />
           ),
-          headerShown: false,
         }}
       />
       <Tab.Screen
@@ -36,7 +34,6 @@ export default function TabNavigator() {
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name='account-circle' color={color} size={size} />
           ),
-          headerShown: false,
         }}
       />
     </Tab.Navigator>
