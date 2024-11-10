@@ -9,6 +9,7 @@ import {
   query,
   where,
   onSnapshot,
+  orderBy,
 } from "firebase/firestore";
 
 /* 
@@ -22,7 +23,7 @@ export async function writeToDB(data, collectionName) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
-    console.log("Document written with ID: ", docRef.id);
+    console.log("Price Document written with ID: ", docRef.id);
   } catch (err) {
     console.log("Write to db error: ", err);
   }
@@ -88,7 +89,6 @@ export function subscribeToCommentsByPrice(priceId, onCommentsUpdate) {
     const commentsQuery = query(
       collection(database, "comments"),
       where("priceId", "==", priceId),
-      orderBy("createdAt", "desc")
     );
 
     const unsubscribe = onSnapshot(commentsQuery, (querySnapshot) => {
