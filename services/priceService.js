@@ -10,6 +10,7 @@ import {
   where,
   onSnapshot,
 } from "firebase/firestore";
+import { getLocationById } from "./martService";
 
 const PLACEHOLDER_USER_ID = "user123"; // Temporary until auth is implemented
 

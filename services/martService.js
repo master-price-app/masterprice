@@ -76,22 +76,34 @@ export async function getLocations() {
 // Get location by Firebase ID
 export async function getLocationById(locationId) {
   try {
-    const locationDoc = await getDoc(doc(database, "martLocations", locationId));
-    if (!locationDoc.exists()) return null;
-    
-    const locationData = {
-      id: locationDoc.id,
-      ...locationDoc.data()
-    };
-    
-    const chain = martChainsData[locationData.chainId];
+    if (!locationId) {
+      console.log("No locationId provided");
+      return null;
+    }
+
+    const locationRef = doc(database, "martLocations", locationId);
+    const locationDoc = await getDoc(locationRef);
+
+    if (!locationDoc.exists()) {
+      console.log("Location not found");
+      return null;
+    }
+
+    const locationData = locationDoc.data();
+    const chainData = locationData.chainId
+      ? martChainsData[locationData.chainId]
+      : null;
+
     return {
-      location: locationData,
-      chain
+      location: {
+        id: locationDoc.id,
+        ...locationData,
+      },
+      chain: chainData,
     };
   } catch (error) {
     console.error("Error getting location:", error);
-    throw error;
+    return null;
   }
 }
 

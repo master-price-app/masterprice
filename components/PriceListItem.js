@@ -1,24 +1,62 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import PressableButton from './PressableButton';
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, View, Image } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { chainLogoMapping } from "../services/martService";
+import { getLocationById } from "../services/martService";
+import PressableButton from "./PressableButton";
 
 export default function PriceListItem({ price, onPress }) {
+  const [locationData, setLocationData] = useState(null);
+
+  useEffect(() => {
+    async function loadLocationData() {
+      if (price.locationId) {
+        const data = await getLocationById(price.locationId);
+        setLocationData(data);
+      }
+    }
+
+    loadLocationData();
+  }, [price.locationId]);
+
+  const getChainLogo = (chainId) => {
+    if (!chainId) return null;
+    return chainLogoMapping[chainId.toLowerCase()] || null;
+  };
+
   return (
     <PressableButton pressedHandler={onPress}>
-      <View style={[
-        styles.priceItem,
-        price.isMasterPrice && styles.masterPriceItem
-      ]}>
+      <View
+        style={[
+          styles.priceItem,
+          price.isMasterPrice && styles.masterPriceItem,
+        ]}
+      >
         <View style={styles.priceHeader}>
           <View style={styles.storeInfo}>
-            <MaterialIcons name="store" size={16} color="#666" />
-            <Text style={styles.storeText}>{price.store}</Text>
+            {locationData?.chain?.chainId ? (
+              <View style={styles.chainLogoContainer}>
+                <Image
+                  source={getChainLogo(locationData.chain.chainId)}
+                  style={styles.chainLogo}
+                />
+              </View>
+            ) : (
+              <>
+                <MaterialIcons name="store" size={16} color="#666" />
+                <Text style={styles.storeText}>
+                  {locationData?.location?.name || "Loading..."}
+                </Text>
+              </>
+            )}
           </View>
           <View style={styles.priceInfo}>
-            <Text style={[
-              styles.priceText,
-              price.isMasterPrice && styles.masterPriceText
-            ]}>
+            <Text
+              style={[
+                styles.priceText,
+                price.isMasterPrice && styles.masterPriceText,
+              ]}
+            >
               ${price.price.toFixed(2)}
             </Text>
             {price.isMasterPrice && (
@@ -40,66 +78,76 @@ export default function PriceListItem({ price, onPress }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   priceItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: 'white',
+    borderBottomColor: "#eee",
+    backgroundColor: "white",
   },
   masterPriceItem: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: "#f0f9ff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#007AFF20',
+    borderColor: "#007AFF20",
     marginVertical: 4,
   },
   priceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   storeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  chainLogoContainer: {
+    width: 80,
+    height: 30,
+    marginRight: 8,
+  },
+  chainLogo: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
   },
   storeText: {
     marginLeft: 8,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   priceInfo: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   priceText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 4,
   },
   masterPriceText: {
-    color: '#007AFF',
+    color: "#007AFF",
   },
   masterBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 2,
   },
   masterText: {
     marginLeft: 4,
     fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '500',
+    color: "#007AFF",
+    fontWeight: "500",
   },
   priceFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   dateText: {
     marginLeft: 8,
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
 });
