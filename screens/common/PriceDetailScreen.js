@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { Menu } from "react-native-paper";
@@ -73,6 +74,18 @@ export default function PriceDetailScreen({ navigation, route }) {
     if (newComment.trim() && priceData.id) {
       await writeComment(newComment, priceData.id);
       setNewComment("");
+    }
+  };
+
+  const handleLogoPress = () => {
+    if (priceData?.locationId) {
+      navigation.navigate("MartDetail", { locationId: priceData.locationId });
+    }
+  };
+
+  const handleLocationPress = () => {
+    if (priceData?.locationId) {
+      navigation.navigate("MartDetail", { locationId: priceData.locationId });
     }
   };
 
@@ -158,12 +171,14 @@ export default function PriceDetailScreen({ navigation, route }) {
                 By {priceData.userId} Found At{" "}
               </Text>
               {martData && (
-                <View style={styles.chainLogoContainer}>
-                  <Image
-                    source={getChainLogo(martData.chain.chainId)}
-                    style={styles.chainLogoSmall}
-                  />
-                </View>
+                <TouchableOpacity onPress={handleLogoPress}>
+                  <View style={styles.chainLogoContainer}>
+                    <Image
+                      source={getChainLogo(martData.chain.chainId)}
+                      style={styles.chainLogoSmall}
+                    />
+                  </View>
+                </TouchableOpacity>
               )}
             </View>
             <Text style={styles.dateText}>
@@ -176,13 +191,16 @@ export default function PriceDetailScreen({ navigation, route }) {
             </Text>
 
             {martData && (
-              <View style={styles.locationInfo}>
+              <TouchableOpacity
+                style={styles.locationInfo}
+                onPress={handleLocationPress}
+              >
                 <MaterialIcons name="location-on" size={24} color="#E31837" />
                 <Text style={styles.locationText}>
                   {martData.location?.address.street},{" "}
                   {martData.location?.address.city}
                 </Text>
-              </View>
+              </TouchableOpacity>
             )}
 
             <View style={styles.priceInfo}>
@@ -293,7 +311,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   chainLogoContainer: {
-    width: 80, 
+    width: 80,
     height: 40,
     justifyContent: "center",
     alignItems: "flex-start",
