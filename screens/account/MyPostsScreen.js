@@ -36,12 +36,10 @@ export default function MyPostsScreen({ navigation }) {
             id: doc.id,
             productId: data.code,
             productName: data.productName,
-            productImageUrl: null, // You can add image handling later
+            productImageUrl: null,
             price: data.price,
-            martId: data.storeId,
-            martName: data.store,
+            locationId: data.locationId, // Store locationId instead of mart info
             createdAt: data.createdAt,
-            // Set expiry date to 7 days after creation for demo
             expiryDate:
               new Date(data.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000,
             status: "active",
@@ -96,10 +94,10 @@ export default function MyPostsScreen({ navigation }) {
                 id: item.id,
                 code: item.productId,
                 price: item.price,
-                storeId: item.martId,
+                locationId: item.locationId, // Pass locationId
                 userId: PLACEHOLDER_USER_ID,
                 createdAt: item.createdAt,
-                updatedAt: item.createdAt, // Using createdAt as updatedAt for now
+                updatedAt: item.createdAt,
                 comments: {},
                 inShoppingList: {},
               },
