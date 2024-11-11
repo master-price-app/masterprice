@@ -78,7 +78,7 @@ export default function ShoppingListScreen({ navigation }) {
     const fetchData = async () => {
       try {
         // Simulate network request delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 500));
         setShoppingList(DUMMY_DATA);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -213,25 +213,23 @@ export default function ShoppingListScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderSectionHeader={({ section: { title, data } }) => (
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons name="store" size={20} color="#666" />
-              <Text style={styles.sectionTitle}>{title}</Text>
-              <Text style={styles.itemCount}>{data.length} items</Text>
-            </View>
+          <View style={styles.sectionHeader}>
+            <MaterialIcons name="store" size={20} color="#666" />
+            <Text style={styles.sectionTitle}>{title}</Text>
+            <Text style={styles.itemCount}>{data.length} items</Text>
           </View>
         )}
         renderItem={({ item, section }) => (
-          <View style={styles.sectionCard}>
-            <ShoppingListItem
-              price={item}
-              onPress={() => handleItemPress(item)}
-              isSelected={selectedItems.has(item.id)}
-              showCheckbox={isManaging}
-            />
-          </View>
+          <ShoppingListItem
+            price={item}
+            onPress={() => handleItemPress(item)}
+            isSelected={selectedItems.has(item.id)}
+            showCheckbox={isManaging}
+          />
         )}
+        SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
         stickySectionHeadersEnabled={false}
+        renderSectionFooter={() => <View style={styles.sectionFooter} />}
       />
 
       {/* Delete button - only show when managing and selected items */}
@@ -286,23 +284,31 @@ const styles = StyleSheet.create({
   listContent: {
     padding: 16,
   },
-  sectionCard: {
-    backgroundColor: '#fff',
+  section: {
+    backgroundColor: 'white',
     borderRadius: 12,
     marginBottom: 16,
+    overflow: 'hidden',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    overflow: 'hidden',
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   sectionTitle: {
     flex: 1,
@@ -310,6 +316,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+  },
+  sectionSeparator: {
+    height: 16,
+  },
+  sectionFooter: {
+    height: 8,
+    backgroundColor: 'white',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
   itemCount: {
     fontSize: 14,
