@@ -1,6 +1,16 @@
 import { useState } from 'react';
-import { Alert, View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { Menu } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import PressableButton from '../../components/PressableButton';
 
 export default function EditProfileScreen({ navigation }) {
   const [profile, setProfile] = useState({
@@ -10,6 +20,47 @@ export default function EditProfileScreen({ navigation }) {
     phone: '778-123-456',
     address: '123 Main St, Burnaby, Canada',
   });
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const handleImageSelection = async (useCamera) => {
+    try {
+      setMenuVisible(false);
+
+      // Request permission
+      const permissionType = useCamera 
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (permissionType.status !== 'granted') {
+        Alert.alert('Sorry', `Need ${useCamera ? 'camera' : 'photo library'} permission to change avatar`);
+        return;
+      }
+
+      const result = useCamera
+        ? await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+            cameraType: ImagePicker.CameraType.front,
+          })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+          });
+
+      if (!result.canceled) {
+        setProfile(prev => ({
+          ...prev,
+          avatar: result.assets[0].uri
+        }));
+      }
+    } catch (error) {
+      console.error('Error selecting image:', error);
+      Alert.alert('Error', 'Error selecting image');
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -22,27 +73,42 @@ export default function EditProfileScreen({ navigation }) {
     }
   }
 
-  const handleChangeAvatar = () => {
-    // TODO: Change avatar
-    Alert.alert('Success', 'Avatar changed');
-  }
-
   return (
     <View style={styles.container}>
       {/* Avatar section */}
-      <TouchableOpacity 
-        style={styles.avatarContainer} 
-        onPress={handleChangeAvatar}
+      <Menu
+        visible={menuVisible}
+        onDismiss={() => setMenuVisible(false)}
+        anchor={
+          <PressableButton
+            // style={styles.avatarContainer} 
+            // onPress={handleChangeAvatar}
+            pressedHandler={() => setMenuVisible(true)}
+            componentStyle={styles.avatarContainer}
+            pressedStyle={styles.avatarContainerPressed}
+          >
+            <Image
+              source={{ uri: profile.avatar }} 
+              style={styles.avatar} 
+            />
+            <View style={styles.avatarOverlay}>
+              <MaterialIcons name="camera-alt" size={24} color="#fff" />
+              <Text style={styles.avatarText}>Change Avatar</Text>
+            </View>
+          </PressableButton>
+        }
       >
-        <Image 
-          source={{ uri: profile.avatar }} 
-          style={styles.avatar} 
+        <Menu.Item
+          onPress={() => handleImageSelection(false)}
+          title="Select from library"
+          leadingIcon="image"
         />
-        <View style={styles.avatarOverlay}>
-          <MaterialIcons name="camera-alt" size={24} color="#fff" />
-          <Text style={styles.avatarText}>Change Avatar</Text>
-        </View>
-      </TouchableOpacity>
+        <Menu.Item
+          onPress={() => handleImageSelection(true)}
+          title="Take a photo"
+          leadingIcon="camera"
+        />
+      </Menu>
 
       {/* Form section */}
       <View style={styles.form}>
@@ -59,12 +125,15 @@ export default function EditProfileScreen({ navigation }) {
       </View>
 
       {/* Save button */}
-      <TouchableOpacity 
-        style={styles.saveButton} 
-        onPress={handleSave}
+      <PressableButton
+        // style={styles.saveButton} 
+        // onPress={handleSave}
+        pressedHandler={handleSave}
+        componentStyle={styles.saveButton}
+        pressedStyle={styles.saveButtonPressed}
       >
         <Text style={styles.saveButtonText}>Save</Text>
-      </TouchableOpacity>
+      </PressableButton>
     </View>
   );
 }
@@ -79,6 +148,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#fff',
+  },
+  avatarContainerPressed: {
+    backgroundColor: '#f0f0f0',
   },
   avatar: {
     width: 100,
@@ -129,6 +201,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  saveButtonPressed: {
+    backgroundColor: '#0056b3',
   },
   saveButtonText: {
     color: '#fff',
