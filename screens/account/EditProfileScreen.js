@@ -41,6 +41,7 @@ export default function EditProfileScreen({ navigation }) {
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.5,
+            cameraType: ImagePicker.CameraType.front,
           })
         : await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
