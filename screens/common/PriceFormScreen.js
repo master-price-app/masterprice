@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { writeToDB, updateData } from "../../services/priceService";
@@ -23,6 +25,7 @@ export default function PriceFormScreen({ navigation, route }) {
   );
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [imageUri, setImageUri] = useState(null);
 
   useEffect(() => {
     async function loadLocations() {
@@ -39,6 +42,40 @@ export default function PriceFormScreen({ navigation, route }) {
 
     loadLocations();
   }, []);
+
+  const handleImageSelection = async (useCamera) => {
+    try {
+      const permissionType = useCamera 
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (permissionType.status !== 'granted') {
+        Alert.alert('Sorry', `Need ${useCamera ? 'camera' : 'photo library'} permission to upload images`);
+        return;
+      }
+
+      const result = useCamera
+        ? await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+            camera: 'back',
+          })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+          });
+
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error selecting image:', error);
+      Alert.alert('Error', 'Error selecting image');
+    }
+  };
 
   function validatePrice(price) {
     if (isNaN(price)) {
@@ -98,16 +135,58 @@ export default function PriceFormScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.formCard}>
+        {/* Upload Product Image Section */}
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>Product Image (Optional)</Text>
+          <View style={styles.imageSection}>
+            {imageUri ? (
+              <View style={styles.imageContainer}>
+                <Image source={{ uri: imageUri }} style={styles.previewImage} />
+                <PressableButton
+                  pressedHandler={() => setImageUri(null)}
+                  componentStyle={styles.removeImageButton}
+                >
+                  <MaterialIcons name="close" size={20} color="#fff" />
+                </PressableButton>
+              </View>
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <MaterialIcons name="add-photo-alternate" size={40} color="#666" />
+                <Text style={styles.imagePlaceholderText}>Add Product Photo</Text>
+              </View>
+            )}
+            <View style={styles.imageButtons}>
+              <PressableButton
+                pressedHandler={() => handleImageSelection(true)}
+                componentStyle={styles.imageButton}
+              >
+                <MaterialIcons name="camera-alt" size={20} color="#007AFF" />
+                <Text style={styles.imageButtonText}>Take Photo</Text>
+              </PressableButton>
+              <PressableButton
+                pressedHandler={() => handleImageSelection(false)}
+                componentStyle={styles.imageButton}
+              >
+                <MaterialIcons name="photo-library" size={20} color="#007AFF" />
+                <Text style={styles.imageButtonText}>Choose Photo</Text>
+              </PressableButton>
+            </View>
+          </View>
+        </View>
+
+        {/* Product Name Section */}
         <View style={styles.infoSection}>
           <Text style={styles.label}>Product Name</Text>
           <Text style={styles.value}>{productName}</Text>
         </View>
 
+        {/* Barcode Number Section */}
         <View style={styles.infoSection}>
           <Text style={styles.label}>Barcode Number</Text>
           <Text style={styles.value}>{code}</Text>
         </View>
 
+        {/* Price Section */}
         <View style={styles.inputSection}>
           <Text style={styles.label}>Price</Text>
           <View style={styles.inputContainer}>
@@ -122,7 +201,8 @@ export default function PriceFormScreen({ navigation, route }) {
             />
           </View>
         </View>
-        
+
+        {/* Store Location Section */}
         <View style={styles.inputSection}>
           <Text style={styles.label}>Store Location</Text>
 
@@ -143,6 +223,7 @@ export default function PriceFormScreen({ navigation, route }) {
           </View>
         </View>
 
+        {/* Submit Button */}
         <PressableButton
           pressedHandler={handleSubmit}
           componentStyle={styles.submitButton}
@@ -172,6 +253,59 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  imageContainer: {
+    width: '100%',
+    position: 'relative',
+  },
+  previewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePlaceholder: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  imagePlaceholderText: {
+    color: '#666',
+    marginTop: 8,
+  },
+  imageButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  imageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    minWidth: 120,
+    justifyContent: 'center',
+  },
+  imageButtonText: {
+    color: '#007AFF',
+    marginLeft: 8,
+    fontSize: 14,
   },
   infoSection: {
     marginBottom: 20,
