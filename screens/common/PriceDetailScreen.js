@@ -38,6 +38,65 @@ export default function PriceDetailScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if the price is posted by the current user
+    const isCurrentUserPost = priceData.userId === PLACEHOLDER_USER_ID;
+
+    navigation.setOptions({
+      // Set the title
+      title: productName,
+      // Set the right edit button
+      headerRight: () => isCurrentUserPost ? (
+        <Menu
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={
+            <PressableButton
+              pressedHandler={() => setMenuVisible(true)}
+              componentStyle={styles.headerButton}
+              pressedStyle={styles.headerButtonPressed}
+            >
+              <MaterialIcons name="edit" size={24} color="#007AFF" />
+            </PressableButton>
+          }
+        >
+          <Menu.Item
+            onPress={() => {
+              setMenuVisible(false);
+              navigation.navigate("PriceForm", {
+                code: priceData.code,
+                productName,
+                editMode: true,
+                priceData: {
+                  id: priceData.id,
+                  price: priceData.price,
+                  locationId: priceData.locationId,
+                  code: priceData.code,
+                },
+              });
+            }}
+            title="Edit"
+            leadingIcon="pencil"
+          />
+          <Menu.Item
+            onPress={async () => {
+              setMenuVisible(false);
+              try {
+                await deleteData("prices", priceData.id);
+                navigation.goBack();
+              } catch (error) {
+                console.error("Error deleting price:", error);
+              }
+            }}
+            title="Delete"
+            leadingIcon="delete"
+            titleStyle={{ color: "#ff3b30" }}
+          />
+        </Menu>
+      ) : null
+    });
+  }, [menuVisible]);
+
+  useEffect(() => {
     if (initialPriceData && initialPriceData.id) {
       const unsubscribe = subscribeToPriceDetails(
         initialPriceData.id,
@@ -106,8 +165,6 @@ export default function PriceDetailScreen({ navigation, route }) {
       }))
     : [];
 
-  const isCurrentUserPrice = priceData.userId === PLACEHOLDER_USER_ID;
-
   if (!priceData || !priceData.id || loading) {
     return (
       <View style={styles.centerContainer}>
@@ -119,56 +176,6 @@ export default function PriceDetailScreen({ navigation, route }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        {isCurrentUserPrice && (
-          <View style={styles.menuContainer}>
-            <Menu
-              visible={menuVisible}
-              onDismiss={() => setMenuVisible(false)}
-              anchor={
-                <PressableButton
-                  pressedHandler={() => setMenuVisible(true)}
-                  componentStyle={styles.menuButton}
-                >
-                  <MaterialIcons name="more-vert" size={24} color="#666" />
-                </PressableButton>
-              }
-            >
-              <Menu.Item
-                onPress={() => {
-                  setMenuVisible(false);
-                  navigation.navigate("PriceForm", {
-                    code: priceData.code,
-                    productName,
-                    editMode: true,
-                    priceData: {
-                      id: priceData.id,
-                      price: priceData.price,
-                      locationId: priceData.locationId,
-                      code: priceData.code,
-                    },
-                  });
-                }}
-                title="Edit"
-                leadingIcon="pencil"
-              />
-              <Menu.Item
-                onPress={async () => {
-                  setMenuVisible(false);
-                  try {
-                    await deleteData("prices", priceData.id);
-                    navigation.goBack();
-                  } catch (error) {
-                    console.error("Error deleting price:", error);
-                  }
-                }}
-                title="Delete"
-                leadingIcon="delete"
-                titleStyle={{ color: "#ff3b30" }}
-              />
-            </Menu>
-          </View>
-        )}
-
         <View style={styles.productCard}>
           {productImage && (
             <Image source={{ uri: productImage }} style={styles.productImage} />
@@ -299,14 +306,13 @@ const styles = StyleSheet.create({
     margin: 16,
     overflow: "hidden",
   },
-  menuContainer: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    zIndex: 1,
-  },
-  menuButton: {
+  headerButton: {
     padding: 8,
+    marginRight: 8,
+    borderRadius: 8,
+  },
+  headerButtonPressed: {
+    backgroundColor: '#E5E5E5',
   },
   productCard: {
     padding: 16,
