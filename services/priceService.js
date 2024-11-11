@@ -10,15 +10,16 @@ import {
   where,
   onSnapshot,
 } from "firebase/firestore";
+import { getLocationById } from "./martService";
 
 const PLACEHOLDER_USER_ID = "user123"; // Temporary until auth is implemented
 
 export async function writeToDB(data, collectionName) {
   try {
+    // Remove storeId creation since we're using locationId
     const docRef = await addDoc(collection(database, collectionName), {
       ...data,
       userId: PLACEHOLDER_USER_ID,
-      storeId: `store_${data.store.replace(/\s+/g, "_").toLowerCase()}`,
       comments: {},
       inShoppingList: {},
       updatedAt: new Date().toISOString(),
@@ -33,6 +34,7 @@ export async function writeToDB(data, collectionName) {
 
 export async function updateData(data, collectionName, id) {
   try {
+    // For updates, we don't need to modify the userId or initialize comments/shopping list
     await updateDoc(doc(database, collectionName, id), {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -76,7 +78,29 @@ export function subscribeToPricesByProduct(code, onPricesUpdate) {
   }
 }
 
-// Add subscribeToPriceDetails function
+// Add function to get prices by location
+export function subscribeToPricesByLocation(locationId, onPricesUpdate) {
+  try {
+    const pricesQuery = query(
+      collection(database, "prices"),
+      where("locationId", "==", locationId)
+    );
+
+    const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
+      const prices = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      onPricesUpdate(prices);
+    });
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error in prices by location listener:", error);
+    throw error;
+  }
+}
+
 export function subscribeToPriceDetails(priceId, onPriceUpdate) {
   try {
     const priceRef = doc(database, "prices", priceId);
@@ -98,7 +122,6 @@ export function subscribeToPriceDetails(priceId, onPriceUpdate) {
   }
 }
 
-// Add writeComment function
 export async function writeComment(comment, priceId) {
   try {
     const priceRef = doc(database, "prices", priceId);

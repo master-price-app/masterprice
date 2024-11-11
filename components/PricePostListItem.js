@@ -1,28 +1,44 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useState, useEffect } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { getLocationById, chainLogoMapping } from "../services/martService";
 
 export default function PricePostListItem({ post, onPress }) {
+  const [locationData, setLocationData] = useState(null);
   const isExpired = new Date(post.expiryDate) < new Date();
 
+  useEffect(() => {
+    async function loadLocationData() {
+      if (post.locationId) {
+        const data = await getLocationById(post.locationId);
+        setLocationData(data);
+      }
+    }
+
+    loadLocationData();
+  }, [post.locationId]);
+
   const formatDate = (timestamp) => {
-    return new Date(timestamp).toLocaleDateString('en-CA', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(timestamp).toLocaleDateString("en-CA", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
+  const getChainLogo = (chainId) => {
+    if (!chainId) return null;
+    return chainLogoMapping[chainId.toLowerCase()] || null;
+  };
+
   return (
-    <TouchableOpacity 
-      style={styles.card}
-      onPress={onPress}
-    >
+    <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.cardContent}>
         {/* Left: Product Image */}
-        <Image 
-          source={{ uri: post.productImageUrl }} 
+        <Image
+          source={{ uri: post.productImageUrl }}
           style={styles.productImage}
-          defaultSource={require('../assets/default-product.png')}
+          defaultSource={require("../assets/default-product.png")}
         />
 
         {/* Right: Product Info */}
@@ -45,11 +61,24 @@ export default function PricePostListItem({ post, onPress }) {
 
           {/* Details */}
           <View style={styles.details}>
-            <View style={styles.detailRow}>
-              <MaterialIcons name="store" size={16} color="#666" />
-              <Text style={styles.detailText}>{post.martName}</Text>
+            <View style={styles.storeDetail}>
+              {locationData?.chain?.chainId ? (
+                <View style={styles.chainLogoContainer}>
+                  <Image
+                    source={getChainLogo(locationData.chain.chainId)}
+                    style={styles.chainLogo}
+                  />
+                </View>
+              ) : (
+                <View style={styles.detailRow}>
+                  <MaterialIcons name="store" size={16} color="#666" />
+                  <Text style={styles.detailText}>
+                    {locationData?.location?.name || "Loading..."}
+                  </Text>
+                </View>
+              )}
             </View>
-            
+
             <View style={styles.detailRow}>
               <MaterialIcons name="schedule" size={16} color="#666" />
               <Text style={styles.detailText}>
@@ -60,15 +89,19 @@ export default function PricePostListItem({ post, onPress }) {
 
           {/* Status */}
           <View style={styles.footer}>
-            <View style={[
-              styles.statusBadge,
-              isExpired ? styles.expiredBadge : styles.validBadge
-            ]}>
-              <Text style={[
-                styles.statusText,
-                isExpired ? styles.expiredText : styles.validText
-              ]}>
-                {isExpired ? 'Expired' : 'Valid'}
+            <View
+              style={[
+                styles.statusBadge,
+                isExpired ? styles.expiredBadge : styles.validBadge,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  isExpired ? styles.expiredText : styles.validText,
+                ]}
+              >
+                {isExpired ? "Expired" : "Valid"}
               </Text>
             </View>
             <MaterialIcons name="chevron-right" size={20} color="#999" />
@@ -82,18 +115,18 @@ export default function PricePostListItem({ post, onPress }) {
 // Temporary styles
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     marginHorizontal: 16,
     marginVertical: 8,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   cardContent: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 12,
   },
   productImage: {
@@ -104,12 +137,12 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 8,
   },
   titleContainer: {
@@ -118,43 +151,43 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 4,
   },
   masterBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
   },
   masterText: {
     marginLeft: 4,
     fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '500',
+    color: "#007AFF",
+    fontWeight: "500",
   },
   price: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#007AFF',
+    fontWeight: "600",
+    color: "#007AFF",
   },
   details: {
     marginBottom: 8,
   },
   detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
   },
   detailText: {
     marginLeft: 8,
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -162,19 +195,32 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   validBadge: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: "#E8F5E9",
   },
   expiredBadge: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: "#FFEBEE",
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   validText: {
-    color: '#2E7D32',
+    color: "#2E7D32",
   },
   expiredText: {
-    color: '#C62828',
+    color: "#C62828",
+  },
+  chainLogoContainer: {
+    width: 80,
+    height: 24,
+    marginVertical: 4,
+  },
+  chainLogo: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
+  },
+  storeDetail: {
+    marginBottom: 4,
   },
 });

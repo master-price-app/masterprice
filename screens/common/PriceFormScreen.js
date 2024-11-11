@@ -1,7 +1,16 @@
-import { useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
-import { MaterialIcons } from '@expo/vector-icons';
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 import { writeToDB, updateData } from "../../services/priceService";
+import { getLocations } from "../../services/martService";
 import PressableButton from "../../components/PressableButton";
 
 export default function PriceFormScreen({ navigation, route }) {
@@ -9,7 +18,27 @@ export default function PriceFormScreen({ navigation, route }) {
   const [price, setPrice] = useState(
     editMode ? priceData.price.toString() : ""
   );
-  const [location, setLocation] = useState(editMode ? priceData.store : "");
+  const [selectedLocationId, setSelectedLocationId] = useState(
+    editMode ? priceData.locationId : ""
+  );
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadLocations() {
+      try {
+        const locationData = await getLocations();
+        setLocations(locationData);
+      } catch (error) {
+        console.error("Error loading locations:", error);
+        Alert.alert("Error", "Failed to load store locations");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLocations();
+  }, []);
 
   function validatePrice(price) {
     if (isNaN(price)) {
@@ -19,9 +48,9 @@ export default function PriceFormScreen({ navigation, route }) {
     return true;
   }
 
-  function validateLocation(location) {
-    if (!location) {
-      Alert.alert("Error", "Location is required");
+  function validateLocation() {
+    if (!selectedLocationId) {
+      Alert.alert("Error", "Please select a store location");
       return false;
     }
     return true;
@@ -29,18 +58,14 @@ export default function PriceFormScreen({ navigation, route }) {
 
   const handleSubmit = async () => {
     try {
-      if (!validatePrice(price)) {
-        return;
-      }
-      if (!validateLocation(location)) {
-        return;
-      }
+      if (!validatePrice(price)) return;
+      if (!validateLocation()) return;
 
       const priceData = {
         code,
         productName,
         price: parseFloat(price),
-        store: location,
+        locationId: selectedLocationId,
         createdAt: new Date().toISOString(),
       };
 
@@ -61,6 +86,14 @@ export default function PriceFormScreen({ navigation, route }) {
       );
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -89,18 +122,24 @@ export default function PriceFormScreen({ navigation, route }) {
             />
           </View>
         </View>
-
+        
         <View style={styles.inputSection}>
-          <Text style={styles.label}>Location</Text>
-          <View style={styles.inputContainer}>
-            <MaterialIcons name="store" size={20} color="#666" />
-            <TextInput
-              style={styles.input}
-              value={location}
-              onChangeText={setLocation}
-              placeholder="Enter store location"
-              placeholderTextColor="#999"
-            />
+          <Text style={styles.label}>Store Location</Text>
+
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={selectedLocationId}
+              onValueChange={(value) => setSelectedLocationId(value)}
+            >
+              <Picker.Item label="Select a location" value="" />
+              {locations.map((location) => (
+                <Picker.Item
+                  key={location.id}
+                  label={location.name}
+                  value={location.id}
+                />
+              ))}
+            </Picker>
           </View>
         </View>
 
@@ -121,15 +160,15 @@ export default function PriceFormScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     padding: 16,
   },
   formCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -143,7 +182,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: "600",
-    color: '#333',
+    color: "#333",
     marginBottom: 8,
   },
   value: {
@@ -151,32 +190,32 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   input: {
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 8,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   submitButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingVertical: 14,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 8,
   },
   submitButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
