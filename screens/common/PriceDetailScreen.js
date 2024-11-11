@@ -31,6 +31,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     productImage = null,
   } = route.params || {};
 
+  const [isInList, setIsInList] = useState(false); 
   const [priceData, setPriceData] = useState(initialPriceData);
   const [newComment, setNewComment] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
@@ -126,6 +127,20 @@ export default function PriceDetailScreen({ navigation, route }) {
     loadLocationData();
   }, [priceData.locationId]);
 
+  useEffect(() => {
+    async function checkShoppingList() {
+      if (priceData?.id) {
+        const inList = await isInShoppingList(
+          PLACEHOLDER_USER_ID,
+          priceData.id
+        );
+        setIsInList(inList);
+      }
+    }
+
+    checkShoppingList();
+  }, [priceData]);
+
   const getChainLogo = (chainId) => {
     return chainId ? chainLogoMapping[chainId.toLowerCase()] : null;
   };
@@ -149,13 +164,35 @@ export default function PriceDetailScreen({ navigation, route }) {
     }
   };
 
-  const handleAddToList = () => {
-    // TODO: Implement add to list logic
-    Alert.alert(
-      "Success",
-      "Added to shopping list",
-      [{ text: "OK", onPress: () => {} }]
-    );
+  const handleAddToList = async () => {
+    try {
+      if (isInList) {
+        // Remove from list
+        await removeFromShoppingList(
+          PLACEHOLDER_USER_ID,
+          priceData.id,
+          priceData.locationId
+        );
+        setIsInList(false);
+        Alert.alert("Success", "Removed from shopping list", [{ text: "OK" }]);
+      } else {
+        // Add to list
+        await addToShoppingList(
+          PLACEHOLDER_USER_ID,
+          priceData.id,
+          priceData.locationId
+        );
+        setIsInList(true);
+        Alert.alert("Success", "Added to shopping list", [{ text: "OK" }]);
+      }
+    } catch (error) {
+      console.error("Error updating shopping list:", error);
+      Alert.alert(
+        "Error",
+        `Failed to ${isInList ? "remove from" : "add to"} shopping list`,
+        [{ text: "OK" }]
+      );
+    }
   };
 
   const commentsArray = priceData.comments
@@ -227,12 +264,26 @@ export default function PriceDetailScreen({ navigation, route }) {
 
             <PressableButton
               pressedHandler={handleAddToList}
-              componentStyle={styles.addToListButton}
-              pressedStyle={styles.addToListButtonPressed}
+              componentStyle={[
+                styles.addToListButton,
+                isInList && styles.removeFromListButton, // Add this style
+              ]}
+              pressedStyle={[
+                styles.addToListButtonPressed,
+                isInList && styles.removeFromListButtonPressed, // Add this style
+              ]}
             >
               <View style={styles.addToListContent}>
-                <MaterialIcons name="add-shopping-cart" size={24} color="#fff" />
-                <Text style={styles.addToListText}>Add to Shopping List</Text>
+                <MaterialIcons
+                  name={isInList ? "remove-shopping-cart" : "add-shopping-cart"}
+                  size={24}
+                  color="#fff"
+                />
+                <Text style={styles.addToListText}>
+                  {isInList
+                    ? "Remove from Shopping List"
+                    : "Add to Shopping List"}
+                </Text>
               </View>
             </PressableButton>
           </View>
@@ -480,5 +531,11 @@ const styles = StyleSheet.create({
   },
   submitButtonTextDisabled: {
     color: "#fff8",
+  },
+  removeFromListButton: {
+    backgroundColor: '#ff3b30',
+  },
+  removeFromListButtonPressed: {
+    backgroundColor: '#ff3b30cc',
   },
 });
