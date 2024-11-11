@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -87,6 +88,15 @@ export default function PriceDetailScreen({ navigation, route }) {
     if (priceData?.locationId) {
       navigation.navigate("MartDetail", { locationId: priceData.locationId });
     }
+  };
+
+  const handleAddToList = () => {
+    // TODO: Implement add to list logic
+    Alert.alert(
+      "Success",
+      "Added to shopping list",
+      [{ text: "OK", onPress: () => {} }]
+    );
   };
 
   const commentsArray = priceData.comments
@@ -207,6 +217,17 @@ export default function PriceDetailScreen({ navigation, route }) {
               <Text style={styles.priceLabel}>Price</Text>
               <Text style={styles.price}>${priceData.price.toFixed(2)}</Text>
             </View>
+
+            <PressableButton
+              pressedHandler={handleAddToList}
+              componentStyle={styles.addToListButton}
+              pressedStyle={styles.addToListButtonPressed}
+            >
+              <View style={styles.addToListContent}>
+                <MaterialIcons name="add-shopping-cart" size={24} color="#fff" />
+                <Text style={styles.addToListText}>Add to Shopping List</Text>
+              </View>
+            </PressableButton>
           </View>
         </View>
       </View>
@@ -261,6 +282,7 @@ export default function PriceDetailScreen({ navigation, route }) {
   );
 }
 
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -355,6 +377,26 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
     color: "#007AFF",
+  },
+  addToListButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    marginTop: 16,
+    paddingVertical: 12,
+  },
+  addToListButtonPressed: {
+    opacity: 0.8,
+  },
+  addToListContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  addToListText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   commentsSection: {
     backgroundColor: "white",
