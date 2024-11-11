@@ -59,7 +59,7 @@ export default function PriceFormScreen({ navigation, route }) {
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.5,
-            camera: 'back',
+            cameraType: ImagePicker.CameraType.back,
           })
         : await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
