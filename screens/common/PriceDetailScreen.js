@@ -9,12 +9,13 @@ import {
   View,
 } from "react-native";
 import { Menu } from "react-native-paper";
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from "@expo/vector-icons";
 import {
   subscribeToPriceDetails,
   writeComment,
   deleteData,
 } from "../../services/priceService";
+import { getLocationById, chainLogoMapping } from "../../services/martService";
 import PressableButton from "../../components/PressableButton";
 
 const PLACEHOLDER_USER_ID = "user123";
@@ -31,6 +32,8 @@ export default function PriceDetailScreen({ navigation, route }) {
   const [priceData, setPriceData] = useState(initialPriceData);
   const [newComment, setNewComment] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
+  const [martData, setMartData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (initialPriceData && initialPriceData.id) {
@@ -44,6 +47,27 @@ export default function PriceDetailScreen({ navigation, route }) {
       return () => unsubscribe && unsubscribe();
     }
   }, [initialPriceData]);
+
+  useEffect(() => {
+    async function loadLocationData() {
+      try {
+        if (priceData.locationId) {
+          const data = await getLocationById(priceData.locationId);
+          setMartData(data);
+        }
+      } catch (error) {
+        console.error("Error loading location data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLocationData();
+  }, [priceData.locationId]);
+
+  const getChainLogo = (chainId) => {
+    return chainId ? chainLogoMapping[chainId.toLowerCase()] : null;
+  };
 
   const handleSubmitComment = async () => {
     if (newComment.trim() && priceData.id) {
@@ -61,7 +85,7 @@ export default function PriceDetailScreen({ navigation, route }) {
 
   const isCurrentUserPrice = priceData.userId === PLACEHOLDER_USER_ID;
 
-  if (!priceData || !priceData.id) {
+  if (!priceData || !priceData.id || loading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -96,7 +120,7 @@ export default function PriceDetailScreen({ navigation, route }) {
                     priceData: {
                       id: priceData.id,
                       price: priceData.price,
-                      store: priceData.store,
+                      locationId: priceData.locationId,
                       code: priceData.code,
                     },
                   });
@@ -124,37 +148,46 @@ export default function PriceDetailScreen({ navigation, route }) {
 
         <View style={styles.productCard}>
           {productImage && (
-            <Image
-              source={{ uri: productImage }}
-              style={styles.productImage}
-            />
+            <Image source={{ uri: productImage }} style={styles.productImage} />
           )}
+
           <View style={styles.productInfo}>
-            <Text style={styles.productName}>{productName}</Text>
-            <Text style={styles.quantity}>
-              {productQuantity} {productUnit}
+            <View style={styles.userInfo}>
+              <MaterialIcons name="account-circle" size={24} color="#666" />
+              <Text style={styles.userText}>
+                By {priceData.userId} Found At{" "}
+              </Text>
+              {martData && (
+                <View style={styles.chainLogoContainer}>
+                  <Image
+                    source={getChainLogo(martData.chain.chainId)}
+                    style={styles.chainLogoSmall}
+                  />
+                </View>
+              )}
+            </View>
+            <Text style={styles.dateText}>
+              on{" "}
+              {new Date(priceData.createdAt).toLocaleString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
             </Text>
+
+            {martData && (
+              <View style={styles.locationInfo}>
+                <MaterialIcons name="location-on" size={24} color="#E31837" />
+                <Text style={styles.locationText}>
+                  {martData.location?.address.street},{" "}
+                  {martData.location?.address.city}
+                </Text>
+              </View>
+            )}
+
             <View style={styles.priceInfo}>
               <Text style={styles.priceLabel}>Price</Text>
               <Text style={styles.price}>${priceData.price.toFixed(2)}</Text>
-            </View>
-            <View style={styles.storeInfo}>
-              <MaterialIcons name="store" size={16} color="#666" />
-              <PressableButton
-                pressedHandler={() => navigation.navigate("MartDetail", { 
-                  store: priceData.store 
-                })}
-                componentStyle={styles.storeButton}
-              >
-                <Text style={styles.storeText}>{priceData.store}</Text>
-                <MaterialIcons name="chevron-right" size={16} color="#666" />
-              </PressableButton>
-            </View>
-            <View style={styles.dateInfo}>
-              <MaterialIcons name="schedule" size={16} color="#666" />
-              <Text style={styles.dateText}>
-                {new Date(priceData.createdAt).toLocaleDateString()}
-              </Text>
             </View>
           </View>
         </View>
@@ -168,7 +201,7 @@ export default function PriceDetailScreen({ navigation, route }) {
               <View style={styles.commentUser}>
                 <MaterialIcons name="account-circle" size={24} color="#666" />
                 <Text style={styles.commentAuthor}>
-                  {comment.userId || '• Anonymous User'}
+                  {comment.userId || "• Anonymous User"}
                 </Text>
               </View>
               <Text style={styles.commentDate}>
@@ -191,14 +224,16 @@ export default function PriceDetailScreen({ navigation, route }) {
             pressedHandler={handleSubmitComment}
             componentStyle={[
               styles.submitButton,
-              !newComment.trim() && styles.submitButtonDisabled
+              !newComment.trim() && styles.submitButtonDisabled,
             ]}
             disabled={!newComment.trim()}
           >
-            <Text style={[
-              styles.submitButtonText,
-              !newComment.trim() && styles.submitButtonTextDisabled
-            ]}>
+            <Text
+              style={[
+                styles.submitButtonText,
+                !newComment.trim() && styles.submitButtonTextDisabled,
+              ]}
+            >
               Post
             </Text>
           </PressableButton>
@@ -208,25 +243,24 @@ export default function PriceDetailScreen({ navigation, route }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     margin: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   menuContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     right: 8,
     zIndex: 1,
@@ -238,117 +272,118 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   productImage: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 1,
     borderRadius: 8,
+    backgroundColor: "#f5f5f5",
     marginBottom: 16,
-    backgroundColor: '#f5f5f5',
   },
   productInfo: {
     flex: 1,
   },
-  productName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
-  quantity: {
+  userText: {
     fontSize: 16,
-    color: '#666',
+    color: "#333",
+    marginLeft: 8,
+    marginRight: 4,
+  },
+  chainLogoContainer: {
+    width: 80, 
+    height: 40,
+    justifyContent: "center",
+    alignItems: "flex-start",
+  },
+  chainLogoSmall: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
+  },
+  dateText: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 16,
+    marginLeft: 32,
+  },
+  locationInfo: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: 16,
   },
+  locationText: {
+    fontSize: 16,
+    color: "#333",
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 24,
+  },
   priceInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderColor: "#eee",
   },
   priceLabel: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   price: {
     fontSize: 24,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  storeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  storeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginLeft: 8,
-    paddingVertical: 4,
-  },
-  storeText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  dateInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666',
+    fontWeight: "600",
+    color: "#007AFF",
   },
   commentsSection: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     margin: 16,
     padding: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 16,
   },
   commentItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   commentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   commentUser: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   commentAuthor: {
     marginLeft: 8,
     fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
+    fontWeight: "500",
+    color: "#333",
   },
   commentDate: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
   commentContent: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     marginLeft: 32,
     lineHeight: 22,
   },
   commentInput: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     marginTop: 16,
     gap: 8,
   },
@@ -357,27 +392,27 @@ const styles = StyleSheet.create({
     minHeight: 40,
     maxHeight: 100,
     padding: 12,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     borderRadius: 8,
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   submitButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
   },
   submitButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   submitButtonTextDisabled: {
-    color: '#fff8',
+    color: "#fff8",
   },
 });

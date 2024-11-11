@@ -1,5 +1,5 @@
 import { database } from "./firebaseSetup";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, getDoc, doc } from "firebase/firestore";
 import { martChainsData, martLocationsData } from "./martHelper";
 
 export async function initializeMartData() {
@@ -94,3 +94,10 @@ export async function getLocationById(locationId) {
     throw error;
   }
 }
+
+export const chainLogoMapping = {
+  walmart: require("../assets/martLogos/Walmart_logo.png"),
+  costco: require("../assets/martLogos/Costco_logo.png"),
+  superstore: require("../assets/martLogos/Superstore_logo.png"),
+  tnt: require("../assets/martLogos/T&T_Logo.png"),
+};
