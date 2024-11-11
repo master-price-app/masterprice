@@ -57,3 +57,40 @@ export async function getMartLocations(chainId) {
     throw error;
   }
 }
+
+
+// Get all locations with their Firebase IDs
+export async function getLocations() {
+  try {
+    const querySnapshot = await getDocs(collection(database, "martLocations"));
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,  // Firebase-generated ID
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error("Error getting locations:", error);
+    throw error;
+  }
+}
+
+// Get location by Firebase ID
+export async function getLocationById(locationId) {
+  try {
+    const locationDoc = await getDoc(doc(database, "martLocations", locationId));
+    if (!locationDoc.exists()) return null;
+    
+    const locationData = {
+      id: locationDoc.id,
+      ...locationDoc.data()
+    };
+    
+    const chain = martChainsData[locationData.chainId];
+    return {
+      location: locationData,
+      chain
+    };
+  } catch (error) {
+    console.error("Error getting location:", error);
+    throw error;
+  }
+}

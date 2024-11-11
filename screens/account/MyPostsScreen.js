@@ -96,7 +96,6 @@ export default function MyPostsScreen({ navigation }) {
                 id: item.id,
                 code: item.productId,
                 price: item.price,
-                store: item.martName,
                 storeId: item.martId,
                 userId: PLACEHOLDER_USER_ID,
                 createdAt: item.createdAt,
