@@ -7,6 +7,9 @@ import {
   runTransaction,
   serverTimestamp,
   onSnapshot,
+  query,
+  collection,
+  where,  
 } from "firebase/firestore";
 import { getLocationById } from "./martService";
 
@@ -30,7 +33,7 @@ export async function addToShoppingList(userId, priceId, locationId) {
           lastUpdated: serverTimestamp(),
         });
       } else {
-        // Update existing document maintaining nested structure
+        // Update existing document
         transaction.update(listRef, {
           [`items.${locationId}.${priceId}`]: true,
           lastUpdated: serverTimestamp(),
@@ -38,7 +41,6 @@ export async function addToShoppingList(userId, priceId, locationId) {
       }
     });
 
-    console.log("Successfully added item to shopping list");
     return true;
   } catch (error) {
     console.error("Error adding to shopping list:", error);
@@ -58,7 +60,9 @@ export async function isInShoppingList(userId, priceId) {
     const items = data.items || {};
 
     // Check each location's prices for the priceId
-    return Object.values(items).some((locationItems) => locationItems[priceId]);
+    return Object.values(items).some((locationItems) =>
+      Object.keys(locationItems).includes(priceId)
+    );
   } catch (error) {
     console.error("Error checking shopping list:", error);
     return false;
@@ -70,87 +74,76 @@ export function subscribeToShoppingList(userId, onUpdate) {
   const listRef = doc(database, "shoppingLists", userId);
 
   try {
+    // First get the list of priceIds from shopping list
     const unsubscribe = onSnapshot(listRef, async (snapshot) => {
-      if (!snapshot.exists()) {
+      if (!snapshot.exists() || !snapshot.data()?.items) {
         onUpdate([]);
         return;
       }
 
-      const data = snapshot.data();
-      if (!data?.items) {
+      // Get all priceIds from the shopping list
+      const priceIds = [];
+      Object.values(snapshot.data().items).forEach((locationPrices) => {
+        priceIds.push(...Object.keys(locationPrices));
+      });
+
+      if (priceIds.length === 0) {
         onUpdate([]);
         return;
       }
 
-      try {
-        const locationPromises = Object.entries(data.items).map(
-          async ([locationId, priceIds]) => {
-            try {
-              // Get location data using existing function
-              const locationData = await getLocationById(locationId);
+      // Create a query to listen to these prices
+      const pricesQuery = query(
+        collection(database, "prices"),
+        where("__name__", "in", priceIds)
+      );
+
+      // Subscribe to price updates
+      const priceUnsubscribe = onSnapshot(
+        pricesQuery,
+        async (querySnapshot) => {
+          try {
+            // Get all prices with location data
+            const pricesPromises = querySnapshot.docs.map(async (doc) => {
+              const priceData = doc.data();
+              const locationData = await getLocationById(priceData.locationId);
+
               if (!locationData) return null;
 
-              // Get all prices for this location
-              const pricePromises = Object.keys(priceIds).map(
-                async (priceId) => {
-                  const priceRef = doc(database, "prices", priceId);
-                  const priceSnapshot = await getDoc(priceRef);
-
-                  if (!priceSnapshot.exists()) return null;
-
-                  const priceData = priceSnapshot.data();
-                  return {
-                    id: priceId,
-                    locationId,
-                    locationName: locationData.location.name, // Access name from the correct path
-                    ...priceData,
-                    productQuantity: priceData.quantity || "",
-                    isMasterPrice: false,
-                  };
-                }
-              );
-
-              const pricesData = (await Promise.all(pricePromises)).filter(
-                Boolean
-              );
-              if (!pricesData.length) return null;
-
               return {
-                locationId,
+                id: doc.id,
+                locationId: priceData.locationId,
+                locationName: locationData.location.name,
                 chainName: locationData.chain?.chainName || "Other",
-                prices: pricesData,
+                ...priceData,
+                isMasterPrice: false,
               };
-            } catch (error) {
-              console.error(`Error processing location ${locationId}:`, error);
-              return null;
-            }
+            });
+
+            const prices = (await Promise.all(pricesPromises)).filter(Boolean);
+
+            // Group by chain
+            const chainGroups = prices.reduce((groups, price) => {
+              if (!groups[price.chainName]) {
+                groups[price.chainName] = {
+                  title: price.chainName,
+                  data: [],
+                };
+              }
+              groups[price.chainName].data.push(price);
+              return groups;
+            }, {});
+
+            onUpdate(Object.values(chainGroups));
+          } catch (error) {
+            console.error("Error processing prices:", error);
+            onUpdate([]);
           }
-        );
+        }
+      );
 
-        const locationResults = (await Promise.all(locationPromises)).filter(
-          Boolean
-        );
-
-        // Group by chain for SectionList
-        const chainGroups = locationResults.reduce((groups, location) => {
-          if (!location?.prices?.length) return groups;
-
-          if (!groups[location.chainName]) {
-            groups[location.chainName] = {
-              title: location.chainName,
-              data: [],
-            };
-          }
-
-          groups[location.chainName].data.push(...location.prices);
-          return groups;
-        }, {});
-
-        onUpdate(Object.values(chainGroups));
-      } catch (error) {
-        console.error("Error transforming shopping list data:", error);
-        onUpdate([]);
-      }
+      // Clean up price subscription when shopping list changes
+      return () => priceUnsubscribe();
     });
 
     return unsubscribe;
@@ -169,28 +162,45 @@ export async function removeFromShoppingList(userId, priceId, locationId) {
       const listDoc = await transaction.get(listRef);
 
       if (!listDoc.exists()) {
-        throw new Error("Shopping list not found");
+        return; // Just exit if no list exists
       }
 
       const data = listDoc.data();
-      const locationItems = data.items[locationId];
+      const items = data.items || {};
 
-      if (!locationItems || !locationItems[priceId]) {
-        throw new Error("Item not found in shopping list");
+      // If location exists and has this price
+      if (items[locationId]?.[priceId]) {
+        // If this is the last price in the location
+        if (Object.keys(items[locationId]).length === 1) {
+          transaction.update(listRef, {
+            [`items.${locationId}`]: deleteField(),
+            lastUpdated: serverTimestamp(),
+          });
+        } else {
+          transaction.update(listRef, {
+            [`items.${locationId}.${priceId}`]: deleteField(),
+            lastUpdated: serverTimestamp(),
+          });
+        }
       }
-
-      // If this is the last price in the location, remove the location
-      if (Object.keys(locationItems).length === 1) {
-        transaction.update(listRef, {
-          [`items.${locationId}`]: deleteField(),
-          lastUpdated: serverTimestamp(),
-        });
-      } else {
-        // Just remove the price from the location
-        transaction.update(listRef, {
-          [`items.${locationId}.${priceId}`]: deleteField(),
-          lastUpdated: serverTimestamp(),
-        });
+      // If locationId not found but priceId exists somewhere else
+      else {
+        for (const [loc, prices] of Object.entries(items)) {
+          if (prices[priceId]) {
+            if (Object.keys(prices).length === 1) {
+              transaction.update(listRef, {
+                [`items.${loc}`]: deleteField(),
+                lastUpdated: serverTimestamp(),
+              });
+            } else {
+              transaction.update(listRef, {
+                [`items.${loc}.${priceId}`]: deleteField(),
+                lastUpdated: serverTimestamp(),
+              });
+            }
+            break;
+          }
+        }
       }
     });
 
