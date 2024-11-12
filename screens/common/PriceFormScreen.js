@@ -7,6 +7,7 @@ import {
   Text,
   TextInput,
   View,
+  ScrollView,
 } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from "@expo/vector-icons";
@@ -133,113 +134,134 @@ export default function PriceFormScreen({ navigation, route }) {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.formCard}>
-        {/* Upload Product Image Section */}
-        <View style={styles.inputSection}>
-          <Text style={styles.label}>Product Image (Optional)</Text>
-          <View style={styles.imageSection}>
-            {imageUri ? (
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: imageUri }} style={styles.previewImage} />
+    <ScrollView
+      style={styles.scrollViewContainer}
+    >
+      <View style={styles.container}>
+        <View style={styles.formCard}>
+          {/* Upload Product Image Section */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Product Image (Optional)</Text>
+            <View style={styles.imageSection}>
+              {imageUri ? (
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={styles.previewImage}
+                  />
+                  <PressableButton
+                    pressedHandler={() => setImageUri(null)}
+                    componentStyle={styles.removeImageButton}
+                  >
+                    <MaterialIcons name="close" size={20} color="#fff" />
+                  </PressableButton>
+                </View>
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <MaterialIcons
+                    name="add-photo-alternate"
+                    size={40}
+                    color="#666"
+                  />
+                  <Text style={styles.imagePlaceholderText}>
+                    Add Product Photo
+                  </Text>
+                </View>
+              )}
+              <View style={styles.imageButtons}>
                 <PressableButton
-                  pressedHandler={() => setImageUri(null)}
-                  componentStyle={styles.removeImageButton}
+                  pressedHandler={() => handleImageSelection(true)}
+                  componentStyle={styles.imageButton}
                 >
-                  <MaterialIcons name="close" size={20} color="#fff" />
+                  <MaterialIcons name="camera-alt" size={20} color="#007AFF" />
+                  <Text style={styles.imageButtonText}>Take Photo</Text>
+                </PressableButton>
+                <PressableButton
+                  pressedHandler={() => handleImageSelection(false)}
+                  componentStyle={styles.imageButton}
+                >
+                  <MaterialIcons
+                    name="photo-library"
+                    size={20}
+                    color="#007AFF"
+                  />
+                  <Text style={styles.imageButtonText}>Choose Photo</Text>
                 </PressableButton>
               </View>
-            ) : (
-              <View style={styles.imagePlaceholder}>
-                <MaterialIcons name="add-photo-alternate" size={40} color="#666" />
-                <Text style={styles.imagePlaceholderText}>Add Product Photo</Text>
-              </View>
-            )}
-            <View style={styles.imageButtons}>
-              <PressableButton
-                pressedHandler={() => handleImageSelection(true)}
-                componentStyle={styles.imageButton}
-              >
-                <MaterialIcons name="camera-alt" size={20} color="#007AFF" />
-                <Text style={styles.imageButtonText}>Take Photo</Text>
-              </PressableButton>
-              <PressableButton
-                pressedHandler={() => handleImageSelection(false)}
-                componentStyle={styles.imageButton}
-              >
-                <MaterialIcons name="photo-library" size={20} color="#007AFF" />
-                <Text style={styles.imageButtonText}>Choose Photo</Text>
-              </PressableButton>
             </View>
           </View>
-        </View>
 
-        {/* Product Name Section */}
-        <View style={styles.infoSection}>
-          <Text style={styles.label}>Product Name</Text>
-          <Text style={styles.value}>{productName}</Text>
-        </View>
-
-        {/* Barcode Number Section */}
-        <View style={styles.infoSection}>
-          <Text style={styles.label}>Barcode Number</Text>
-          <Text style={styles.value}>{code}</Text>
-        </View>
-
-        {/* Price Section */}
-        <View style={styles.inputSection}>
-          <Text style={styles.label}>Price</Text>
-          <View style={styles.inputContainer}>
-            <MaterialIcons name="attach-money" size={20} color="#666" />
-            <TextInput
-              style={styles.input}
-              value={price}
-              onChangeText={setPrice}
-              placeholder="Enter price"
-              keyboardType="decimal-pad"
-              placeholderTextColor="#999"
-            />
+          {/* Product Name Section */}
+          <View style={styles.infoSection}>
+            <Text style={styles.label}>Product Name</Text>
+            <Text style={styles.value}>{productName}</Text>
           </View>
-        </View>
 
-        {/* Store Location Section */}
-        <View style={styles.inputSection}>
-          <Text style={styles.label}>Store Location</Text>
-
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedLocationId}
-              onValueChange={(value) => setSelectedLocationId(value)}
-            >
-              <Picker.Item label="Select a location" value="" />
-              {locations.map((location) => (
-                <Picker.Item
-                  key={location.id}
-                  label={location.name}
-                  value={location.id}
-                />
-              ))}
-            </Picker>
+          {/* Barcode Number Section */}
+          <View style={styles.infoSection}>
+            <Text style={styles.label}>Barcode Number</Text>
+            <Text style={styles.value}>{code}</Text>
           </View>
-        </View>
 
-        {/* Submit Button */}
-        <PressableButton
-          pressedHandler={handleSubmit}
-          componentStyle={styles.submitButton}
-        >
-          <Text style={styles.submitButtonText}>
-            {editMode ? "Update Price" : "Share Price"}
-          </Text>
-        </PressableButton>
+          {/* Price Section */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Price</Text>
+            <View style={styles.inputContainer}>
+              <MaterialIcons name="attach-money" size={20} color="#666" />
+              <TextInput
+                style={styles.input}
+                value={price}
+                onChangeText={setPrice}
+                placeholder="Enter price"
+                keyboardType="decimal-pad"
+                placeholderTextColor="#999"
+              />
+            </View>
+          </View>
+
+          {/* Store Location Section */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Store Location</Text>
+
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={selectedLocationId}
+                onValueChange={(value) => setSelectedLocationId(value)}
+              >
+                <Picker.Item label="Select a location" value="" />
+                {locations.map((location) => (
+                  <Picker.Item
+                    key={location.id}
+                    label={location.name}
+                    value={location.id}
+                  />
+                ))}
+              </Picker>
+            </View>
+          </View>
+
+          {/* Submit Button */}
+          <PressableButton
+            pressedHandler={handleSubmit}
+            componentStyle={styles.submitButton}
+          >
+            <Text style={styles.submitButtonText}>
+              {editMode ? "Update Price" : "Share Price"}
+            </Text>
+          </PressableButton>
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 // Temporary styles
 const styles = StyleSheet.create({
+  scrollViewContainer: {
+    flex: 1,
+  },
   container: {
+    flexGrow: 1,
     flex: 1,
     backgroundColor: "#f5f5f5",
     padding: 16,
@@ -255,55 +277,55 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   imageContainer: {
-    width: '100%',
-    position: 'relative',
+    width: "100%",
+    position: "relative",
   },
   previewImage: {
-    width: '100%',
+    width: "100%",
     height: 200,
     borderRadius: 8,
     marginBottom: 8,
   },
   removeImageButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
     borderRadius: 15,
     width: 30,
     height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   imagePlaceholder: {
-    width: '100%',
+    width: "100%",
     height: 200,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
   },
   imagePlaceholderText: {
-    color: '#666',
+    color: "#666",
     marginTop: 8,
   },
   imageButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
   },
   imageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     minWidth: 120,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   imageButtonText: {
-    color: '#007AFF',
+    color: "#007AFF",
     marginLeft: 8,
     fontSize: 14,
   },
