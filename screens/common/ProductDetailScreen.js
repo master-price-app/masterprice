@@ -12,6 +12,9 @@ import { subscribeToPricesByProduct } from "../../services/priceService";
 import PressableButton from "../../components/PressableButton";
 import PriceListItem from "../../components/PriceListItem";
 
+// Import dummy data for backup
+const dummyProduct = require("../../assets/dummyData/dummyProduct.json");
+
 export default function ProductDetailScreen({ navigation, route }) {
   const { code } = route.params;
   const [product, setProduct] = useState(null);
@@ -26,14 +29,19 @@ export default function ProductDetailScreen({ navigation, route }) {
           `https://world.openfoodfacts.net/api/v2/product/${code}`
         );
         const data = await response.json();
+
         if (data.product) {
           setProduct(data.product);
         } else {
-          setError("Product not found");
+          // Load from dummy data
+          console.log("Loading backup data");
+          setProduct(dummyProduct.product);
         }
       } catch (err) {
-        setError("Failed to fetch product details");
-        console.error(err);
+        // On API failure, load from dummy data
+        console.error("API Error:", err);
+        console.log("Loading backup data");
+        setProduct(dummyProduct.product);
       }
     };
 
@@ -49,8 +57,6 @@ export default function ProductDetailScreen({ navigation, route }) {
     // Cleanup subscription on unmount
     return () => unsubscribe && unsubscribe();
   }, [code]);
-
-
 
   if (error) {
     return (
@@ -82,15 +88,15 @@ export default function ProductDetailScreen({ navigation, route }) {
     />
   );
 
- const handleAddPrice = () => {
-   navigation.navigate("PriceForm", {
-     code,
-     productName: product.product_name,
-   });
- };
+  const handleAddPrice = () => {
+    navigation.navigate("PriceForm", {
+      code,
+      productName: product.product_name,
+    });
+  };
 
   return (
-<ScrollView style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.productCard}>
         {product.image_url && (
           <Image
