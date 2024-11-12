@@ -1,71 +1,21 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { subscribeToPricesByShoppingList, removeFromShoppingList } from '../../services/priceService';
-import PressableButton from '../../components/PressableButton';
-import ShoppingListItem from '../../components/ShoppingListItem';
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  SectionList,
+  StyleSheet,
+  Text,
+  View,
+  Alert,
+} from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import {
+  removeMultipleFromShoppingList,
+  subscribeToShoppingList,
+} from "../../services/shoppingListService";
+import PressableButton from "../../components/PressableButton";
+import ShoppingListItem from "../../components/ShoppingListItem";
 
 const PLACEHOLDER_USER_ID = "user123"; // Temporary use, waiting for authentication system implementation
-// Temporary data
-const DUMMY_DATA = [
-  {
-    title: "Walmart",
-    data: [
-      {
-        id: "1",
-        store: "Walmart",
-        price: 2.99,
-        productName: "Coca-Cola",
-        productQuantity: "330ml",
-        createdAt: "2024-03-15",
-        isMasterPrice: true,
-      },
-      {
-        id: "2",
-        store: "Walmart",
-        price: 4.99,
-        productName: "Lay's Potato Chips",
-        productQuantity: "235g",
-        createdAt: "2024-03-14",
-      },
-    ],
-  },
-  {
-    title: "Costco",
-    data: [
-      {
-        id: "3",
-        store: "Costco",
-        price: 15.99,
-        productName: "Kirkland Paper Towel",
-        productQuantity: "12 rolls",
-        createdAt: "2024-03-13",
-        isMasterPrice: true,
-      },
-    ],
-  },
-  {
-    title: "Save-On-Foods",
-    data: [
-      {
-        id: "4",
-        store: "Save-On-Foods",
-        price: 5.99,
-        productName: "Bread",
-        productQuantity: "675g",
-        createdAt: "2024-03-12",
-      },
-      {
-        id: "5",
-        store: "Save-On-Foods",
-        price: 3.99,
-        productName: "Milk",
-        productQuantity: "2L",
-        createdAt: "2024-03-12",
-      },
-    ],
-  },
-];
 
 export default function ShoppingListScreen({ navigation }) {
   const [shoppingList, setShoppingList] = useState([]);
@@ -73,21 +23,20 @@ export default function ShoppingListScreen({ navigation }) {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [loading, setLoading] = useState(true);
 
-  // Simulate loading data delay
+  // Subscribe to shopping list
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Simulate network request delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setShoppingList(DUMMY_DATA);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
+    setLoading(true);
+
+    const unsubscribe = subscribeToShoppingList(
+      PLACEHOLDER_USER_ID,
+      (transformedData) => {
+        setShoppingList(transformedData);
         setLoading(false);
       }
-    };
+    );
 
-    fetchData();
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   // Set the header right button
@@ -100,14 +49,14 @@ export default function ShoppingListScreen({ navigation }) {
           pressedStyle={styles.headerButtonPressed}
         >
           <Text style={styles.headerButtonText}>
-            {isManaging ? 'Done' : 'Manage'}
+            {isManaging ? "Done" : "Manage"}
           </Text>
         </PressableButton>
       ),
     });
   }, [isManaging]);
 
-  // Subscribe to prices by shopping list
+  // Subscribe to prices by shopping list - keeping commented code for reference
   /*
   useEffect(() => {
     const unsubscribe = subscribeToPricesByShoppingList(
@@ -141,7 +90,7 @@ export default function ShoppingListScreen({ navigation }) {
   const handleItemPress = (price) => {
     if (isManaging) {
       // Multiple selection mode
-      setSelectedItems(prev => {
+      setSelectedItems((prev) => {
         const newSelected = new Set(prev);
         if (newSelected.has(price.id)) {
           newSelected.delete(price.id);
@@ -160,33 +109,27 @@ export default function ShoppingListScreen({ navigation }) {
   };
 
   const handleDelete = async () => {
-    const selectedIds = Array.from(selectedItems);
-    const newShoppingList = shoppingList.map(section => ({
-      ...section,
-      data: section.data.filter(item => !selectedIds.includes(item.id))
-    })).filter(section => section.data.length > 0);
-
-    setShoppingList(newShoppingList);
-    setSelectedItems(new Set());
-    setIsManaging(false);
-
-    /*
     try {
-      // Batch delete selected items
-      const deletePromises = Array.from(selectedItems).map(priceId =>
-        // TODO: removeFromShoppingList(priceId, PLACEHOLDER_USER_ID)
-        console.log("delete priceId: ", priceId)
-      );
-      await Promise.all(deletePromises);
+      const itemsToDelete = Array.from(selectedItems).map((id) => {
+        const section = shoppingList.find((s) =>
+          s.data.some((item) => item.id === id)
+        );
+        const item = section?.data.find((item) => item.id === id);
+
+        return {
+          priceId: id,
+          locationId: item.locationId,
+        };
+      });
+
+      await removeMultipleFromShoppingList(PLACEHOLDER_USER_ID, itemsToDelete);
       
-      // Reset the selected state
       setSelectedItems(new Set());
       setIsManaging(false);
     } catch (error) {
-      console.error('Failed to delete items:', error);
-      // TODO: Show error message
+      console.error("Failed to delete items:", error);
+      Alert.alert("Error", "Failed to delete selected items", [{ text: "OK" }]);
     }
-    */
   };
 
   if (loading) {
@@ -227,7 +170,9 @@ export default function ShoppingListScreen({ navigation }) {
             showCheckbox={isManaging}
           />
         )}
-        SectionSeparatorComponent={() => <View style={styles.sectionSeparator} />}
+        SectionSeparatorComponent={() => (
+          <View style={styles.sectionSeparator} />
+        )}
         stickySectionHeadersEnabled={false}
         renderSectionFooter={() => <View style={styles.sectionFooter} />}
       />
@@ -251,23 +196,23 @@ export default function ShoppingListScreen({ navigation }) {
   );
 }
 
-// Temporary styles
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
   },
   headerButton: {
     paddingHorizontal: 12,
@@ -278,34 +223,34 @@ const styles = StyleSheet.create({
   },
   headerButtonText: {
     fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '500',
+    color: "#007AFF",
+    fontWeight: "500",
   },
   listContent: {
     padding: 16,
   },
   section: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     marginBottom: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -314,33 +259,33 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   sectionSeparator: {
     height: 16,
   },
   sectionFooter: {
     height: 8,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
   },
   itemCount: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   deleteButtonContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 24,
     left: 16,
     right: 16,
   },
   deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ff3b30',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ff3b30",
     padding: 16,
     borderRadius: 12,
     gap: 8,
@@ -349,8 +294,8 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   deleteButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

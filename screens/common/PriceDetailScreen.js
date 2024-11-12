@@ -17,6 +17,11 @@ import {
   writeComment,
   deleteData,
 } from "../../services/priceService";
+import {
+  isInShoppingList,
+  addToShoppingList,
+  removeFromShoppingList,
+} from "../../services/shoppingListService";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import PressableButton from "../../components/PressableButton";
 
@@ -32,114 +37,151 @@ export default function PriceDetailScreen({ navigation, route }) {
   } = route.params || {};
 
   const [priceData, setPriceData] = useState(initialPriceData);
+  const [isInList, setIsInList] = useState(false);
+  const [martData, setMartData] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
-  const [martData, setMartData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Subscribe to price updates and setup menu
   useEffect(() => {
-    // Check if the price is posted by the current user
-    const isCurrentUserPost = priceData.userId === PLACEHOLDER_USER_ID;
+    if (!initialPriceData?.id) return;
 
+    // Setup menu based on ownership
+    const isCurrentUserPost = initialPriceData.userId === PLACEHOLDER_USER_ID;
     navigation.setOptions({
-      // Set the title
       title: productName,
-      // Set the right edit button
-      headerRight: () => isCurrentUserPost ? (
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <PressableButton
-              pressedHandler={() => setMenuVisible(true)}
-              componentStyle={styles.headerButton}
-              pressedStyle={styles.headerButtonPressed}
-            >
-              <MaterialIcons name="edit" size={24} color="#007AFF" />
-            </PressableButton>
-          }
-        >
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-              navigation.navigate("PriceForm", {
-                code: priceData.code,
-                productName,
-                editMode: true,
-                priceData: {
-                  id: priceData.id,
-                  price: priceData.price,
-                  locationId: priceData.locationId,
-                  code: priceData.code,
-                },
-              });
-            }}
-            title="Edit"
-            leadingIcon="pencil"
-          />
-          <Menu.Item
-            onPress={async () => {
-              setMenuVisible(false);
-              try {
-                await deleteData("prices", priceData.id);
-                navigation.goBack();
-              } catch (error) {
-                console.error("Error deleting price:", error);
-              }
-            }}
-            title="Delete"
-            leadingIcon="delete"
-            titleStyle={{ color: "#ff3b30" }}
-          />
-        </Menu>
-      ) : null
+      headerRight: isCurrentUserPost ? renderMenu : null,
     });
-  }, [menuVisible]);
 
+    // Subscribe to price updates
+    const unsubscribe = subscribeToPriceDetails(
+      initialPriceData.id,
+      (updatedPriceData) => {
+        setPriceData(updatedPriceData);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [initialPriceData, menuVisible]);
+
+  // Load initial data and check shopping list status
   useEffect(() => {
-    if (initialPriceData && initialPriceData.id) {
-      const unsubscribe = subscribeToPriceDetails(
-        initialPriceData.id,
-        (updatedPriceData) => {
-          setPriceData(updatedPriceData);
-        }
-      );
+    async function loadData() {
+      if (!priceData?.locationId || !priceData?.id) return;
 
-      return () => unsubscribe && unsubscribe();
-    }
-  }, [initialPriceData]);
-
-  useEffect(() => {
-    async function loadLocationData() {
       try {
-        if (priceData.locationId) {
-          const data = await getLocationById(priceData.locationId);
-          setMartData(data);
-        }
+        const [locationData, inList] = await Promise.all([
+          getLocationById(priceData.locationId),
+          isInShoppingList(PLACEHOLDER_USER_ID, priceData.id),
+        ]);
+
+        setMartData(locationData);
+        setIsInList(inList);
       } catch (error) {
-        console.error("Error loading location data:", error);
+        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    loadLocationData();
-  }, [priceData.locationId]);
+    loadData();
+  }, [priceData]);
 
-  const getChainLogo = (chainId) => {
-    return chainId ? chainLogoMapping[chainId.toLowerCase()] : null;
+  // Update shopping list status on screen focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      if (priceData?.id) {
+        isInShoppingList(PLACEHOLDER_USER_ID, priceData.id)
+          .then(setIsInList)
+          .catch(console.error);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, priceData]);
+
+  const renderMenu = () => (
+    <Menu
+      visible={menuVisible}
+      onDismiss={() => setMenuVisible(false)}
+      anchor={
+        <PressableButton
+          pressedHandler={() => setMenuVisible(true)}
+          componentStyle={styles.headerButton}
+          pressedStyle={styles.headerButtonPressed}
+        >
+          <MaterialIcons name="edit" size={24} color="#007AFF" />
+        </PressableButton>
+      }
+    >
+      <Menu.Item onPress={handleEdit} title="Edit" leadingIcon="pencil" />
+      <Menu.Item
+        onPress={handleDelete}
+        title="Delete"
+        leadingIcon="delete"
+        titleStyle={{ color: "#ff3b30" }}
+      />
+    </Menu>
+  );
+
+  const handleEdit = () => {
+    setMenuVisible(false);
+    navigation.navigate("PriceForm", {
+      code: priceData.code,
+      productName,
+      editMode: true,
+      priceData: {
+        id: priceData.id,
+        price: priceData.price,
+        locationId: priceData.locationId,
+        code: priceData.code,
+      },
+    });
   };
 
-  const handleSubmitComment = async () => {
-    if (newComment.trim() && priceData.id) {
-      await writeComment(newComment, priceData.id);
-      setNewComment("");
+  const handleDelete = async () => {
+    setMenuVisible(false);
+    try {
+      await deleteData("prices", priceData.id);
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error deleting price:", error);
+      Alert.alert("Error", "Failed to delete price");
     }
   };
 
-  const handleLogoPress = () => {
-    if (priceData?.locationId) {
-      navigation.navigate("MartDetail", { locationId: priceData.locationId });
+  const handleShoppingListToggle = async () => {
+    try {
+      if (isInList) {
+        await removeFromShoppingList(
+          PLACEHOLDER_USER_ID,
+          priceData.id,
+          priceData.locationId
+        );
+      } else {
+        await addToShoppingList(
+          PLACEHOLDER_USER_ID,
+          priceData.id,
+          priceData.locationId
+        );
+      }
+      setIsInList(!isInList);
+    } catch (error) {
+      console.error("Error updating shopping list:", error);
+      Alert.alert("Error", "Failed to update shopping list");
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || !priceData?.id) return;
+
+    try {
+      await writeComment(newComment, priceData.id);
+      setNewComment("");
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      Alert.alert("Error", "Failed to post comment");
     }
   };
 
@@ -149,22 +191,6 @@ export default function PriceDetailScreen({ navigation, route }) {
     }
   };
 
-  const handleAddToList = () => {
-    // TODO: Implement add to list logic
-    Alert.alert(
-      "Success",
-      "Added to shopping list",
-      [{ text: "OK", onPress: () => {} }]
-    );
-  };
-
-  const commentsArray = priceData.comments
-    ? Object.entries(priceData.comments).map(([id, comment]) => ({
-        id,
-        ...comment,
-      }))
-    : [];
-
   if (!priceData || !priceData.id || loading) {
     return (
       <View style={styles.centerContainer}>
@@ -172,6 +198,13 @@ export default function PriceDetailScreen({ navigation, route }) {
       </View>
     );
   }
+
+  const commentsArray = priceData.comments
+    ? Object.entries(priceData.comments).map(([id, comment]) => ({
+        id,
+        ...comment,
+      }))
+    : [];
 
   return (
     <ScrollView style={styles.container}>
@@ -188,16 +221,15 @@ export default function PriceDetailScreen({ navigation, route }) {
                 By {priceData.userId} Found At{" "}
               </Text>
               {martData && (
-                <TouchableOpacity onPress={handleLogoPress}>
-                  <View style={styles.chainLogoContainer}>
-                    <Image
-                      source={getChainLogo(martData.chain.chainId)}
-                      style={styles.chainLogoSmall}
-                    />
-                  </View>
-                </TouchableOpacity>
+                <Image
+                  source={
+                    chainLogoMapping[martData.chain.chainId.toLowerCase()]
+                  }
+                  style={styles.chainLogoSmall}
+                />
               )}
             </View>
+
             <Text style={styles.dateText}>
               on{" "}
               {new Date(priceData.createdAt).toLocaleString(undefined, {
@@ -226,14 +258,20 @@ export default function PriceDetailScreen({ navigation, route }) {
             </View>
 
             <PressableButton
-              pressedHandler={handleAddToList}
-              componentStyle={styles.addToListButton}
-              pressedStyle={styles.addToListButtonPressed}
+              pressedHandler={handleShoppingListToggle}
+              componentStyle={[
+                styles.shoppingListButton,
+                isInList && styles.removeButton,
+              ]}
             >
-              <View style={styles.addToListContent}>
-                <MaterialIcons name="add-shopping-cart" size={24} color="#fff" />
-                <Text style={styles.addToListText}>Add to Shopping List</Text>
-              </View>
+              <MaterialIcons
+                name={isInList ? "remove-shopping-cart" : "add-shopping-cart"}
+                size={24}
+                color="#fff"
+              />
+              <Text style={styles.shoppingListButtonText}>
+                {isInList ? "Remove from List" : "Add to List"}
+              </Text>
             </PressableButton>
           </View>
         </View>
@@ -241,6 +279,7 @@ export default function PriceDetailScreen({ navigation, route }) {
 
       <View style={styles.commentsSection}>
         <Text style={styles.sectionTitle}>Comments</Text>
+
         {commentsArray.map((comment) => (
           <View key={comment.id} style={styles.commentItem}>
             <View style={styles.commentHeader}>
@@ -291,6 +330,7 @@ export default function PriceDetailScreen({ navigation, route }) {
 
 // Temporary styles
 const styles = StyleSheet.create({
+  // Layout
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -306,14 +346,18 @@ const styles = StyleSheet.create({
     margin: 16,
     overflow: "hidden",
   },
+  
+  // Header Menu
   headerButton: {
     padding: 8,
     marginRight: 8,
     borderRadius: 8,
   },
   headerButtonPressed: {
-    backgroundColor: '#E5E5E5',
+    backgroundColor: "#E5E5E5",
   },
+
+  // Product Section
   productCard: {
     padding: 16,
   },
@@ -327,6 +371,8 @@ const styles = StyleSheet.create({
   productInfo: {
     flex: 1,
   },
+
+  // User Info
   userInfo: {
     flexDirection: "row",
     alignItems: "center",
@@ -338,15 +384,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     marginRight: 4,
   },
-  chainLogoContainer: {
-    width: 80,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "flex-start",
-  },
   chainLogoSmall: {
-    width: "100%",
-    height: "100%",
+    width: 80, 
+    height: 40,
     resizeMode: "contain",
   },
   dateText: {
@@ -355,6 +395,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginLeft: 32,
   },
+
+  // Location
   locationInfo: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -367,6 +409,8 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 24,
   },
+
+  // Price
   priceInfo: {
     flexDirection: "row",
     alignItems: "center",
@@ -384,26 +428,28 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#007AFF",
   },
-  addToListButton: {
-    backgroundColor: '#007AFF',
+
+  // Shopping List Button
+  shoppingListButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#007AFF",
+    padding: 12,
     borderRadius: 8,
     marginTop: 16,
-    paddingVertical: 12,
-  },
-  addToListButtonPressed: {
-    opacity: 0.8,
-  },
-  addToListContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
   },
-  addToListText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  removeButton: {
+    backgroundColor: "#FF3B30",
   },
+  shoppingListButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  // Comments Section
   commentsSection: {
     backgroundColor: "white",
     borderRadius: 12,
@@ -447,6 +493,8 @@ const styles = StyleSheet.create({
     marginLeft: 32,
     lineHeight: 22,
   },
+
+  // Comment Input
   commentInput: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -481,4 +529,5 @@ const styles = StyleSheet.create({
   submitButtonTextDisabled: {
     color: "#fff8",
   },
+
 });
