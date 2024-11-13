@@ -35,25 +35,46 @@ Group 22:
 
 - **Barcode Scanner**: Instantly check prices by scanning product barcodes
 
-  
-- **Price Comparison**: Search and compare prices of products across multiple marts in your area
+<br><br>
+<br><br>
+
+- **Price Comparison**: Search, share and compare prices of products across multiple marts in your area
+<img src="https://github.com/user-attachments/assets/59848bd2-2bbb-4917-9a9c-56404b43a75c" width="300" alt="Search Screen"/>
+<img src="https://github.com/user-attachments/assets/7f536aac-d1f3-4750-aeb2-ecf5fa162d45" width="300" alt="Search Result Screen"/>
+<img src="https://github.com/user-attachments/assets/1b9d81ae-3116-41a1-91aa-a684bfcc2c2d" width="300" alt="Product Detail Screen"/>
+<br><br>
+<br><br>
+
 
   
-- **Community-Driven Updates**: Share and validate price information
+- **Community-Driven Updates**: Share and comment on price information
+<img src="https://github.com/user-attachments/assets/06a0da7a-be4d-45e7-abdf-c8e9b3ccaa24" width="300" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/4e342019-8489-48f1-8233-e37d92a37772" width="300" alt="Price Form Screen"/>
+<img src="https://github.com/user-attachments/assets/02cf2247-8d3b-4393-a152-1a78c37c5085" width="300" alt="Price Detail Screen"/>
+<br><br>
+<br><br>
 
   
 - **Mart Browse**: View and schedule notifications for the chosen marts’ deal releases based on deal cycles
 
-  
+<br><br>
+<br><br>
+
 - **Interactive Map**: View nearby marts with current deals
 
-  
-- **Shopping List Manager**: Build and manage mart-specific grocery lists
+<br><br>  
 
-  
+- **Shopping List Manager**: Build and manage mart-specific grocery lists by adding/removing items on price detail screen
+<img src="https://github.com/user-attachments/assets/547c48d0-3b25-4768-87c1-69678af6d66f" width="300" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/c22d4c71-24f0-4acf-bd6e-ffb67e87780f" width="300" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/1448417b-fdeb-4647-ab0f-d19e5293f9a6" width="300" alt="Shopping List Screen"/>
+<br><br>
+<br><br>
+
 - **My Post Manager**: Manage user's posts of price sharing efficiently
-
-  
+<img src="https://github.com/user-attachments/assets/4a2e0871-1dd2-4b7a-bf83-2fab0bc1c44c" width="300" alt="My Post Screen"/>
+<img src="https://github.com/user-attachments/assets/285e83b8-30c6-49d3-afa2-e8f5d43ac604" width="300" alt="Price Detail Screen"/>
+<br><br>
 
 ## Data Model
 
