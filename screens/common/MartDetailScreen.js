@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 
+// TODO: will be updated with notification, location and map integration
 export default function MartDetailScreen({ navigation, route }) {
   const { locationId } = route.params;
   const [locationData, setLocationData] = useState(null);

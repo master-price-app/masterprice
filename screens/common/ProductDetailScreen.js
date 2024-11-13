@@ -72,7 +72,8 @@ export default function ProductDetailScreen({ navigation, route }) {
       </View>
     );
   }
-
+  
+  // Render price list item
   const renderPriceItem = ({ item }) => (
     <PriceListItem
       price={item}
@@ -88,6 +89,7 @@ export default function ProductDetailScreen({ navigation, route }) {
     />
   );
 
+  // Handle add price button press
   const handleAddPrice = () => {
     navigation.navigate("PriceForm", {
       code,
@@ -98,7 +100,7 @@ export default function ProductDetailScreen({ navigation, route }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.productCard}>
-        {/* Product Image */}
+        {/* Product Image, TODO: will be updated with location and map integration */}
         {product.image_url && (
           <Image
             source={{ uri: product.image_url }}

@@ -10,7 +10,7 @@ import {
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function AccountScreen({ navigation }) {
-  // TODO: Get user information from API
+  // TODO: Get user information from Firebase Auth and Firestore
   const user = {
     avatar: 'https://via.placeholder.com/150',
     nickname: 'Fiona',

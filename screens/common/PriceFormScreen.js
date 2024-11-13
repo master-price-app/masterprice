@@ -28,6 +28,7 @@ export default function PriceFormScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [imageUri, setImageUri] = useState(null);
 
+  // TODO: will be replaced with location and map integration
   useEffect(() => {
     async function loadLocations() {
       try {
@@ -44,6 +45,7 @@ export default function PriceFormScreen({ navigation, route }) {
     loadLocations();
   }, []);
 
+  // Image selection handler
   const handleImageSelection = async (useCamera) => {
     try {
       const permissionType = useCamera 
@@ -127,7 +129,7 @@ export default function PriceFormScreen({ navigation, route }) {
       );
     }
   };
-
+  
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -137,9 +139,7 @@ export default function PriceFormScreen({ navigation, route }) {
   }
 
   return (
-    <ScrollView
-      style={styles.scrollViewContainer}
-    >
+    <ScrollView style={styles.scrollViewContainer}>
       <View style={styles.container}>
         <View style={styles.formCard}>
           {/* Upload Product Image Section */}
@@ -228,7 +228,7 @@ export default function PriceFormScreen({ navigation, route }) {
             </View>
           </View>
 
-          {/* Store Location Section */}
+          {/* Store Location Section,   // TODO: will be replaced with location and map integration */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Store Location</Text>
 

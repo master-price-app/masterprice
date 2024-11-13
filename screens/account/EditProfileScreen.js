@@ -12,6 +12,7 @@ import * as ImagePicker from 'expo-image-picker';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import PressableButton from '../../components/PressableButton';
 
+// TODO: will be updated when firebase authentication system is implemented
 export default function EditProfileScreen({ navigation }) {
   const [profile, setProfile] = useState({
     avatar: 'https://via.placeholder.com/150',

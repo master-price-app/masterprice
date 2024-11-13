@@ -102,7 +102,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     return unsubscribe;
   }, [navigation, priceData]);
 
-  // Render menu
+  // Render the price detail management menu if posted the current user
   const renderMenu = () => (
     <Menu
       visible={menuVisible}

@@ -9,7 +9,7 @@ export default function AccountSecurityScreen({ navigation }) {
   });
 
   const handleChangePassword = async () => {
-    // TODO: Change password
+    // TODO: will be updated when firebase authentication system is implemented
 
     // Basic validation
     if (!passwords.current || !passwords.new || !passwords.confirm) {
