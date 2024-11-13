@@ -10,11 +10,25 @@ list.
 
 ## Team Members and Contributions
 Group 22:
-- Jiani Guo
 
+**Jiani Guo**
+- Project structure design
+- Collection design
+- Navigation and stack setup
+- Component creation
+- UI and styling
+- Account screens development: Account, AccountSecurity, EditProfile, TermsAndConditions
+- List screens development: ShoppingList
+- Search screens development: BarcodeScanner, Search
 
-- Annan Fu
-
+**Annan Fu**
+- firebase setup and configuration
+- Collection design and CRUD operation services
+- third-party web API integration
+- Common screens development: MartDetail, PriceDetail, PriceForm, ProductDetail
+  Search screens development: SearchResult
+- Account screens development: MyPosts
+- Assets: martLogos and dummyProduct data storage
 
 
 ## Features
