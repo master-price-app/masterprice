@@ -78,6 +78,7 @@ export default function PriceListItem({ price, onPress }) {
   );
 }
 
+// Temporary styles
 const styles = StyleSheet.create({
   priceItem: {
     padding: 12,

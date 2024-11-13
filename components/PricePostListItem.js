@@ -32,6 +32,7 @@ export default function PricePostListItem({ post, onPress }) {
   };
 
   return (
+    // TODO: Replace with PressableButton
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.cardContent}>
         {/* Left: Product Image */}
@@ -79,6 +80,7 @@ export default function PricePostListItem({ post, onPress }) {
               )}
             </View>
 
+            {/* Date */}
             <View style={styles.detailRow}>
               <MaterialIcons name="schedule" size={16} color="#666" />
               <Text style={styles.detailText}>

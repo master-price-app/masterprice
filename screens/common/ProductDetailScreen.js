@@ -98,12 +98,14 @@ export default function ProductDetailScreen({ navigation, route }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.productCard}>
+        {/* Product Image */}
         {product.image_url && (
           <Image
             source={{ uri: product.image_url }}
             style={styles.productImage}
           />
         )}
+        {/* Product Info */}
         <View style={styles.productInfo}>
           <Text style={styles.productName}>{product.product_name}</Text>
           {product.brands && (
@@ -117,6 +119,7 @@ export default function ProductDetailScreen({ navigation, route }) {
         </View>
       </View>
 
+      {/* Price Section */}
       <View style={styles.priceSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Price History</Text>
@@ -128,6 +131,7 @@ export default function ProductDetailScreen({ navigation, route }) {
           </PressableButton>
         </View>
 
+        {/* Price List */}
         <FlatList
           data={prices}
           renderItem={renderPriceItem}

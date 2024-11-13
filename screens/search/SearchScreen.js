@@ -6,27 +6,32 @@ import PressableButton from "../../components/PressableButton";
 export default function SearchScreen({ navigation }) {
   const [keyword, setKeyword] = useState("");
 
+  // Navigate to barcode scanner
   const handleScanBarcode = () => {
     navigation.navigate('BarcodeScanner');
   };
 
+  // Navigate to search results
   const handleSearch = () => {
     if (keyword.trim()) {
       navigation.navigate("SearchResult", { keyword: keyword.trim() });
     }
   };
 
+  // Clear search keyword
   const handleClearSearch = () => {
     setKeyword("");
   };
 
   return (
     <View style={styles.container}>
+      {/* Header Section */}
       <View style={styles.header}>
         <Text style={styles.title}>Master Price</Text>
         <Text style={styles.subtitle}>Find the Best Deals</Text>
       </View>
 
+      {/* Search Section */}
       <View style={styles.searchSection}>
         <View style={styles.searchContainer}>
           <MaterialIcons name="search" size={20} color="#666" />
@@ -39,6 +44,7 @@ export default function SearchScreen({ navigation }) {
             onSubmitEditing={handleSearch}
             style={styles.searchInput}
           />
+          {/* Clear search keyword button */}
           {keyword.length > 0 && (
             <PressableButton
               pressedHandler={handleClearSearch}
@@ -52,6 +58,7 @@ export default function SearchScreen({ navigation }) {
 
         <Text style={styles.orText}>or</Text>
 
+        {/* Scan Barcode Button */}
         <PressableButton
           pressedHandler={handleScanBarcode}
           componentStyle={styles.scanButton}
@@ -64,6 +71,7 @@ export default function SearchScreen({ navigation }) {
         </PressableButton>
       </View>
 
+      {/* Search Tips Section */}
       <View style={styles.tipsSection}>
         <Text style={styles.tipsTitle}>Search Tips</Text>
         <View style={styles.tipItem}>

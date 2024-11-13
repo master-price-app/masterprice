@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   SectionList,
   StyleSheet,
   Text,
   View,
-  Alert,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
@@ -15,7 +15,8 @@ import {
 import PressableButton from "../../components/PressableButton";
 import ShoppingListItem from "../../components/ShoppingListItem";
 
-const PLACEHOLDER_USER_ID = "user123"; // Temporary use, waiting for authentication system implementation
+// Temporary use, waiting for authentication system implementation
+const PLACEHOLDER_USER_ID = "user123";
 
 export default function ShoppingListScreen({ navigation }) {
   const [shoppingList, setShoppingList] = useState([]);
@@ -87,6 +88,7 @@ export default function ShoppingListScreen({ navigation }) {
   }, []);
   */
 
+  // Handle item press
   const handleItemPress = (price) => {
     if (isManaging) {
       // Multiple selection mode
@@ -108,6 +110,7 @@ export default function ShoppingListScreen({ navigation }) {
     }
   };
 
+  // Handle delete
   const handleDelete = async () => {
     try {
       const itemsToDelete = Array.from(selectedItems).map((id) => {
@@ -132,6 +135,7 @@ export default function ShoppingListScreen({ navigation }) {
     }
   };
 
+  // Loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -140,6 +144,7 @@ export default function ShoppingListScreen({ navigation }) {
     );
   }
 
+  // Empty state
   if (shoppingList.length === 0) {
     return (
       <View style={styles.centerContainer}>
@@ -154,14 +159,6 @@ export default function ShoppingListScreen({ navigation }) {
       <SectionList
         sections={shoppingList}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        renderSectionHeader={({ section: { title, data } }) => (
-          <View style={styles.sectionHeader}>
-            <MaterialIcons name="store" size={20} color="#666" />
-            <Text style={styles.sectionTitle}>{title}</Text>
-            <Text style={styles.itemCount}>{data.length} items</Text>
-          </View>
-        )}
         renderItem={({ item, section }) => (
           <ShoppingListItem
             price={item}
@@ -170,10 +167,18 @@ export default function ShoppingListScreen({ navigation }) {
             showCheckbox={isManaging}
           />
         )}
-        SectionSeparatorComponent={() => (
-          <View style={styles.sectionSeparator} />
-        )}
         stickySectionHeadersEnabled={false}
+        // List content style
+        contentContainerStyle={styles.listContent}
+        // Render section header
+        renderSectionHeader={({ section: { title, data } }) => (
+          <View style={styles.sectionHeader}>
+            <MaterialIcons name="store" size={20} color="#666" />
+            <Text style={styles.sectionTitle}>{title}</Text>
+            <Text style={styles.itemCount}>{data.length} items</Text>
+          </View>
+        )}
+        // Render section footer
         renderSectionFooter={() => <View style={styles.sectionFooter} />}
       />
 
@@ -196,7 +201,7 @@ export default function ShoppingListScreen({ navigation }) {
   );
 }
 
-
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -262,14 +267,19 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
   },
-  sectionSeparator: {
-    height: 16,
-  },
   sectionFooter: {
-    height: 8,
+    height: 16,
+    marginBottom: 16,
     backgroundColor: "white",
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   itemCount: {
     fontSize: 14,
