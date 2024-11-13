@@ -11,6 +11,15 @@ list.
 ## Team Members and Contributions
 Group 22:
 
+**Annan Fu**
+- firebase setup and configuration
+- Collection design and CRUD operation services
+- third-party web API integration
+- Common screens development: MartDetail, PriceDetail, PriceForm, ProductDetail
+- Search screens development: SearchResult
+- Account screens development: MyPosts
+- Assets: martLogos and dummyProduct data storage
+
 **Jiani Guo**
 - Project structure design
 - Collection design
@@ -20,15 +29,6 @@ Group 22:
 - Account screens development: Account, AccountSecurity, EditProfile, TermsAndConditions
 - List screens development: ShoppingList
 - Search screens development: BarcodeScanner, Search
-
-**Annan Fu**
-- firebase setup and configuration
-- Collection design and CRUD operation services
-- third-party web API integration
-- Common screens development: MartDetail, PriceDetail, PriceForm, ProductDetail
-  Search screens development: SearchResult
-- Account screens development: MyPosts
-- Assets: martLogos and dummyProduct data storage
 
 
 ## Features
@@ -61,26 +61,26 @@ The application uses Firebase Firestore with 5 main collections:
 
 ### 1. users
 ```javascript
-documentId: {   // Firebase Auth UID as document ID
+documentId: {             // Firebase Auth UID as document ID
   email: string, 
   nickname: string,
   createdAt: timestamp, 
   updatedAt: timestamp,   
-  notificationOn: boolean  // Mart weekly deal release notification  
+  notificationOn: boolean // Mart weekly deal release notification  
   }
 ```
 
 ### 2. prices
 ```javascript
-documentId: {   // Auto-generated Firebase ID              
-  code: string,            // Product barcode
-  productName: string,     // Product name
-  price: number,           // Price value
-  locationId: string,        // mart identifier
-  userId: string,         // User who posted the price
-  createdAt: timestamp,   // Creation date
-  updatedAt: timestamp,   // Last update date
-  comments: {             // Nested comments
+documentId: {               // Auto-generated Firebase ID              
+  code: string,             // Product barcode
+  productName: string,      // Product name
+  price: number,            // Price value
+  locationId: string,       // mart identifier
+  userId: string,           // User who posted the price
+  createdAt: timestamp,     // Creation date
+  updatedAt: timestamp,     // Last update date
+  comments: {               // Nested comments
     [commentId]: {
       userId: string,
       content: string,
@@ -92,21 +92,21 @@ documentId: {   // Auto-generated Firebase ID
 
 ### 3. martChains
 ```javascript
-documentId: { // Auto-generated Firebase ID
-  chainId: string,        // Unique chain identifier
-  chainName: string,      // Chain name
-  dealCycle: {           // Weekly deal cycle
-    startDay: number,    // Start day (1-7)
-    endDay: number      // End day (1-7)
+documentId: {         // Auto-generated Firebase ID
+  chainId: string,    // Unique chain identifier
+  chainName: string,  // Chain name
+  dealCycle: {        // Weekly deal cycle
+    startDay: number, // Start day (1-7)
+    endDay: number    // End day (1-7)
   }
 }
 ```
 
 ### 4. martLocations
 ```javascript
-documentId: {   // Auto-generated Firebase ID   
-  chainId: string,        // Reference to martChains
-  name: string,           // Location name
+documentId: {           // Auto-generated Firebase ID   
+  chainId: string,      // Reference to martChains
+  name: string,         // Location name
   coordinates: {
     latitude: number,
     longitude: number
@@ -115,7 +115,7 @@ documentId: {   // Auto-generated Firebase ID
     street: string,
     city: string,
     province: string,
-    country: string
+    country: string,
     postalCode: string,
   },
   isActive: boolean
@@ -124,15 +124,15 @@ documentId: {   // Auto-generated Firebase ID
 
 ### 5. shoppingLists
 ```javascript
-userId: {     // Document ID is the userId
-  userId: string,           // Reference to users collection
-  items: {                  // Map of items in the shopping list
-    [locationId: string]: {    // The key is the martLocation document ID from martLocations collections
-      [priceId: string]: boolean   // The key is the price document ID, value is always true
+userId: {                 // Document ID is the userId
+  userId: string,         // Reference to users collection
+  items: {                // Map of items in the shopping list
+    [locationId: string]: {       // The key is the martLocation document ID from martLocations collections
+      [priceId: string]: boolean  // The key is the price document ID, value is always true
     }
   },
-  lastUpdated: timestamp,   // Last time the shopping list was modified
-  userId: string           // user ID for queries
+  lastUpdated: timestamp, // Last time the shopping list was modified
+  userId: string          // user ID for queries
 }
 ```
 
@@ -167,7 +167,9 @@ userId: {     // Document ID is the userId
   - Update last login
 - **Delete**: Delete user account and associated data
 
-**Note**: The users collection CRUD operations will be implemented in Iteration 2 along with Firebase Authentication and Notification. 
+**Note**: 
+- The users collection CRUD operations will be implemented in Iteration 2 along with Firebase Authentication and Notification. 
+- The search result of product list is fetched from external APIs; when product is selected, the price records are read from database.
 
 ## Setup and Installation
 
@@ -201,28 +203,18 @@ npx expo start
 ## Project Structure
 ```
 .
-├── App.js                 # Main application entry
-├── assets/               # Static assets
-├── components/           # Reusable UI components
-├── navigation/           # Navigation configuration
-├── screens/             # Application screens
-│   ├── account/         # Account-related screens
-│   ├── common/          # Shared screens mart/product/price
-│   ├── list/           # Shopping list screens
-│   └── search/         # Search-related screens
-└── services/            # Firebase and API services
+├── App.js        # Main application entry
+├── assets/       # Static assets
+├── components/   # Reusable UI components
+├── navigation/   # Navigation configuration
+├── screens/      # Application screens
+│   ├── account/  # Account-related screens
+│   ├── common/   # Shared screens mart/product/price
+│   ├── list/     # Shopping list screens
+│   └── search/   # Search-related screens
+└── services/     # Firebase and API services
 ```
-
-## External Web API integration
-
-### OpenFoodFacts API
-The application uses the OpenFoodFacts API to fetch product information based on barcode scanning and text search. OpenFoodFacts is an open-source food products database.
-
-#### Base URLs
-- Search endpoint: `https://world.openfoodfacts.org/cgi/search.pl`
-- Product lookup endpoint: `https://world.openfoodfacts.net/api/v2/search`
-- Product by barcode: `https://world.openfoodfacts.net/api/v2/product/{barcode}`
-
+  
 ## External APIs and Endpoints
 
 ### OpenFoodFacts API
@@ -234,7 +226,6 @@ The application uses the OpenFoodFacts API to fetch product information based on
 - Product by barcode: `https://world.openfoodfacts.net/api/v2/product/{barcode}`
 
 #### Endpoints Used
-
 1. **Product Search by Keyword**
 ```http
 GET https://world.openfoodfacts.org/cgi/search.pl
@@ -244,7 +235,6 @@ Query Parameters:
 - page_size: number       // Number of results (default: 5)
 - fields: string         // Comma-separated list of fields to return
 ```
-
 2. **Product Search by Barcode**
 ```http
 GET https://world.openfoodfacts.net/api/v2/search
@@ -253,18 +243,17 @@ Query Parameters:
 - fields: string        // Comma-separated list of fields to return
 - page_size: number     // Number of results (default: 5)
 ```
-
 3. **Product Details by Barcode**
 ```http
 GET https://world.openfoodfacts.net/api/v2/product/{barcode}
 ```
-
 
 ## Dependencies
 - react-native
 - react-navigation
 - react-native-paper
 - expo-camera
+- expo-image-picker
 - firebase
 
 ## Acknowledgments
