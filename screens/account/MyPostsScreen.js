@@ -11,6 +11,7 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { database } from "../../services/firebaseSetup";
 import PricePostListItem from "../../components/PricePostListItem";
 
+// Temporary use, waiting for authentication system implementation
 const PLACEHOLDER_USER_ID = "user123";
 
 export default function MyPostsScreen({ navigation }) {

@@ -1,6 +1,8 @@
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
+// TODO: Add disabled state
+// TODO: Change pressedHandler to onPress
 export default function PressableButton({
   children,
   componentStyle,

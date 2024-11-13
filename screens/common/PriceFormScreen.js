@@ -152,6 +152,7 @@ export default function PriceFormScreen({ navigation, route }) {
                     source={{ uri: imageUri }}
                     style={styles.previewImage}
                   />
+                  {/* Remove image button */}
                   <PressableButton
                     pressedHandler={() => setImageUri(null)}
                     componentStyle={styles.removeImageButton}
@@ -173,16 +174,20 @@ export default function PriceFormScreen({ navigation, route }) {
               )}
               {/* Image selection buttons */}
               <View style={styles.imageButtons}>
+                {/* Take photo */}
                 <PressableButton
                   pressedHandler={() => handleImageSelection(true)}
                   componentStyle={styles.imageButton}
+                  pressedStyle={styles.imageButtonPressed}
                 >
                   <MaterialIcons name="camera-alt" size={20} color="#007AFF" />
                   <Text style={styles.imageButtonText}>Take Photo</Text>
                 </PressableButton>
+                {/* Choose photo from library */}
                 <PressableButton
                   pressedHandler={() => handleImageSelection(false)}
                   componentStyle={styles.imageButton}
+                  pressedStyle={styles.imageButtonPressed}
                 >
                   <MaterialIcons
                     name="photo-library"
@@ -248,6 +253,7 @@ export default function PriceFormScreen({ navigation, route }) {
           <PressableButton
             pressedHandler={handleSubmit}
             componentStyle={styles.submitButton}
+            pressedStyle={styles.submitButtonPressed}
           >
             <Text style={styles.submitButtonText}>
               {editMode ? "Update Price" : "Share Price"}
@@ -328,6 +334,9 @@ const styles = StyleSheet.create({
     minWidth: 120,
     justifyContent: "center",
   },
+  imageButtonPressed: {
+    backgroundColor: "#ddd",
+  },
   imageButtonText: {
     color: "#007AFF",
     marginLeft: 8,
@@ -372,6 +381,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
+  },
+  submitButtonPressed: {
+    backgroundColor: "#0056b3",
   },
   submitButtonText: {
     color: "white",

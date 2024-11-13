@@ -25,6 +25,7 @@ import {
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import PressableButton from "../../components/PressableButton";
 
+// Temporary use, waiting for authentication system implementation
 const PLACEHOLDER_USER_ID = "user123";
 
 export default function PriceDetailScreen({ navigation, route }) {
@@ -331,6 +332,7 @@ export default function PriceDetailScreen({ navigation, route }) {
               styles.submitButton,
               !newComment.trim() && styles.submitButtonDisabled,
             ]}
+            pressedStyle={styles.submitButtonPressed}
             disabled={!newComment.trim()}
           >
             <Text
@@ -537,6 +539,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+  },
+  submitButtonPressed: {
+    backgroundColor: "#0056b3",
   },
   submitButtonDisabled: {
     backgroundColor: "#ccc",
