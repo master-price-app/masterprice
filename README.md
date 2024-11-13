@@ -11,6 +11,15 @@ list.
 ## Team Members and Contributions
 Group 22:
 
+**Annan Fu**
+- firebase setup and configuration
+- Collection design and CRUD operation services
+- third-party web API integration
+- Common screens development: MartDetail, PriceDetail, PriceForm, ProductDetail
+  Search screens development: SearchResult
+- Account screens development: MyPosts
+- Assets: martLogos and dummyProduct data storage
+
 **Jiani Guo**
 - Project structure design
 - Collection design
@@ -20,15 +29,6 @@ Group 22:
 - Account screens development: Account, AccountSecurity, EditProfile, TermsAndConditions
 - List screens development: ShoppingList
 - Search screens development: BarcodeScanner, Search
-
-**Annan Fu**
-- firebase setup and configuration
-- Collection design and CRUD operation services
-- third-party web API integration
-- Common screens development: MartDetail, PriceDetail, PriceForm, ProductDetail
-  Search screens development: SearchResult
-- Account screens development: MyPosts
-- Assets: martLogos and dummyProduct data storage
 
 
 ## Features
@@ -61,27 +61,27 @@ The application uses Firebase Firestore with 5 main collections:
 
 ### 1. users
 ```javascript
-documentId: {   // Firebase Auth UID as document ID
+documentId: {             // Firebase Auth UID as document ID
   email: string, 
   nickname: string,
   createdAt: timestamp, 
   updatedAt: timestamp,   
-  notificationOn: boolean  // Mart weekly deal release notification  
+  notificationOn: boolean // Mart weekly deal release notification  
   }
 }
 ```
 
 ### 2. prices
 ```javascript
-documentId: {   // Auto-generated Firebase ID              
-  code: string,            // Product barcode
-  productName: string,     // Product name
-  price: number,           // Price value
-  locationId: string,        // mart identifier
-  userId: string,         // User who posted the price
-  createdAt: timestamp,   // Creation date
-  updatedAt: timestamp,   // Last update date
-  comments: {             // Nested comments
+documentId: {               // Auto-generated Firebase ID              
+  code: string,             // Product barcode
+  productName: string,      // Product name
+  price: number,            // Price value
+  locationId: string,       // mart identifier
+  userId: string,           // User who posted the price
+  createdAt: timestamp,     // Creation date
+  updatedAt: timestamp,     // Last update date
+  comments: {               // Nested comments
     [commentId]: {
       userId: string,
       content: string,
@@ -93,21 +93,21 @@ documentId: {   // Auto-generated Firebase ID
 
 ### 3. martChains
 ```javascript
-documentId: { // Auto-generated Firebase ID
-  chainId: string,        // Unique chain identifier
-  chainName: string,      // Chain name
-  dealCycle: {           // Weekly deal cycle
-    startDay: number,    // Start day (1-7)
-    endDay: number      // End day (1-7)
+documentId: {         // Auto-generated Firebase ID
+  chainId: string,    // Unique chain identifier
+  chainName: string,  // Chain name
+  dealCycle: {        // Weekly deal cycle
+    startDay: number, // Start day (1-7)
+    endDay: number    // End day (1-7)
   }
 }
 ```
 
 ### 4. martLocations
 ```javascript
-documentId: {   // Auto-generated Firebase ID   
-  chainId: string,        // Reference to martChains
-  name: string,           // Location name
+documentId: {           // Auto-generated Firebase ID   
+  chainId: string,      // Reference to martChains
+  name: string,         // Location name
   coordinates: {
     latitude: number,
     longitude: number
@@ -116,7 +116,7 @@ documentId: {   // Auto-generated Firebase ID
     street: string,
     city: string,
     province: string,
-    country: string
+    country: string,
     postalCode: string,
   },
   isActive: boolean
@@ -125,15 +125,15 @@ documentId: {   // Auto-generated Firebase ID
 
 ### 5. shoppingLists
 ```javascript
-userId: {     // Document ID is the userId
-  userId: string,           // Reference to users collection
-  items: {                  // Map of items in the shopping list
-    [locationId: string]: {    // The key is the martLocation document ID from martLocations collections
-      [priceId: string]: boolean   // The key is the price document ID, value is always true
+userId: {                 // Document ID is the userId
+  userId: string,         // Reference to users collection
+  items: {                // Map of items in the shopping list
+    [locationId: string]: {       // The key is the martLocation document ID from martLocations collections
+      [priceId: string]: boolean  // The key is the price document ID, value is always true
     }
   },
-  lastUpdated: timestamp,   // Last time the shopping list was modified
-  userId: string           // user ID for queries
+  lastUpdated: timestamp, // Last time the shopping list was modified
+  userId: string          // user ID for queries
 }
 ```
 
@@ -202,16 +202,16 @@ npx expo start
 ## Project Structure
 ```
 .
-├── App.js                 # Main application entry
-├── assets/               # Static assets
-├── components/           # Reusable UI components
-├── navigation/           # Navigation configuration
-├── screens/             # Application screens
-│   ├── account/         # Account-related screens
-│   ├── common/          # Shared screens mart/product/price
-│   ├── list/           # Shopping list screens
-│   └── search/         # Search-related screens
-└── services/            # Firebase and API services
+├── App.js        # Main application entry
+├── assets/       # Static assets
+├── components/   # Reusable UI components
+├── navigation/   # Navigation configuration
+├── screens/      # Application screens
+│   ├── account/  # Account-related screens
+│   ├── common/   # Shared screens mart/product/price
+│   ├── list/     # Shopping list screens
+│   └── search/   # Search-related screens
+└── services/     # Firebase and API services
 ```
 
 ## Dependencies
@@ -219,6 +219,7 @@ npx expo start
 - react-navigation
 - react-native-paper
 - expo-camera
+- expo-image-picker
 - firebase
 
 ## Acknowledgments
