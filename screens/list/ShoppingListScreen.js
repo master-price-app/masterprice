@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   SectionList,
   StyleSheet,
   Text,
   View,
-  Alert,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
@@ -87,6 +87,7 @@ export default function ShoppingListScreen({ navigation }) {
   }, []);
   */
 
+  // Handle item press
   const handleItemPress = (price) => {
     if (isManaging) {
       // Multiple selection mode
@@ -108,6 +109,7 @@ export default function ShoppingListScreen({ navigation }) {
     }
   };
 
+  // Handle delete
   const handleDelete = async () => {
     try {
       const itemsToDelete = Array.from(selectedItems).map((id) => {
@@ -132,6 +134,7 @@ export default function ShoppingListScreen({ navigation }) {
     }
   };
 
+  // Loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -140,6 +143,7 @@ export default function ShoppingListScreen({ navigation }) {
     );
   }
 
+  // Empty state
   if (shoppingList.length === 0) {
     return (
       <View style={styles.centerContainer}>
@@ -196,7 +200,7 @@ export default function ShoppingListScreen({ navigation }) {
   );
 }
 
-
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

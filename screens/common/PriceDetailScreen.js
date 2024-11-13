@@ -101,6 +101,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     return unsubscribe;
   }, [navigation, priceData]);
 
+  // Render menu
   const renderMenu = () => (
     <Menu
       visible={menuVisible}
@@ -125,6 +126,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     </Menu>
   );
 
+  // Navigate to price form
   const handleEdit = () => {
     setMenuVisible(false);
     navigation.navigate("PriceForm", {
@@ -140,6 +142,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     });
   };
 
+  // Delete price
   const handleDelete = async () => {
     setMenuVisible(false);
     try {
@@ -151,6 +154,8 @@ export default function PriceDetailScreen({ navigation, route }) {
     }
   };
 
+  // Toggle shopping list
+  // If price is in list, remove it, otherwise add it
   const handleShoppingListToggle = async () => {
     try {
       if (isInList) {
@@ -173,6 +178,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     }
   };
 
+  // Submit comment
   const handleSubmitComment = async () => {
     if (!newComment.trim() || !priceData?.id) return;
 
@@ -185,12 +191,14 @@ export default function PriceDetailScreen({ navigation, route }) {
     }
   };
 
+  // Navigate to mart detail
   const handleLocationPress = () => {
     if (priceData?.locationId) {
       navigation.navigate("MartDetail", { locationId: priceData.locationId });
     }
   };
 
+  // Loading state
   if (!priceData || !priceData.id || loading) {
     return (
       <View style={styles.centerContainer}>
@@ -199,6 +207,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     );
   }
 
+  // Format comments
   const commentsArray = priceData.comments
     ? Object.entries(priceData.comments).map(([id, comment]) => ({
         id,
@@ -210,11 +219,13 @@ export default function PriceDetailScreen({ navigation, route }) {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.productCard}>
+          {/* Product Image */}
           {productImage && (
             <Image source={{ uri: productImage }} style={styles.productImage} />
           )}
 
           <View style={styles.productInfo}>
+            {/* User Info */}
             <View style={styles.userInfo}>
               <MaterialIcons name="account-circle" size={24} color="#666" />
               <Text style={styles.userText}>
@@ -230,6 +241,7 @@ export default function PriceDetailScreen({ navigation, route }) {
               )}
             </View>
 
+            {/* Date */}
             <Text style={styles.dateText}>
               on{" "}
               {new Date(priceData.createdAt).toLocaleString(undefined, {
@@ -239,7 +251,9 @@ export default function PriceDetailScreen({ navigation, route }) {
               })}
             </Text>
 
+            {/* Mart Location */}
             {martData && (
+              // TODO: Replace with PressableButton
               <TouchableOpacity
                 style={styles.locationInfo}
                 onPress={handleLocationPress}
@@ -252,11 +266,13 @@ export default function PriceDetailScreen({ navigation, route }) {
               </TouchableOpacity>
             )}
 
+            {/* Price */}
             <View style={styles.priceInfo}>
               <Text style={styles.priceLabel}>Price</Text>
               <Text style={styles.price}>${priceData.price.toFixed(2)}</Text>
             </View>
 
+            {/* Add/Remove from Shopping List Button */}
             <PressableButton
               pressedHandler={handleShoppingListToggle}
               componentStyle={[
@@ -277,9 +293,11 @@ export default function PriceDetailScreen({ navigation, route }) {
         </View>
       </View>
 
+      {/* Comments Section */}
       <View style={styles.commentsSection}>
         <Text style={styles.sectionTitle}>Comments</Text>
 
+        {/* Comments */}
         {commentsArray.map((comment) => (
           <View key={comment.id} style={styles.commentItem}>
             <View style={styles.commentHeader}>
@@ -298,6 +316,7 @@ export default function PriceDetailScreen({ navigation, route }) {
         ))}
 
         <View style={styles.commentInput}>
+          {/* Comment input */}
           <TextInput
             style={styles.input}
             value={newComment}
@@ -305,6 +324,7 @@ export default function PriceDetailScreen({ navigation, route }) {
             placeholder="Share your thoughts..."
             multiline
           />
+          {/* Submit comment button */}
           <PressableButton
             pressedHandler={handleSubmitComment}
             componentStyle={[

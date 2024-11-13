@@ -71,6 +71,8 @@ export default function AccountSecurityScreen({ navigation }) {
         />
       </View>
 
+      {/* TODO: Replace with PressableButton */}
+      {/* Submit Button */}
       <TouchableOpacity 
         style={styles.submitButton} 
         onPress={handleChangePassword}
@@ -78,6 +80,8 @@ export default function AccountSecurityScreen({ navigation }) {
         <Text style={styles.submitButtonText}>Change Password</Text>
       </TouchableOpacity>
 
+      {/* TODO: Replace with PressableButton */}
+      {/* Forgot Password Button */}
       <TouchableOpacity 
         style={styles.forgotButton}
         onPress={() => {/* TODO: Implement forgot password functionality */}}

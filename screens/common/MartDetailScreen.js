@@ -21,6 +21,7 @@ export default function MartDetailScreen({ navigation, route }) {
     navigation.goBack();
   };
 
+  // Loading state
   if (!locationData) {
     return (
       <View style={styles.loadingContainer}>
@@ -34,16 +35,21 @@ export default function MartDetailScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        {/* TODO: Remove this button may be not needed */}
+        {/* Back Button */}
         <TouchableOpacity onPress={handleBackPress}>
           <MaterialIcons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
+        {/* Chain Logo */}
         <Image
           source={chainLogoMapping[chain.chainId.toLowerCase()]}
           style={styles.logo}
         />
+        {/* Chain Name */}
         <Text style={styles.chainName}>{chain.chainName}</Text>
       </View>
 
+      {/* Location Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <MaterialIcons name="location-on" size={24} color="#E31837" />
@@ -62,6 +68,7 @@ export default function MartDetailScreen({ navigation, route }) {
   );
 }
 
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

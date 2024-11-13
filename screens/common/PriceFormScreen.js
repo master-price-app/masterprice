@@ -3,11 +3,11 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  ScrollView,
 } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from "@expo/vector-icons";
@@ -78,6 +78,7 @@ export default function PriceFormScreen({ navigation, route }) {
     }
   };
 
+  // Validate price
   function validatePrice(price) {
     if (isNaN(price)) {
       Alert.alert("Error", "Price must be a number");
@@ -86,6 +87,7 @@ export default function PriceFormScreen({ navigation, route }) {
     return true;
   }
 
+  // Validate location
   function validateLocation() {
     if (!selectedLocationId) {
       Alert.alert("Error", "Please select a store location");
@@ -94,6 +96,7 @@ export default function PriceFormScreen({ navigation, route }) {
     return true;
   }
 
+  // Submit price
   const handleSubmit = async () => {
     try {
       if (!validatePrice(price)) return;
@@ -168,6 +171,7 @@ export default function PriceFormScreen({ navigation, route }) {
                   </Text>
                 </View>
               )}
+              {/* Image selection buttons */}
               <View style={styles.imageButtons}>
                 <PressableButton
                   pressedHandler={() => handleImageSelection(true)}

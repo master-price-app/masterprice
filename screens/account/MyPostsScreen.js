@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  FlatList,
   ActivityIndicator,
+  FlatList,
   StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import PricePostListItem from "../../components/PricePostListItem";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { database } from "../../services/firebaseSetup";
+import PricePostListItem from "../../components/PricePostListItem";
 
 const PLACEHOLDER_USER_ID = "user123";
 
@@ -22,6 +22,8 @@ export default function MyPostsScreen({ navigation }) {
     loadPosts();
   }, []);
 
+  // TODO: Move to a custom hook
+  // Load posts
   const loadPosts = () => {
     try {
       const pricesQuery = query(
@@ -59,6 +61,8 @@ export default function MyPostsScreen({ navigation }) {
     }
   };
 
+  // TODO: Move to a custom hook
+  // Refresh posts
   const handleRefresh = () => {
     setRefreshing(true);
     loadPosts();
@@ -72,6 +76,8 @@ export default function MyPostsScreen({ navigation }) {
     );
   }
 
+  // TODO: Move to a custom hook
+  // If no posts show empty message
   if (posts.length === 0) {
     return (
       <View style={styles.centerContainer}>
@@ -113,6 +119,7 @@ export default function MyPostsScreen({ navigation }) {
   );
 }
 
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

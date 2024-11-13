@@ -63,6 +63,7 @@ export default function ShoppingListItem({
   );
 }
 
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
