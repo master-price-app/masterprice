@@ -33,47 +33,57 @@ Group 22:
 
 ## Features
 
-- **Barcode Scanner**: Instantly check prices by scanning product barcodes
+- **Barcode Scanner**: Instantly check prices by scanning product barcodes(To be updated in the next iteration with location and map) 
+<img src="https://github.com/user-attachments/assets/1bf5c7c1-8009-444a-8758-cbdd8002792e" width="200" alt="Search Screen"/>
+<img src="https://github.com/user-attachments/assets/bd99985d-c56f-4888-900a-6d8eb625e8f3" width="200" alt="Barcode Scanner Screen"/>
 
 <br><br>
+Try scanning this barcode:
+
+<img width="200" alt="image" src="https://github.com/user-attachments/assets/26d0d634-eb87-4d5c-a987-48fd506d0954">
+
 <br><br>
 
-- **Price Comparison**: Search, share and compare prices of products across multiple marts in your area
-<img src="https://github.com/user-attachments/assets/59848bd2-2bbb-4917-9a9c-56404b43a75c" width="300" alt="Search Screen"/>
-<img src="https://github.com/user-attachments/assets/7f536aac-d1f3-4750-aeb2-ecf5fa162d45" width="300" alt="Search Result Screen"/>
-<img src="https://github.com/user-attachments/assets/1b9d81ae-3116-41a1-91aa-a684bfcc2c2d" width="300" alt="Product Detail Screen"/>
+- **Price Comparison**: Search and compare prices of products across multiple marts in your area(To be updated in the next iteration with authentication)
+<img src="https://github.com/user-attachments/assets/59848bd2-2bbb-4917-9a9c-56404b43a75c" width="200" alt="Search Screen"/>
+<img src="https://github.com/user-attachments/assets/7f536aac-d1f3-4750-aeb2-ecf5fa162d45" width="200" alt="Search Result Screen"/>
+<img src="https://github.com/user-attachments/assets/1b9d81ae-3116-41a1-91aa-a684bfcc2c2d" width="200" alt="Product Detail Screen"/>
 <br><br>
 <br><br>
-
-
   
 - **Community-Driven Updates**: Share and comment on price information
-<img src="https://github.com/user-attachments/assets/06a0da7a-be4d-45e7-abdf-c8e9b3ccaa24" width="300" alt="Price Detail Screen"/>
-<img src="https://github.com/user-attachments/assets/4e342019-8489-48f1-8233-e37d92a37772" width="300" alt="Price Form Screen"/>
-<img src="https://github.com/user-attachments/assets/02cf2247-8d3b-4393-a152-1a78c37c5085" width="300" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/06a0da7a-be4d-45e7-abdf-c8e9b3ccaa24" width="200" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/4e342019-8489-48f1-8233-e37d92a37772" width="200" alt="Price Form Screen"/>
+<img src="https://github.com/user-attachments/assets/02cf2247-8d3b-4393-a152-1a78c37c5085" width="200" alt="Price Detail Screen"/>
 <br><br>
 <br><br>
 
   
-- **Mart Browse**: View and schedule notifications for the chosen marts’ deal releases based on deal cycles
-
+- **Mart Browse**: View and schedule notifications for the chosen marts’ deal releases based on deal cycles(To be updated in the next iteration with location, map and notification) 
+<img src="https://github.com/user-attachments/assets/16cff329-4e1c-4773-8bb7-e3838981d313" width="200" alt="Mart Detail Screen"/>
 <br><br>
 <br><br>
 
-- **Interactive Map**: View nearby marts with current deals
-
+- **Interactive Map**: View nearby marts with current deals(To be developed in the next iteration with location and map) 
 <br><br>  
 
-- **Shopping List Manager**: Build and manage mart-specific grocery lists by adding/removing items on price detail screen
-<img src="https://github.com/user-attachments/assets/547c48d0-3b25-4768-87c1-69678af6d66f" width="300" alt="Price Detail Screen"/>
-<img src="https://github.com/user-attachments/assets/c22d4c71-24f0-4acf-bd6e-ffb67e87780f" width="300" alt="Price Detail Screen"/>
-<img src="https://github.com/user-attachments/assets/1448417b-fdeb-4647-ab0f-d19e5293f9a6" width="300" alt="Shopping List Screen"/>
+- **Shopping List Management**: Build and manage mart-specific grocery lists by adding/removing items on price detail screen
+<img src="https://github.com/user-attachments/assets/547c48d0-3b25-4768-87c1-69678af6d66f" width="200" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/c22d4c71-24f0-4acf-bd6e-ffb67e87780f" width="200" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/1448417b-fdeb-4647-ab0f-d19e5293f9a6" width="200" alt="Shopping List Screen"/>
 <br><br>
 <br><br>
 
-- **My Post Manager**: Manage user's posts of price sharing efficiently
-<img src="https://github.com/user-attachments/assets/4a2e0871-1dd2-4b7a-bf83-2fab0bc1c44c" width="300" alt="My Post Screen"/>
-<img src="https://github.com/user-attachments/assets/285e83b8-30c6-49d3-afa2-e8f5d43ac604" width="300" alt="Price Detail Screen"/>
+- **My Post Management**: Manage user's posts of price sharing efficiently
+<img src="https://github.com/user-attachments/assets/4a2e0871-1dd2-4b7a-bf83-2fab0bc1c44c" width="200" alt="My Post Screen"/>
+<img src="https://github.com/user-attachments/assets/285e83b8-30c6-49d3-afa2-e8f5d43ac604" width="200" alt="Price Detail Screen"/>
+<br><br>
+<br><br>
+
+- **Account Management**: Allow user to manage user CRUD information(To be updated in the next iteration with authentication)
+<img src="https://github.com/user-attachments/assets/deed7fbb-6ed6-481b-ab71-17db00870495" width="200" alt="Account Screen"/>
+<img src="https://github.com/user-attachments/assets/fdfa6e5c-e4df-4cfd-bc8c-113cbbce186e" width="200" alt="Edit Profile Screen"/>
+<img src="https://github.com/user-attachments/assets/ea3e65e9-6fcf-41af-a05f-7a3e02c07f92" width="200" alt="Account Security Screen"/>
 <br><br>
 
 ## Data Model
@@ -248,7 +258,7 @@ The application uses the OpenFoodFacts API to fetch product information based on
 
 #### Endpoints Used
 1. **Product Search by Keyword**
-```http
+```
 GET https://world.openfoodfacts.org/cgi/search.pl
 Query Parameters:
 - search_terms: string    // Search keyword
@@ -256,16 +266,18 @@ Query Parameters:
 - page_size: number       // Number of results (default: 5)
 - fields: string         // Comma-separated list of fields to return
 ```
+
 2. **Product Search by Barcode**
-```http
+```
 GET https://world.openfoodfacts.net/api/v2/search
 Query Parameters:
 - code: string           // Product barcode
 - fields: string        // Comma-separated list of fields to return
 - page_size: number     // Number of results (default: 5)
 ```
+
 3. **Product Details by Barcode**
-```http
+```
 GET https://world.openfoodfacts.net/api/v2/product/{barcode}
 ```
 
