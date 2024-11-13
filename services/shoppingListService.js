@@ -15,9 +15,12 @@ import { getLocationById } from "./martService";
 
 // CREATE - Add item to shopping list
 export async function addToShoppingList(userId, priceId, locationId) {
+  // Reference to the user's shopping list
   const listRef = doc(database, "shoppingLists", userId);
 
   try {
+    // Run transaction to add item to shopping list
+    // runTransaction is used to ensure data consistency
     await runTransaction(database, async (transaction) => {
       const listDoc = await transaction.get(listRef);
 
@@ -87,6 +90,7 @@ export function subscribeToShoppingList(userId, onUpdate) {
         priceIds.push(...Object.keys(locationPrices));
       });
 
+      // If no prices in the list, return empty array
       if (priceIds.length === 0) {
         onUpdate([]);
         return;
@@ -100,7 +104,7 @@ export function subscribeToShoppingList(userId, onUpdate) {
 
       // Subscribe to price updates
       const priceUnsubscribe = onSnapshot(
-        pricesQuery,
+        pricesQuery, 
         async (querySnapshot) => {
           try {
             // Get all prices with location data
@@ -109,20 +113,20 @@ export function subscribeToShoppingList(userId, onUpdate) {
               const locationData = await getLocationById(priceData.locationId);
 
               if (!locationData) return null;
-
+              
               return {
                 id: doc.id,
                 locationId: priceData.locationId,
                 locationName: locationData.location.name,
                 chainName: locationData.chain?.chainName || "Other",
                 ...priceData,
-                isMasterPrice: false,
+                isMasterPrice: false, // temporary value, will be updated using application code logic
               };
             });
 
             const prices = (await Promise.all(pricesPromises)).filter(Boolean);
 
-            // Group by chain
+            // Group by chain for UI
             const chainGroups = prices.reduce((groups, price) => {
               if (!groups[price.chainName]) {
                 groups[price.chainName] = {
@@ -133,7 +137,7 @@ export function subscribeToShoppingList(userId, onUpdate) {
               groups[price.chainName].data.push(price);
               return groups;
             }, {});
-
+            // Convert object to array to send to UI
             onUpdate(Object.values(chainGroups));
           } catch (error) {
             console.error("Error processing prices:", error);
@@ -185,14 +189,19 @@ export async function removeFromShoppingList(userId, priceId, locationId) {
       }
       // If locationId not found but priceId exists somewhere else
       else {
+        // Check each location for the priceId
         for (const [loc, prices] of Object.entries(items)) {
+          // If priceId exists in this location
           if (prices[priceId]) {
+            // If this is the last price in the location
             if (Object.keys(prices).length === 1) {
+              // Remove the location and all its prices
               transaction.update(listRef, {
                 [`items.${loc}`]: deleteField(),
                 lastUpdated: serverTimestamp(),
               });
             } else {
+              // Remove the price from the location
               transaction.update(listRef, {
                 [`items.${loc}.${priceId}`]: deleteField(),
                 lastUpdated: serverTimestamp(),
@@ -228,23 +237,26 @@ export async function removeMultipleFromShoppingList(userId, items) {
 
       // Count items per location and prepare updates
       items.forEach(({ priceId, locationId }) => {
+        // Increment count for this location
         if (!locationItemCounts[locationId]) {
           locationItemCounts[locationId] = 1;
         } else {
           locationItemCounts[locationId]++;
         }
+        // remove the item from the location
         updates[`items.${locationId}.${priceId}`] = deleteField();
       });
 
       // Check if any locations should be completely removed
       const data = listDoc.data();
+      // Remove locations with all items removed
       Object.entries(locationItemCounts).forEach(([locationId, count]) => {
         const locationItems = data.items[locationId];
         if (locationItems && Object.keys(locationItems).length === count) {
           updates[`items.${locationId}`] = deleteField();
         }
       });
-
+      // Update the shopping list with all changes
       transaction.update(listRef, {
         ...updates,
         lastUpdated: serverTimestamp(),
