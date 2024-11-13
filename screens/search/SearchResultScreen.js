@@ -21,6 +21,8 @@ export default function SearchResultScreen({ navigation, route }) {
     }
   }, [products, barcode]);
 
+  // TODO: Move to services
+  // Fetch products from API
   const fetchProducts = async () => {
     try {
       const baseUrl = keyword
@@ -29,6 +31,7 @@ export default function SearchResultScreen({ navigation, route }) {
 
       let url;
       if (keyword) {
+        // Search by keyword
         const params = new URLSearchParams({
           search_terms: keyword,
           json: 1,
@@ -38,6 +41,7 @@ export default function SearchResultScreen({ navigation, route }) {
         });
         url = `${baseUrl}?${params.toString()}`;
       } else if (barcode) {
+        // Search by barcode
         const params = new URLSearchParams({
           code: barcode,
           fields:
@@ -90,14 +94,17 @@ export default function SearchResultScreen({ navigation, route }) {
   };
 
   // For search result item press
+  // Navigate to product detail
   const handleProductPress = (code) => {
     navigation.navigate("ProductDetail", { code });
   };
 
+  // Render product item
   const renderProduct = ({ item }) => (
     <ProductListItem product={item} onPress={handleProductPress} />
   );
 
+  // Loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -105,7 +112,7 @@ export default function SearchResultScreen({ navigation, route }) {
       </View>
     );
   }
-
+  // Error state
   if (error) {
     return (
       <View style={styles.centerContainer}>
@@ -113,7 +120,7 @@ export default function SearchResultScreen({ navigation, route }) {
       </View>
     );
   }
-
+  // Empty state
   if (!products.length)
     return (
       <View style={styles.centerContainer}>
@@ -143,6 +150,7 @@ export default function SearchResultScreen({ navigation, route }) {
   );
 }
 
+// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
