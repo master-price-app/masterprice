@@ -14,14 +14,15 @@ import { getLocationById } from "./martService";
 
 const PLACEHOLDER_USER_ID = "user123"; // Temporary until auth is implemented
 
+// function to write price data to the database
 export async function writeToDB(data, collectionName) {
   try {
-    // Remove storeId creation since we're using locationId
+    
     const docRef = await addDoc(collection(database, collectionName), {
       ...data,
-      userId: PLACEHOLDER_USER_ID,
-      comments: {},
-      inShoppingList: {},
+      userId: PLACEHOLDER_USER_ID, // temporary until auth is implemented
+      comments: {}, // initialize comments object
+      //inShoppingList: {},
       updatedAt: new Date().toISOString(),
     });
     console.log("Price Document written with ID: ", docRef.id);
@@ -32,6 +33,7 @@ export async function writeToDB(data, collectionName) {
   }
 }
 
+// function to update price data in the database
 export async function updateData(data, collectionName, id) {
   try {
     // For updates, we don't need to modify the userId or initialize comments/shopping list
@@ -46,6 +48,7 @@ export async function updateData(data, collectionName, id) {
   }
 }
 
+// function to delete price data by id from the database
 export async function deleteData(collectionName, id) {
   try {
     await deleteDoc(doc(database, collectionName, id));
@@ -56,16 +59,17 @@ export async function deleteData(collectionName, id) {
   }
 }
 
+// function to listen for price data by product barcode
 export function subscribeToPricesByProduct(code, onPricesUpdate) {
   try {
     const pricesQuery = query(
       collection(database, "prices"),
       where("code", "==", code)
     );
-
+    // onSnapshot is a listener that triggers when the data changes
     const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
       const prices = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
+        id: doc.id, 
         ...doc.data(),
       }));
       onPricesUpdate(prices);
@@ -78,7 +82,7 @@ export function subscribeToPricesByProduct(code, onPricesUpdate) {
   }
 }
 
-// Add function to get prices by location
+// function to get prices by martLocation
 export function subscribeToPricesByLocation(locationId, onPricesUpdate) {
   try {
     const pricesQuery = query(
@@ -101,6 +105,7 @@ export function subscribeToPricesByLocation(locationId, onPricesUpdate) {
   }
 }
 
+// function to get price details by id
 export function subscribeToPriceDetails(priceId, onPriceUpdate) {
   try {
     const priceRef = doc(database, "prices", priceId);
@@ -122,6 +127,7 @@ export function subscribeToPriceDetails(priceId, onPriceUpdate) {
   }
 }
 
+// function to write comment to a price document
 export async function writeComment(comment, priceId) {
   try {
     const priceRef = doc(database, "prices", priceId);
@@ -129,13 +135,13 @@ export async function writeComment(comment, priceId) {
 
     const commentData = {
       [`comments.${commentId}`]: {
-        userId: PLACEHOLDER_USER_ID,
+        userId: PLACEHOLDER_USER_ID,  // temporary until auth is implemented
         content: comment,
         createdAt: new Date().toISOString(),
       },
     };
 
-    await updateDoc(priceRef, commentData);
+    await updateDoc(priceRef, commentData); // update the comments object in the price document
     console.log("Comment added successfully");
   } catch (error) {
     console.error("Error adding comment:", error);

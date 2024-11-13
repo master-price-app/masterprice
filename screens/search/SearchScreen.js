@@ -28,7 +28,9 @@ export default function SearchScreen({ navigation }) {
       {/* Header Section */}
       <View style={styles.header}>
         <Text style={styles.title}>Master Price</Text>
-        <Text style={styles.subtitle}>Find the Best Deals</Text>
+        <Text style={styles.subtitle}>
+          Find the Best Grocery Deals Near You
+        </Text>
       </View>
 
       {/* Search Section */}
@@ -38,7 +40,7 @@ export default function SearchScreen({ navigation }) {
           <TextInput
             value={keyword}
             onChangeText={setKeyword}
-            placeholder="Search for products"
+            placeholder="Search for products, try 'coke'"
             placeholderTextColor="#999"
             returnKeyType="search"
             onSubmitEditing={handleSearch}
@@ -64,7 +66,7 @@ export default function SearchScreen({ navigation }) {
           componentStyle={styles.scanButton}
           pressedStyle={styles.scanButtonPressed}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
             <MaterialIcons name="qr-code-scanner" size={24} color="#fff" />
             <Text style={styles.scanButtonText}>Scan Barcode</Text>
           </View>
@@ -76,11 +78,15 @@ export default function SearchScreen({ navigation }) {
         <Text style={styles.tipsTitle}>Search Tips</Text>
         <View style={styles.tipItem}>
           <MaterialIcons name="info" size={20} color="#666" />
-          <Text style={styles.tipText}>Enter product name or brand to search</Text>
+          <Text style={styles.tipText}>
+            Enter product name or brand to search
+          </Text>
         </View>
         <View style={styles.tipItem}>
           <MaterialIcons name="info" size={20} color="#666" />
-          <Text style={styles.tipText}>Scan barcode for quick product lookup</Text>
+          <Text style={styles.tipText}>
+            Scan barcode for instant price comparison
+          </Text>
         </View>
       </View>
     </View>

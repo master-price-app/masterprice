@@ -2,13 +2,14 @@ import { database } from "./firebaseSetup";
 import { collection, addDoc, query, where, getDocs, getDoc, doc } from "firebase/firestore";
 import { martChainsData, martLocationsData } from "./martHelper";
 
+// Initialize mart chains data and mart locations data in Firestore
 export async function initializeMartData() {
   try {
     console.log("Starting mart data initialization...");
 
     // Add all mart chains
     const chainPromises = Object.values(martChainsData).map((chain) =>
-      addDoc(collection(database, "martChains"), chain)
+      addDoc(collection(database, "martChains"), chain)  
     );
     await Promise.all(chainPromises);
     console.log("Mart chains added successfully");
@@ -17,7 +18,7 @@ export async function initializeMartData() {
     const locationPromises = martLocationsData.map((location) =>
       addDoc(collection(database, "martLocations"), location)
     );
-    await Promise.all(locationPromises);
+    await Promise.all(locationPromises); // Wait for all promises to resolve
     console.log("Mart locations added successfully");
 
     console.log("All mart data initialized successfully");
@@ -27,6 +28,7 @@ export async function initializeMartData() {
   }
 }
 
+// Get all mart chains by ID
 export async function getMartChain(chainId) {
   try {
     const chainQuery = query(
@@ -41,6 +43,7 @@ export async function getMartChain(chainId) {
   }
 }
 
+// Get all mart locations by chain ID
 export async function getMartLocations(chainId) {
   try {
     const locationsQuery = query(
@@ -90,6 +93,7 @@ export async function getLocationById(locationId) {
     }
 
     const locationData = locationDoc.data();
+    // Get chain data if chainId is provided
     const chainData = locationData.chainId
       ? martChainsData[locationData.chainId]
       : null;
@@ -107,6 +111,7 @@ export async function getLocationById(locationId) {
   }
 }
 
+// mart chain logos stored in assets/martLogos used for displaying chain logos in UI
 export const chainLogoMapping = {
   walmart: require("../assets/martLogos/Walmart_logo.png"),
   costco: require("../assets/martLogos/Costco_logo.png"),

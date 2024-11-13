@@ -4,7 +4,7 @@ export const martChainsData = {
     chainName: "Walmart",
     // use asset logo
     logoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg",
+      "",
     dealCycle: {
       startDay: 4, // Thursday
       endDay: 3, // Wednesday
@@ -14,7 +14,7 @@ export const martChainsData = {
     chainId: "costco",
     chainName: "Costco",
     logoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/5/59/Costco_Wholesale_logo_2010-10-26.svg",
+      "",
     dealCycle: {
       startDay: 1, // Monday
       endDay: 7, // Sunday
@@ -24,7 +24,7 @@ export const martChainsData = {
     chainId: "superstore",
     chainName: "Real Canadian Superstore",
     logoUrl:
-      "https://upload.wikimedia.org/wikipedia/en/b/bb/Real_Canadian_Superstore_logo.svg",
+      "",
     dealCycle: {
       startDay: 4, // Thursday
       endDay: 3, // Wednesday
@@ -34,7 +34,7 @@ export const martChainsData = {
     chainId: "tnt",
     chainName: "T&T Supermarket",
     logoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/9/9b/T%26T_Supermarket_Logo.svg",
+      "",
     dealCycle: {
       startDay: 5, // Friday
       endDay: 4, // Thursday
