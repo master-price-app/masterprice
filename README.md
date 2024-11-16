@@ -156,14 +156,13 @@ documentId: {           // Auto-generated Firebase ID
 ### 5. shoppingLists
 ```javascript
 userId: {                 // Document ID is the userId
-  userId: string,         // Reference to users collection
+  userId: string          // user ID for queries
   items: {                // Map of items in the shopping list
     [locationId: string]: {       // The key is the martLocation document ID from martLocations collections
       [priceId: string]: boolean  // The key is the price document ID, value is always true
     }
   },
   lastUpdated: timestamp, // Last time the shopping list was modified
-  userId: string          // user ID for queries
 }
 ```
 
