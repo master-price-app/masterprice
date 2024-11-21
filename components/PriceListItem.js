@@ -25,7 +25,7 @@ export default function PriceListItem({ price, onPress }) {
   };
 
   return (
-    <PressableButton pressedHandler={onPress}>
+    <PressableButton onPress={onPress}>
       <View
         style={[
           styles.priceItem,
@@ -38,6 +38,9 @@ export default function PriceListItem({ price, onPress }) {
               <View style={styles.chainLogoContainer}>
                 <Image
                   source={getChainLogo(locationData.chain.chainId)}
+                  onError={(error) =>
+                    console.log("Error loading chain logo: ", error)
+                  }
                   style={styles.chainLogo}
                 />
               </View>

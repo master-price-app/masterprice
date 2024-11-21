@@ -1,22 +1,43 @@
-import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 
-// TODO: Add disabled state
-// TODO: Change pressedHandler to onPress
 export default function PressableButton({
+  onPress = () => {},
   children,
+  title,
+  disabled = false,
   componentStyle,
-  pressedHandler,
   pressedStyle,
-  text,
-  screenType,
 }) {
   return (
     <Pressable
-      onPress={pressedHandler}
-      style={({ pressed }) => [componentStyle, pressed && pressedStyle]}
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.button,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+        componentStyle,
+        pressed && pressedStyle,
+      ]}
     >
-      {children ? children : <Text>{text}</Text>}
+      {children ? children : (
+        <Text style={[styles.text, disabled && styles.disabledText]}>
+          {title}
+        </Text>
+      )}
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+  },
+  pressed: {
+  },
+  disabled: {
+  },
+  text: {
+  },
+  disabledText: {
+  },
+});

@@ -109,7 +109,7 @@ export default function PriceDetailScreen({ navigation, route }) {
       onDismiss={() => setMenuVisible(false)}
       anchor={
         <PressableButton
-          pressedHandler={() => setMenuVisible(true)}
+          onPress={() => setMenuVisible(true)}
           componentStyle={styles.headerButton}
           pressedStyle={styles.headerButtonPressed}
         >
@@ -222,7 +222,13 @@ export default function PriceDetailScreen({ navigation, route }) {
         <View style={styles.productCard}>
           {/* Product Image */}
           {productImage && (
-            <Image source={{ uri: productImage }} style={styles.productImage} />
+            <Image
+              source={{ uri: productImage }}
+              onError={(error) =>
+                console.log("Error loading product image: ", error)
+              }
+              style={styles.productImage}
+            />
           )}
 
           <View style={styles.productInfo}>
@@ -236,6 +242,9 @@ export default function PriceDetailScreen({ navigation, route }) {
                 <Image
                   source={
                     chainLogoMapping[martData.chain.chainId.toLowerCase()]
+                  }
+                  onError={(error) =>
+                    console.log("Error loading chain logo: ", error)
                   }
                   style={styles.chainLogoSmall}
                 />
@@ -275,7 +284,7 @@ export default function PriceDetailScreen({ navigation, route }) {
 
             {/* Add/Remove from Shopping List Button */}
             <PressableButton
-              pressedHandler={handleShoppingListToggle}
+              onPress={handleShoppingListToggle}
               componentStyle={[
                 styles.shoppingListButton,
                 isInList && styles.removeButton,
@@ -327,7 +336,7 @@ export default function PriceDetailScreen({ navigation, route }) {
           />
           {/* Submit comment button */}
           <PressableButton
-            pressedHandler={handleSubmitComment}
+            onPress={handleSubmitComment}
             componentStyle={[
               styles.submitButton,
               !newComment.trim() && styles.submitButtonDisabled,

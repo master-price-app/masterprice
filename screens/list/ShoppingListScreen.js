@@ -45,7 +45,7 @@ export default function ShoppingListScreen({ navigation }) {
     navigation.setOptions({
       headerRight: () => (
         <PressableButton
-          pressedHandler={() => setIsManaging(!isManaging)}
+          onPress={() => setIsManaging(!isManaging)}
           componentStyle={styles.headerButton}
           pressedStyle={styles.headerButtonPressed}
         >
@@ -186,7 +186,7 @@ export default function ShoppingListScreen({ navigation }) {
       {isManaging && selectedItems.size > 0 && (
         <View style={styles.deleteButtonContainer}>
           <PressableButton
-            pressedHandler={handleDelete}
+            onPress={handleDelete}
             componentStyle={styles.deleteButton}
             pressedStyle={styles.deleteButtonPressed}
           >

@@ -4,12 +4,15 @@ import PressableButton from "./PressableButton";
 export default function ProductListItem({ product, onPress }) {
   return (
     <PressableButton
-      pressedHandler={() => onPress(product.code)}
+      onPress={() => onPress(product.code)}
       componentStyle={styles.container}
     >
       <View style={styles.content}>
         <Image
           source={{ uri: product.image_url }}
+          onError={(error) =>
+            console.log("Error loading product image: ", error)
+          }
           style={styles.image}
         />
         <View style={styles.info}>

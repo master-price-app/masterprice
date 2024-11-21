@@ -44,6 +44,9 @@ export default function MartDetailScreen({ navigation, route }) {
         {/* Chain Logo */}
         <Image
           source={chainLogoMapping[chain.chainId.toLowerCase()]}
+          onError={(error) =>
+            console.log("Error loading chain logo: ", error)
+          }
           style={styles.logo}
         />
         {/* Chain Name */}

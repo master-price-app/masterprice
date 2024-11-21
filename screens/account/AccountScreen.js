@@ -124,6 +124,9 @@ export default function AccountScreen({ navigation }) {
       <View style={styles.userSection}>
         <Image
           source={{ uri: user.avatar }}
+          onError={(error) =>
+            console.log("Error loading avatar: ", error)
+          }
           style={styles.avatar}
         />
         <View style={styles.userInfo}>

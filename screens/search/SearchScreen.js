@@ -49,7 +49,7 @@ export default function SearchScreen({ navigation }) {
           {/* Clear search keyword button */}
           {keyword.length > 0 && (
             <PressableButton
-              pressedHandler={handleClearSearch}
+              onPress={handleClearSearch}
               componentStyle={styles.clearButton}
               pressedStyle={styles.clearButtonPressed}
             >
@@ -62,7 +62,7 @@ export default function SearchScreen({ navigation }) {
 
         {/* Scan Barcode Button */}
         <PressableButton
-          pressedHandler={handleScanBarcode}
+          onPress={handleScanBarcode}
           componentStyle={styles.scanButton}
           pressedStyle={styles.scanButtonPressed}
         >

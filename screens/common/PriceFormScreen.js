@@ -150,11 +150,14 @@ export default function PriceFormScreen({ navigation, route }) {
                 <View style={styles.imageContainer}>
                   <Image
                     source={{ uri: imageUri }}
+                    onError={(error) =>
+                      console.log("Error loading product image: ", error)
+                    }
                     style={styles.previewImage}
                   />
                   {/* Remove image button */}
                   <PressableButton
-                    pressedHandler={() => setImageUri(null)}
+                    onPress={() => setImageUri(null)}
                     componentStyle={styles.removeImageButton}
                   >
                     <MaterialIcons name="close" size={20} color="#fff" />
@@ -176,7 +179,7 @@ export default function PriceFormScreen({ navigation, route }) {
               <View style={styles.imageButtons}>
                 {/* Take photo */}
                 <PressableButton
-                  pressedHandler={() => handleImageSelection(true)}
+                  onPress={() => handleImageSelection(true)}
                   componentStyle={styles.imageButton}
                   pressedStyle={styles.imageButtonPressed}
                 >
@@ -185,7 +188,7 @@ export default function PriceFormScreen({ navigation, route }) {
                 </PressableButton>
                 {/* Choose photo from library */}
                 <PressableButton
-                  pressedHandler={() => handleImageSelection(false)}
+                  onPress={() => handleImageSelection(false)}
                   componentStyle={styles.imageButton}
                   pressedStyle={styles.imageButtonPressed}
                 >
@@ -251,7 +254,7 @@ export default function PriceFormScreen({ navigation, route }) {
 
           {/* Submit Button */}
           <PressableButton
-            pressedHandler={handleSubmit}
+            onPress={handleSubmit}
             componentStyle={styles.submitButton}
             pressedStyle={styles.submitButtonPressed}
           >

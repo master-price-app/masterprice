@@ -39,6 +39,9 @@ export default function PricePostListItem({ post, onPress }) {
         <Image
           source={{ uri: post.productImageUrl }}
           style={styles.productImage}
+          onError={(error) =>
+            console.log("Error loading product image: ", error)
+          }
           defaultSource={require("../assets/default-product.png")}
         />
 
@@ -67,6 +70,9 @@ export default function PricePostListItem({ post, onPress }) {
                 <View style={styles.chainLogoContainer}>
                   <Image
                     source={getChainLogo(locationData.chain.chainId)}
+                    onError={(error) =>
+                      console.log("Error loading chain logo: ", error)
+                    }
                     style={styles.chainLogo}
                   />
                 </View>
