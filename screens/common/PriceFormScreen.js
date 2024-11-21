@@ -9,14 +9,16 @@ import {
   TextInput,
   View,
 } from "react-native";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import { useAuth } from "../../contexts/AuthContext";
 import { writeToDB, updateData } from "../../services/priceService";
 import { getLocations } from "../../services/martService";
 import PressableButton from "../../components/PressableButton";
 
 export default function PriceFormScreen({ navigation, route }) {
+  const { user } = useAuth();
   const { code, productName, editMode, priceData } = route.params;
   const [price, setPrice] = useState(
     editMode ? priceData.price.toString() : ""
@@ -27,6 +29,13 @@ export default function PriceFormScreen({ navigation, route }) {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [imageUri, setImageUri] = useState(null);
+
+  useEffect(() => {
+    if (!user) {
+      navigation.replace("Login");
+      return;
+    }
+  }, [user]);
 
   // TODO: will be replaced with location and map integration
   useEffect(() => {
@@ -48,12 +57,17 @@ export default function PriceFormScreen({ navigation, route }) {
   // Image selection handler
   const handleImageSelection = async (useCamera) => {
     try {
-      const permissionType = useCamera 
+      const permissionType = useCamera
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      if (permissionType.status !== 'granted') {
-        Alert.alert('Sorry', `Need ${useCamera ? 'camera' : 'photo library'} permission to upload images`);
+      if (permissionType.status !== "granted") {
+        Alert.alert(
+          "Sorry",
+          `Need ${
+            useCamera ? "camera" : "photo library"
+          } permission to upload images`
+        );
         return;
       }
 
@@ -75,8 +89,8 @@ export default function PriceFormScreen({ navigation, route }) {
         setImageUri(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
-      Alert.alert('Error', 'Error selecting image');
+      console.error("Error selecting image:", error);
+      Alert.alert("Error", "Error selecting image");
     }
   };
 
@@ -100,11 +114,16 @@ export default function PriceFormScreen({ navigation, route }) {
 
   // Submit price
   const handleSubmit = async () => {
+    if (!user) {
+      navigation.replace("Login");
+      return;
+    }
+
     try {
       if (!validatePrice(price)) return;
       if (!validateLocation()) return;
 
-      const priceData = {
+      const newPriceData = {
         code,
         productName,
         price: parseFloat(price),
@@ -113,10 +132,15 @@ export default function PriceFormScreen({ navigation, route }) {
       };
 
       if (editMode) {
-        await updateData(priceData, "prices", route.params.priceData.id);
+        await updateData(
+          user.uid,
+          newPriceData,
+          "prices",
+          route.params.priceData.id
+        );
         Alert.alert("Success", "Price updated successfully!");
       } else {
-        await writeToDB(priceData, "prices");
+        await writeToDB(user.uid, newPriceData, "prices");
         Alert.alert("Success", "New price shared successfully!");
       }
 
@@ -129,7 +153,7 @@ export default function PriceFormScreen({ navigation, route }) {
       );
     }
   };
-  
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -267,7 +291,6 @@ export default function PriceFormScreen({ navigation, route }) {
     </ScrollView>
   );
 }
-
 // Temporary styles
 const styles = StyleSheet.create({
   scrollViewContainer: {

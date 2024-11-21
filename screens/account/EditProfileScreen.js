@@ -1,35 +1,45 @@
-import { useState, useEffect } from "react";
-import { Alert, Image, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  ActivityIndicator,
+} from "react-native";
 import { Menu } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import PressableButton from "../../components/PressableButton";
 import { useAuth } from "../../contexts/AuthContext";
 import { updateUser, getUserData } from "../../services/userService";
+import PressableButton from "../../components/PressableButton";
 
 export default function EditProfileScreen({ navigation }) {
   const { user } = useAuth();
   const [profile, setProfile] = useState({
     avatar: "https://via.placeholder.com/150",
     nickname: "",
-    notificationOn: true,
   });
   const [menuVisible, setMenuVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load user data when component mounts
   useEffect(() => {
+    if (!user) {
+      navigation.replace("Login");
+      return;
+    }
+
     loadUserData();
-  }, []);
+  }, [user]);
 
   const loadUserData = async () => {
     try {
       const userData = await getUserData(user.uid);
-      setProfile((prev) => ({
-        ...prev,
-        nickname: userData.nickname,
-        notificationOn: userData.notificationOn,
-      }));
+      setProfile({
+        avatar: "https://via.placeholder.com/150", // Keeping default avatar for now
+        nickname: userData.nickname || "",
+      });
     } catch (error) {
       console.error("Error loading user data:", error);
       Alert.alert("Error", "Failed to load profile data");
@@ -42,7 +52,6 @@ export default function EditProfileScreen({ navigation }) {
     try {
       setMenuVisible(false);
 
-      // Request permission
       const permissionType = useCamera
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -84,11 +93,14 @@ export default function EditProfileScreen({ navigation }) {
   };
 
   const handleSave = async () => {
+    if (!user) {
+      navigation.replace("Login");
+      return;
+    }
+
     try {
-      // Update user profile in Firestore
       await updateUser(user.uid, {
         nickname: profile.nickname,
-        notificationOn: profile.notificationOn,
       });
 
       Alert.alert("Success", "Profile updated");
@@ -155,17 +167,6 @@ export default function EditProfileScreen({ navigation }) {
             }
             placeholder="Enter your nickname"
             maxLength={20}
-          />
-        </View>
-
-        {/* Notification Toggle */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Weekly Deal Notifications</Text>
-          <Switch
-            value={profile.notificationOn}
-            onValueChange={(value) =>
-              setProfile((prev) => ({ ...prev, notificationOn: value }))
-            }
           />
         </View>
       </View>

@@ -12,13 +12,15 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebaseSetup";
 import { useAuth } from "../../contexts/AuthContext";
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, route }) {
+  const returnScreen = route.params?.returnScreen;
+  const returnParams = route.params?.returnParams;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { loading } = useAuth();
 
   const handleLogin = async () => {
-    //validation
+    // validation
     if (email.length === 0 || password.length === 0) {
       Alert.alert("Error", "All fields should be provided");
       return;
@@ -31,6 +33,15 @@ export default function LoginScreen({ navigation }) {
         password
       );
       console.log("Logged in user:", userCredential.user.uid);
+
+      // Handle navigation after successful login
+      if (returnScreen) {
+        // Navigate back to the intended screen
+        navigation.replace(returnScreen, returnParams);
+      } else {
+        // Default navigation
+        navigation.replace("Home");
+      }
     } catch (error) {
       console.log("Login error:", error);
       Alert.alert("Error", error.message);
@@ -69,7 +80,13 @@ export default function LoginScreen({ navigation }) {
       <Button title="Login" onPress={handleLogin} />
       <Button
         title="New User? Create An Account"
-        onPress={() => navigation.replace("Register")}
+        onPress={() => {
+          // Preserve return navigation when going to register
+          navigation.replace("Register", {
+            returnScreen,
+            returnParams,
+          });
+        }}
       />
     </View>
   );

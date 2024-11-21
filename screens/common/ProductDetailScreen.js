@@ -9,13 +9,16 @@ import {
   View,
 } from "react-native";
 import { subscribeToPricesByProduct } from "../../services/priceService";
+import { useAuth } from "../../contexts/AuthContext";
 import PressableButton from "../../components/PressableButton";
 import PriceListItem from "../../components/PriceListItem";
+
 
 // Import dummy data for backup
 const dummyProduct = require("../../assets/dummyData/dummyProduct.json");
 
 export default function ProductDetailScreen({ navigation, route }) {
+  const { user } = useAuth();
   const { code } = route.params;
   const [product, setProduct] = useState(null);
   const [prices, setPrices] = useState([]);
@@ -91,6 +94,17 @@ export default function ProductDetailScreen({ navigation, route }) {
 
   // Handle add price button press
   const handleAddPrice = () => {
+    if (!user) {
+      navigation.navigate("Login", {
+        returnScreen: "PriceForm",
+        returnParams: {
+          code,
+          productName: product.product_name,
+        },
+      });
+      return;
+    }
+
     navigation.navigate("PriceForm", {
       code,
       productName: product.product_name,

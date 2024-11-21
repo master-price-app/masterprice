@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   removeMultipleFromShoppingList,
   subscribeToShoppingList,
@@ -15,10 +16,8 @@ import {
 import PressableButton from "../../components/PressableButton";
 import ShoppingListItem from "../../components/ShoppingListItem";
 
-// Temporary use, waiting for authentication system implementation
-const PLACEHOLDER_USER_ID = "user123";
-
 export default function ShoppingListScreen({ navigation }) {
+  const { user } = useAuth();
   const [shoppingList, setShoppingList] = useState([]);
   const [isManaging, setIsManaging] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
@@ -26,19 +25,20 @@ export default function ShoppingListScreen({ navigation }) {
 
   // Subscribe to shopping list
   useEffect(() => {
-    setLoading(true);
+    if (!user) {
+      navigation.replace("Login");
+      return;
+    }
 
-    const unsubscribe = subscribeToShoppingList(
-      PLACEHOLDER_USER_ID,
-      (transformedData) => {
-        setShoppingList(transformedData);
-        setLoading(false);
-      }
-    );
+    setLoading(true);
+    const unsubscribe = subscribeToShoppingList(user.uid, (transformedData) => {
+      setShoppingList(transformedData);
+      setLoading(false);
+    });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   // Set the header right button
   useEffect(() => {
@@ -56,37 +56,6 @@ export default function ShoppingListScreen({ navigation }) {
       ),
     });
   }, [isManaging]);
-
-  // Subscribe to prices by shopping list - keeping commented code for reference
-  /*
-  useEffect(() => {
-    const unsubscribe = subscribeToPricesByShoppingList(
-      PLACEHOLDER_USER_ID,
-      (prices) => {
-        // Group the prices by store
-        const groupedPrices = prices.reduce((groups, price) => {
-          const store = price.store;
-          if (!groups[store]) {
-            groups[store] = [];
-          }
-          groups[store].push(price);
-          return groups;
-        }, {});
-
-        // Convert to the format needed for SectionList
-        const sections = Object.entries(groupedPrices).map(([store, data]) => ({
-          title: store,
-          data,
-        }));
-
-        setShoppingList(sections);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, []);
-  */
 
   // Handle item press
   const handleItemPress = (price) => {
@@ -112,6 +81,8 @@ export default function ShoppingListScreen({ navigation }) {
 
   // Handle delete
   const handleDelete = async () => {
+    if (!user) return;
+
     try {
       const itemsToDelete = Array.from(selectedItems).map((id) => {
         const section = shoppingList.find((s) =>
@@ -125,8 +96,8 @@ export default function ShoppingListScreen({ navigation }) {
         };
       });
 
-      await removeMultipleFromShoppingList(PLACEHOLDER_USER_ID, itemsToDelete);
-      
+      await removeMultipleFromShoppingList(user.uid, itemsToDelete);
+
       setSelectedItems(new Set());
       setIsManaging(false);
     } catch (error) {
