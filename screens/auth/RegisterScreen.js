@@ -96,19 +96,21 @@ export default function RegisterScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     justifyContent: "center",
     padding: 20,
+    backgroundColor: "#fff",
   },
   label: {
-    marginLeft: 10,
+    fontSize: 16,
     marginBottom: 5,
+    color: "#333",
   },
   input: {
-    borderColor: "#552055",
-    borderWidth: 2,
-    padding: 10,
-    marginBottom: 15,
+    height: 40,
+    borderWidth: 1,
+    borderColor: "#ddd",
     borderRadius: 5,
+    marginBottom: 15,
+    paddingHorizontal: 10,
   },
 });
