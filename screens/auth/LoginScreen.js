@@ -1,16 +1,26 @@
 import { useState } from "react";
-import { StyleSheet, Text, TextInput, View, Button, Alert } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Button,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebaseSetup";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { loading } = useAuth();
 
   const handleLogin = async () => {
-    // validation
-    if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+    //validation
+    if (email.length === 0 || password.length === 0) {
+      Alert.alert("Error", "All fields should be provided");
       return;
     }
 
@@ -20,17 +30,20 @@ export default function LoginScreen({ navigation }) {
         email,
         password
       );
-      console.log(userCredential.user);
-
+      console.log("Logged in user:", userCredential.user.uid);
     } catch (error) {
-      console.log("login error:", error);
+      console.log("Login error:", error);
       Alert.alert("Error", error.message);
     }
   };
 
-  const handleNavigateToRegister = () => {
-    navigation.replace("Register");
-  };
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -47,16 +60,16 @@ export default function LoginScreen({ navigation }) {
       <Text style={styles.label}>Password</Text>
       <TextInput
         style={styles.input}
+        secureTextEntry={true}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
-        secureTextEntry
       />
 
       <Button title="Login" onPress={handleLogin} />
       <Button
         title="New User? Create An Account"
-        onPress={handleNavigateToRegister}
+        onPress={() => navigation.replace("Register")}
       />
     </View>
   );
