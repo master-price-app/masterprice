@@ -102,6 +102,9 @@ export default function ProductDetailScreen({ navigation, route }) {
         {product.image_url && (
           <Image
             source={{ uri: product.image_url }}
+            onError={(error) =>
+              console.log("Error loading product image: ", error)
+            }
             style={styles.productImage}
           />
         )}
@@ -124,7 +127,7 @@ export default function ProductDetailScreen({ navigation, route }) {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Price History</Text>
           <PressableButton
-            pressedHandler={handleAddPrice}
+            onPress={handleAddPrice}
             componentStyle={styles.addButton}
           >
             <Text style={styles.addButtonText}>Share New Price</Text>

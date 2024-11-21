@@ -64,7 +64,7 @@ export default function EditProfileScreen({ navigation }) {
 
   const handleSave = async () => {
     try {
-      // TODO: Save profile to API
+      // TODO: Save profile to Firestore
       // await updateUserProfile(profile);
       Alert.alert('Success', 'Profile updated');
       navigation.goBack();
@@ -83,13 +83,16 @@ export default function EditProfileScreen({ navigation }) {
           <PressableButton
             // style={styles.avatarContainer} 
             // onPress={handleChangeAvatar}
-            pressedHandler={() => setMenuVisible(true)}
+            onPress={() => setMenuVisible(true)}
             componentStyle={styles.avatarContainer}
             pressedStyle={styles.avatarContainerPressed}
           >
             <Image
-              source={{ uri: profile.avatar }} 
-              style={styles.avatar} 
+              source={{ uri: profile.avatar }}
+              onError={(error) =>
+                console.log("Error loading avatar: ", error)
+              }
+              style={styles.avatar}
             />
             <View style={styles.avatarOverlay}>
               <MaterialIcons name="camera-alt" size={24} color="#fff" />
@@ -128,7 +131,7 @@ export default function EditProfileScreen({ navigation }) {
       <PressableButton
         // style={styles.saveButton} 
         // onPress={handleSave}
-        pressedHandler={handleSave}
+        onPress={handleSave}
         componentStyle={styles.saveButton}
         pressedStyle={styles.saveButtonPressed}
       >

@@ -9,7 +9,7 @@ export default function ShoppingListItem({
   showCheckbox,
 }) {
   return (
-    <PressableButton pressedHandler={onPress}>
+    <PressableButton onPress={onPress}>
       <View
         style={[
           styles.container,
