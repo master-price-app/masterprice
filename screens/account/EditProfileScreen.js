@@ -1,39 +1,59 @@
-import { useState } from 'react';
-import {
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { Menu } from 'react-native-paper';
-import * as ImagePicker from 'expo-image-picker';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import PressableButton from '../../components/PressableButton';
+import { useState, useEffect } from "react";
+import { Alert, Image, StyleSheet, Text, TextInput, View } from "react-native";
+import { Menu } from "react-native-paper";
+import * as ImagePicker from "expo-image-picker";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import PressableButton from "../../components/PressableButton";
+import { useAuth } from "../../contexts/AuthContext";
+import { updateUser, getUserData } from "../../services/userService";
 
-// TODO: will be updated when firebase authentication system is implemented
 export default function EditProfileScreen({ navigation }) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState({
-    avatar: 'https://via.placeholder.com/150',
-    nickname: 'Fiona',
-    email: 'fiona@example.com',
-    phone: '778-123-456',
-    address: '123 Main St, Burnaby, Canada',
+    avatar: "https://via.placeholder.com/150",
+    nickname: "",
+    notificationOn: true,
   });
   const [menuVisible, setMenuVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load user data when component mounts
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const userData = await getUserData(user.uid);
+      setProfile((prev) => ({
+        ...prev,
+        nickname: userData.nickname,
+        notificationOn: userData.notificationOn,
+      }));
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      Alert.alert("Error", "Failed to load profile data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleImageSelection = async (useCamera) => {
     try {
       setMenuVisible(false);
 
       // Request permission
-      const permissionType = useCamera 
+      const permissionType = useCamera
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      if (permissionType.status !== 'granted') {
-        Alert.alert('Sorry', `Need ${useCamera ? 'camera' : 'photo library'} permission to change avatar`);
+      if (permissionType.status !== "granted") {
+        Alert.alert(
+          "Sorry",
+          `Need ${
+            useCamera ? "camera" : "photo library"
+          } permission to change avatar`
+        );
         return;
       }
 
@@ -52,26 +72,39 @@ export default function EditProfileScreen({ navigation }) {
           });
 
       if (!result.canceled) {
-        setProfile(prev => ({
+        setProfile((prev) => ({
           ...prev,
-          avatar: result.assets[0].uri
+          avatar: result.assets[0].uri,
         }));
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
-      Alert.alert('Error', 'Error selecting image');
+      console.error("Error selecting image:", error);
+      Alert.alert("Error", "Error selecting image");
     }
   };
 
   const handleSave = async () => {
     try {
-      // TODO: Save profile to Firestore
-      // await updateUserProfile(profile);
-      Alert.alert('Success', 'Profile updated');
+      // Update user profile in Firestore
+      await updateUser(user.uid, {
+        nickname: profile.nickname,
+        notificationOn: profile.notificationOn,
+      });
+
+      Alert.alert("Success", "Profile updated");
       navigation.goBack();
     } catch (error) {
-      Alert.alert('Error', 'Failed to update profile');
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", "Failed to update profile");
     }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
   }
 
   return (
@@ -82,17 +115,13 @@ export default function EditProfileScreen({ navigation }) {
         onDismiss={() => setMenuVisible(false)}
         anchor={
           <PressableButton
-            // style={styles.avatarContainer} 
-            // onPress={handleChangeAvatar}
             onPress={() => setMenuVisible(true)}
             componentStyle={styles.avatarContainer}
             pressedStyle={styles.avatarContainerPressed}
           >
             <Image
               source={{ uri: profile.avatar }}
-              onError={(error) =>
-                console.log("Error loading avatar: ", error)
-              }
+              onError={(error) => console.log("Error loading avatar: ", error)}
               style={styles.avatar}
             />
             <View style={styles.avatarOverlay}>
@@ -121,17 +150,28 @@ export default function EditProfileScreen({ navigation }) {
           <TextInput
             style={styles.input}
             value={profile.nickname}
-            onChangeText={(text) => setProfile({ ...profile, nickname: text })}
+            onChangeText={(text) =>
+              setProfile((prev) => ({ ...prev, nickname: text }))
+            }
             placeholder="Enter your nickname"
             maxLength={20}
+          />
+        </View>
+
+        {/* Notification Toggle */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Weekly Deal Notifications</Text>
+          <Switch
+            value={profile.notificationOn}
+            onValueChange={(value) =>
+              setProfile((prev) => ({ ...prev, notificationOn: value }))
+            }
           />
         </View>
       </View>
 
       {/* Save button */}
       <PressableButton
-        // style={styles.saveButton} 
-        // onPress={handleSave}
         onPress={handleSave}
         componentStyle={styles.saveButton}
         pressedStyle={styles.saveButtonPressed}
@@ -142,19 +182,18 @@ export default function EditProfileScreen({ navigation }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#fff",
   },
   avatarContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   avatarContainerPressed: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
   },
   avatar: {
     width: 100,
@@ -162,56 +201,56 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   avatarOverlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
     padding: 8,
     borderRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatarText: {
-    color: '#fff',
+    color: "#fff",
     marginLeft: 4,
   },
   form: {
     marginTop: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingHorizontal: 16,
   },
   inputGroup: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   label: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    color: "#666",
   },
   input: {
+    flex: 1,
     fontSize: 16,
     padding: 8,
-    backgroundColor: '#f9f9f9',
+    marginLeft: 8,
+    backgroundColor: "#f9f9f9",
     borderRadius: 4,
-  },
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
   },
   saveButton: {
     margin: 16,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     padding: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   saveButtonPressed: {
-    backgroundColor: '#0056b3',
+    backgroundColor: "#0056b3",
   },
   saveButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

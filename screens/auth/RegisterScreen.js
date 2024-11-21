@@ -1,22 +1,14 @@
 import { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Button,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
+import { StyleSheet, Text, TextInput, View, Button, Alert } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebaseSetup";
-import { useAuth } from "../../contexts/AuthContext";
+import { writeUserToDB } from "../../services/userService";
 
 export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { loading } = useAuth();
+  const [nickname, setNickname] = useState("");
 
   const handleRegister = async () => {
     if (
@@ -34,25 +26,25 @@ export default function RegisterScreen({ navigation }) {
     }
 
     try {
+      // Create auth user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
+
+      // Create user document in Firestore
+      await writeUserToDB(userCredential.user.uid, {
+        email: userCredential.user.email,
+        nickname: nickname || email.split("@")[0], // Use nickname if provided, otherwise use email username
+      });
+
       console.log("Registered user:", userCredential.user.uid);
     } catch (error) {
       console.log("Register error:", error);
       Alert.alert("Error", error.message);
     }
   };
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -64,6 +56,14 @@ export default function RegisterScreen({ navigation }) {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+      />
+
+      <Text style={styles.label}>Nickname (Optional)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nickname"
+        value={nickname}
+        onChangeText={setNickname}
       />
 
       <Text style={styles.label}>Password</Text>
