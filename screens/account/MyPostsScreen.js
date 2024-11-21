@@ -9,19 +9,22 @@ import {
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { database } from "../../services/firebaseSetup";
+import { useAuth } from "../../contexts/AuthContext";
 import PricePostListItem from "../../components/PricePostListItem";
 
-// Temporary use, waiting for authentication system implementation
-const PLACEHOLDER_USER_ID = "user123";
-
 export default function MyPostsScreen({ navigation }) {
+  const { user } = useAuth(); // Get authenticated user
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
+    if (!user) {
+      navigation.replace("Login");
+      return;
+    }
     loadPosts();
-  }, []);
+  }, [user]);
 
   // TODO: Move to a custom hook
   // Load posts
@@ -29,7 +32,7 @@ export default function MyPostsScreen({ navigation }) {
     try {
       const pricesQuery = query(
         collection(database, "prices"),
-        where("userId", "==", PLACEHOLDER_USER_ID)
+        where("userId", "==", user.uid) // Use actual user ID
       );
 
       const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
@@ -41,7 +44,7 @@ export default function MyPostsScreen({ navigation }) {
             productName: data.productName,
             productImageUrl: null,
             price: data.price,
-            locationId: data.locationId, // Store locationId instead of mart info
+            locationId: data.locationId,
             createdAt: data.createdAt,
             expiryDate:
               new Date(data.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000,
@@ -69,6 +72,7 @@ export default function MyPostsScreen({ navigation }) {
     loadPosts();
   };
 
+  // Loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -77,7 +81,6 @@ export default function MyPostsScreen({ navigation }) {
     );
   }
 
-  // TODO: Move to a custom hook
   // If no posts show empty message
   if (posts.length === 0) {
     return (
@@ -101,12 +104,11 @@ export default function MyPostsScreen({ navigation }) {
                 id: item.id,
                 code: item.productId,
                 price: item.price,
-                locationId: item.locationId, // Pass locationId
-                userId: PLACEHOLDER_USER_ID,
+                locationId: item.locationId,
+                userId: user.uid,
                 createdAt: item.createdAt,
                 updatedAt: item.createdAt,
                 comments: {},
-                inShoppingList: {},
               },
               productName: item.productName,
             })

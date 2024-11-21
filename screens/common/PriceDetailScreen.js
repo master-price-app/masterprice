@@ -7,11 +7,11 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { Menu } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   subscribeToPriceDetails,
   writeComment,
@@ -23,12 +23,39 @@ import {
   removeFromShoppingList,
 } from "../../services/shoppingListService";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
+import { getUserData } from "../../services/userService";
 import PressableButton from "../../components/PressableButton";
 
-// Temporary use, waiting for authentication system implementation
-const PLACEHOLDER_USER_ID = "user123";
+// Comments list component
+const CommentsList = ({ comments, userNicknames }) => {
+  if (!Array.isArray(comments) || comments.length === 0) {
+    return (
+      <Text style={styles.noComments}>
+        No comments yet. Be the first to comment!
+      </Text>
+    );
+  }
+
+  return comments.map((comment) => (
+    <View key={comment.id} style={styles.commentItem}>
+      <View style={styles.commentHeader}>
+        <View style={styles.commentUser}>
+          <MaterialIcons name="account-circle" size={24} color="#666" />
+          <Text style={styles.commentAuthor}>
+            {userNicknames[comment.userId] || "Loading..."}
+          </Text>
+        </View>
+        <Text style={styles.commentDate}>
+          {new Date(comment.createdAt).toLocaleDateString()}
+        </Text>
+      </View>
+      <Text style={styles.commentContent}>{comment.content}</Text>
+    </View>
+  ));
+};
 
 export default function PriceDetailScreen({ navigation, route }) {
+  const { user } = useAuth();
   const {
     priceData: initialPriceData = {},
     productName = "",
@@ -43,13 +70,24 @@ export default function PriceDetailScreen({ navigation, route }) {
   const [newComment, setNewComment] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userNicknames, setUserNicknames] = useState({});
+
+  // Format comments helper function
+  const formatComments = (priceData) => {
+    return priceData?.comments
+      ? Object.entries(priceData.comments).map(([id, comment]) => ({
+          id,
+          ...comment,
+        }))
+      : [];
+  };
 
   // Subscribe to price updates and setup menu
   useEffect(() => {
     if (!initialPriceData?.id) return;
 
     // Setup menu based on ownership
-    const isCurrentUserPost = initialPriceData.userId === PLACEHOLDER_USER_ID;
+    const isCurrentUserPost = user && initialPriceData.userId === user.uid;
     navigation.setOptions({
       title: productName,
       headerRight: isCurrentUserPost ? renderMenu : null,
@@ -64,7 +102,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     );
 
     return () => unsubscribe();
-  }, [initialPriceData, menuVisible]);
+  }, [initialPriceData, menuVisible, user]);
 
   // Load initial data and check shopping list status
   useEffect(() => {
@@ -74,7 +112,9 @@ export default function PriceDetailScreen({ navigation, route }) {
       try {
         const [locationData, inList] = await Promise.all([
           getLocationById(priceData.locationId),
-          isInShoppingList(PLACEHOLDER_USER_ID, priceData.id),
+          user
+            ? isInShoppingList(user.uid, priceData.id)
+            : Promise.resolve(false),
         ]);
 
         setMartData(locationData);
@@ -87,22 +127,59 @@ export default function PriceDetailScreen({ navigation, route }) {
     }
 
     loadData();
-  }, [priceData]);
+  }, [priceData, user]);
 
   // Update shopping list status on screen focus
   useEffect(() => {
+    if (!user) return;
+
     const unsubscribe = navigation.addListener("focus", () => {
       if (priceData?.id) {
-        isInShoppingList(PLACEHOLDER_USER_ID, priceData.id)
+        isInShoppingList(user.uid, priceData.id)
           .then(setIsInList)
           .catch(console.error);
       }
     });
 
     return unsubscribe;
-  }, [navigation, priceData]);
+  }, [navigation, priceData, user]);
 
-  // Render the price detail management menu if posted the current user
+  // Function to load user nicknames
+  const loadUserNickname = async (userId) => {
+    if (!userId) return;
+
+    try {
+      const userData = await getUserData(userId);
+      setUserNicknames((prev) => ({
+        ...prev,
+        [userId]: userData.nickname || userData.email.split("@")[0],
+      }));
+    } catch (error) {
+      console.error(`Error loading nickname for user ${userId}:`, error);
+      setUserNicknames((prev) => ({
+        ...prev,
+        [userId]: userId, // Fallback to userId if nickname can't be loaded
+      }));
+    }
+  };
+
+  // Load nicknames when comments change
+  useEffect(() => {
+    if (!priceData?.comments) return;
+
+    const comments = formatComments(priceData);
+    const userIds = new Set(
+      comments.map((comment) => comment.userId).filter(Boolean)
+    );
+
+    userIds.forEach((userId) => {
+      if (!userNicknames[userId]) {
+        loadUserNickname(userId);
+      }
+    });
+  }, [priceData?.comments, userNicknames]);
+
+  // Render the price detail management menu if posted by the current user
   const renderMenu = () => (
     <Menu
       visible={menuVisible}
@@ -129,6 +206,8 @@ export default function PriceDetailScreen({ navigation, route }) {
 
   // Navigate to price form
   const handleEdit = () => {
+    if (!user) return;
+
     setMenuVisible(false);
     navigation.navigate("PriceForm", {
       code: priceData.code,
@@ -145,9 +224,11 @@ export default function PriceDetailScreen({ navigation, route }) {
 
   // Delete price
   const handleDelete = async () => {
+    if (!user) return;
+
     setMenuVisible(false);
     try {
-      await deleteData("prices", priceData.id);
+      await deleteData(user.uid, "prices", priceData.id);
       navigation.goBack();
     } catch (error) {
       console.error("Error deleting price:", error);
@@ -156,21 +237,21 @@ export default function PriceDetailScreen({ navigation, route }) {
   };
 
   // Toggle shopping list
-  // If price is in list, remove it, otherwise add it
   const handleShoppingListToggle = async () => {
+    if (!user) {
+      navigation.navigate("Login");
+      return;
+    }
+
     try {
       if (isInList) {
         await removeFromShoppingList(
-          PLACEHOLDER_USER_ID,
+          user.uid,
           priceData.id,
           priceData.locationId
         );
       } else {
-        await addToShoppingList(
-          PLACEHOLDER_USER_ID,
-          priceData.id,
-          priceData.locationId
-        );
+        await addToShoppingList(user.uid, priceData.id, priceData.locationId);
       }
       setIsInList(!isInList);
     } catch (error) {
@@ -183,8 +264,13 @@ export default function PriceDetailScreen({ navigation, route }) {
   const handleSubmitComment = async () => {
     if (!newComment.trim() || !priceData?.id) return;
 
+    if (!user) {
+      navigation.navigate("Login");
+      return;
+    }
+
     try {
-      await writeComment(newComment, priceData.id);
+      await writeComment(user.uid, newComment, priceData.id);
       setNewComment("");
     } catch (error) {
       console.error("Error submitting comment:", error);
@@ -208,13 +294,7 @@ export default function PriceDetailScreen({ navigation, route }) {
     );
   }
 
-  // Format comments
-  const commentsArray = priceData.comments
-    ? Object.entries(priceData.comments).map(([id, comment]) => ({
-        id,
-        ...comment,
-      }))
-    : [];
+  const commentsArray = formatComments(priceData);
 
   return (
     <ScrollView style={styles.container}>
@@ -236,7 +316,7 @@ export default function PriceDetailScreen({ navigation, route }) {
             <View style={styles.userInfo}>
               <MaterialIcons name="account-circle" size={24} color="#666" />
               <Text style={styles.userText}>
-                By {priceData.userId} Found At{" "}
+                By {userNicknames[priceData.userId] || "Loading..."} Found At{" "}
               </Text>
               {martData && (
                 <Image
@@ -263,17 +343,17 @@ export default function PriceDetailScreen({ navigation, route }) {
 
             {/* Mart Location */}
             {martData && (
-              // TODO: Replace with PressableButton
-              <TouchableOpacity
-                style={styles.locationInfo}
+              <PressableButton
                 onPress={handleLocationPress}
+                componentStyle={styles.locationInfo}
+                pressedStyle={styles.locationInfoPressed}
               >
                 <MaterialIcons name="location-on" size={24} color="#E31837" />
                 <Text style={styles.locationText}>
                   {martData.location?.address.street},{" "}
                   {martData.location?.address.city}
                 </Text>
-              </TouchableOpacity>
+              </PressableButton>
             )}
 
             {/* Price */}
@@ -306,25 +386,7 @@ export default function PriceDetailScreen({ navigation, route }) {
       {/* Comments Section */}
       <View style={styles.commentsSection}>
         <Text style={styles.sectionTitle}>Comments</Text>
-
-        {/* Comments */}
-        {commentsArray.map((comment) => (
-          <View key={comment.id} style={styles.commentItem}>
-            <View style={styles.commentHeader}>
-              <View style={styles.commentUser}>
-                <MaterialIcons name="account-circle" size={24} color="#666" />
-                <Text style={styles.commentAuthor}>
-                  {comment.userId || "• Anonymous User"}
-                </Text>
-              </View>
-              <Text style={styles.commentDate}>
-                {new Date(comment.createdAt).toLocaleDateString()}
-              </Text>
-            </View>
-            <Text style={styles.commentContent}>{comment.content}</Text>
-          </View>
-        ))}
-
+        <CommentsList comments={commentsArray} userNicknames={userNicknames} />
         <View style={styles.commentInput}>
           {/* Comment input */}
           <TextInput
@@ -377,7 +439,7 @@ const styles = StyleSheet.create({
     margin: 16,
     overflow: "hidden",
   },
-  
+
   // Header Menu
   headerButton: {
     padding: 8,
@@ -416,7 +478,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   chainLogoSmall: {
-    width: 80, 
+    width: 80,
     height: 40,
     resizeMode: "contain",
   },
@@ -440,7 +502,9 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 24,
   },
-
+  locationInfoPressed: {
+    opacity: 0.7,
+  },
   // Price
   priceInfo: {
     flexDirection: "row",
@@ -563,5 +627,4 @@ const styles = StyleSheet.create({
   submitButtonTextDisabled: {
     color: "#fff8",
   },
-
 });

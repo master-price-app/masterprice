@@ -10,19 +10,17 @@ import {
   where,
   onSnapshot,
 } from "firebase/firestore";
-import { getLocationById } from "./martService";
 
-const PLACEHOLDER_USER_ID = "user123"; // Temporary until auth is implemented
 
-// function to write price data to the database
-export async function writeToDB(data, collectionName) {
+// Write price data to the database
+export async function writeToDB(userId, data, collectionName) {
+  if (!userId) throw new Error("User ID is required");
+
   try {
-    
     const docRef = await addDoc(collection(database, collectionName), {
       ...data,
-      userId: PLACEHOLDER_USER_ID, // temporary until auth is implemented
-      comments: {}, // initialize comments object
-      //inShoppingList: {},
+      userId,
+      comments: {},
       updatedAt: new Date().toISOString(),
     });
     console.log("Price Document written with ID: ", docRef.id);
@@ -33,11 +31,24 @@ export async function writeToDB(data, collectionName) {
   }
 }
 
-// function to update price data in the database
-export async function updateData(data, collectionName, id) {
+// Update price data in the database
+export async function updateData(userId, data, collectionName, id) {
+  if (!userId) throw new Error("User ID is required");
+
   try {
-    // For updates, we don't need to modify the userId or initialize comments/shopping list
-    await updateDoc(doc(database, collectionName, id), {
+    // Verify the user owns this price
+    const priceRef = doc(database, collectionName, id);
+    const priceDoc = await getDoc(priceRef);
+
+    if (!priceDoc.exists()) {
+      throw new Error("Price not found");
+    }
+
+    if (priceDoc.data().userId !== userId) {
+      throw new Error("Unauthorized to update this price");
+    }
+
+    await updateDoc(priceRef, {
       ...data,
       updatedAt: new Date().toISOString(),
     });
@@ -48,10 +59,24 @@ export async function updateData(data, collectionName, id) {
   }
 }
 
-// function to delete price data by id from the database
-export async function deleteData(collectionName, id) {
+// Delete price data from the database
+export async function deleteData(userId, collectionName, id) {
+  if (!userId) throw new Error("User ID is required");
+
   try {
-    await deleteDoc(doc(database, collectionName, id));
+    // Verify the user owns this price
+    const priceRef = doc(database, collectionName, id);
+    const priceDoc = await getDoc(priceRef);
+
+    if (!priceDoc.exists()) {
+      throw new Error("Price not found");
+    }
+
+    if (priceDoc.data().userId !== userId) {
+      throw new Error("Unauthorized to delete this price");
+    }
+
+    await deleteDoc(priceRef);
     console.log("Document deleted");
   } catch (err) {
     console.log("Delete data error: ", err);
@@ -59,17 +84,17 @@ export async function deleteData(collectionName, id) {
   }
 }
 
-// function to listen for price data by product barcode
+// Listen for prices by product barcode
 export function subscribeToPricesByProduct(code, onPricesUpdate) {
   try {
     const pricesQuery = query(
       collection(database, "prices"),
       where("code", "==", code)
     );
-    // onSnapshot is a listener that triggers when the data changes
+
     const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
       const prices = querySnapshot.docs.map((doc) => ({
-        id: doc.id, 
+        id: doc.id,
         ...doc.data(),
       }));
       onPricesUpdate(prices);
@@ -82,7 +107,7 @@ export function subscribeToPricesByProduct(code, onPricesUpdate) {
   }
 }
 
-// function to get prices by martLocation
+// Listen for prices by location
 export function subscribeToPricesByLocation(locationId, onPricesUpdate) {
   try {
     const pricesQuery = query(
@@ -105,7 +130,7 @@ export function subscribeToPricesByLocation(locationId, onPricesUpdate) {
   }
 }
 
-// function to get price details by id
+// Listen for price details
 export function subscribeToPriceDetails(priceId, onPriceUpdate) {
   try {
     const priceRef = doc(database, "prices", priceId);
@@ -127,21 +152,23 @@ export function subscribeToPriceDetails(priceId, onPriceUpdate) {
   }
 }
 
-// function to write comment to a price document
-export async function writeComment(comment, priceId) {
+// Write comment to a price
+export async function writeComment(userId, comment, priceId) {
+  if (!userId) throw new Error("User ID is required");
+
   try {
     const priceRef = doc(database, "prices", priceId);
     const commentId = `comment_${Date.now()}`;
 
     const commentData = {
       [`comments.${commentId}`]: {
-        userId: PLACEHOLDER_USER_ID,  // temporary until auth is implemented
+        userId,
         content: comment,
         createdAt: new Date().toISOString(),
       },
     };
 
-    await updateDoc(priceRef, commentData); // update the comments object in the price document
+    await updateDoc(priceRef, commentData);
     console.log("Comment added successfully");
   } catch (error) {
     console.error("Error adding comment:", error);
