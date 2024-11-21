@@ -74,3 +74,23 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    padding: 20,
+  },
+  label: {
+    marginLeft: 10,
+    marginBottom: 5,
+  },
+  input: {
+    borderColor: "#552055",
+    borderWidth: 2,
+    padding: 10,
+    marginBottom: 15,
+    borderRadius: 5,
+  },
+});

@@ -48,7 +48,7 @@ const ProtectedStack = () => (
       component={TermsAndConditionsScreen}
     />
     <Stack.Screen name="ShoppingList" component={ShoppingListScreen} />
-    <Stack.Screen name="PriceForm" component={PriceFormScreen} /> // Added here
+    <Stack.Screen name="PriceForm" component={PriceFormScreen} />
   </>
 );
 
@@ -82,10 +82,7 @@ export default function AppNavigator() {
 
   return (
     <Stack.Navigator>
-      {/* Always show public stack */}
       {PublicStack()}
-
-      {/* Show either protected stack or auth stack based on auth state */}
       {user ? ProtectedStack() : AuthStack()}
     </Stack.Navigator>
   );

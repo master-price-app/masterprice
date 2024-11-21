@@ -1,3 +1,4 @@
+import { View, Text, Button } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
