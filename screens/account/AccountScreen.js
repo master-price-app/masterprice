@@ -24,24 +24,39 @@ export default function AccountScreen({ navigation }) {
     loadUserData();
   }, [user]);
 
-  const loadUserData = async () => {
+const loadUserData = async () => {
+  try {
+    if (!user) return;
+
+    let data;
     try {
-      if (!user) return;
-      const data = await getUserData(user.uid);
-      setUserData({
-        nickname: data.nickname,
-        email: user.email,
-        createdAt: new Date(data.createdAt.toDate())
-          .toISOString()
-          .split("T")[0],
-      });
+      data = await getUserData(user.uid);
     } catch (error) {
-      console.error("Error loading user data:", error);
-      Alert.alert("Error", "Failed to load user data");
-    } finally {
-      setLoading(false);
+      if (error.message === "User not found") {
+        // If user document doesn't exist, create it
+        data = await writeUserToDB(user.uid, {
+          email: user.email,
+          nickname: user.email.split("@")[0],
+        });
+      } else {
+        throw error;
+      }
     }
-  };
+
+    setUserData({
+      nickname: data.nickname,
+      email: user.email,
+      createdAt: data.createdAt
+        ? new Date(data.createdAt.toDate()).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
+    });
+  } catch (error) {
+    console.error("Error loading user data:", error);
+    Alert.alert("Error", "Failed to load user data");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
