@@ -37,7 +37,7 @@ export default function PriceFormScreen({ navigation, route }) {
     }
   }, [user]);
 
-  // TODO: will be replaced with location and map integration
+  // Load locations
   useEffect(() => {
     async function loadLocations() {
       try {
@@ -63,10 +63,25 @@ export default function PriceFormScreen({ navigation, route }) {
 
       if (permissionType.status !== "granted") {
         Alert.alert(
-          "Sorry",
-          `Need ${
-            useCamera ? "camera" : "photo library"
-          } permission to upload images`
+          `"MasterPrice" Would Like to Access Your ${
+            useCamera ? "Camera" : "Photos"
+          }`,
+          `This lets you ${
+            useCamera ? "take" : "choose"
+          } photos to share product prices.`,
+          [
+            { text: "Don't Allow", style: "cancel" },
+            {
+              text: "OK",
+              onPress: () => {
+                if (useCamera) {
+                  ImagePicker.requestCameraPermissionsAsync();
+                } else {
+                  ImagePicker.requestMediaLibraryPermissionsAsync();
+                }
+              },
+            },
+          ]
         );
         return;
       }
@@ -90,57 +105,55 @@ export default function PriceFormScreen({ navigation, route }) {
       }
     } catch (error) {
       console.error("Error selecting image:", error);
-      Alert.alert("Error", "Error selecting image");
+      Alert.alert("Error", "Failed to select image");
     }
   };
 
-  // Validate price
-  function validatePrice(price) {
-    if (isNaN(price)) {
-      Alert.alert("Error", "Price must be a number");
+  // Form validation
+  const validateForm = () => {
+    if (isNaN(price) || price.trim() === "") {
+      Alert.alert("Error", "Please enter a valid price");
       return false;
     }
-    return true;
-  }
-
-  // Validate location
-  function validateLocation() {
     if (!selectedLocationId) {
       Alert.alert("Error", "Please select a store location");
       return false;
     }
     return true;
-  }
+  };
 
-  // Submit price
+  // Handle form submission
   const handleSubmit = async () => {
     if (!user) {
       navigation.replace("Login");
       return;
     }
 
-    try {
-      if (!validatePrice(price)) return;
-      if (!validateLocation()) return;
+    if (!validateForm()) return;
 
-      const newPriceData = {
+    try {
+      const priceData = {
         code,
         productName,
         price: parseFloat(price),
         locationId: selectedLocationId,
-        createdAt: new Date().toISOString(),
       };
+
+      // Add image URI if image was selected
+      if (imageUri) {
+        priceData.imageUri = imageUri;
+      }
 
       if (editMode) {
         await updateData(
           user.uid,
-          newPriceData,
+          priceData,
           "prices",
           route.params.priceData.id
         );
         Alert.alert("Success", "Price updated successfully!");
       } else {
-        await writeToDB(user.uid, newPriceData, "prices");
+        await writeToDB(user.uid, priceData, "prices");
         Alert.alert("Success", "New price shared successfully!");
       }
 
@@ -174,12 +187,8 @@ export default function PriceFormScreen({ navigation, route }) {
                 <View style={styles.imageContainer}>
                   <Image
                     source={{ uri: imageUri }}
-                    onError={(error) =>
-                      console.log("Error loading product image: ", error)
-                    }
                     style={styles.previewImage}
                   />
-                  {/* Remove image button */}
                   <PressableButton
                     onPress={() => setImageUri(null)}
                     componentStyle={styles.removeImageButton}
@@ -199,9 +208,9 @@ export default function PriceFormScreen({ navigation, route }) {
                   </Text>
                 </View>
               )}
+
               {/* Image selection buttons */}
               <View style={styles.imageButtons}>
-                {/* Take photo */}
                 <PressableButton
                   onPress={() => handleImageSelection(true)}
                   componentStyle={styles.imageButton}
@@ -210,7 +219,6 @@ export default function PriceFormScreen({ navigation, route }) {
                   <MaterialIcons name="camera-alt" size={20} color="#007AFF" />
                   <Text style={styles.imageButtonText}>Take Photo</Text>
                 </PressableButton>
-                {/* Choose photo from library */}
                 <PressableButton
                   onPress={() => handleImageSelection(false)}
                   componentStyle={styles.imageButton}
@@ -255,10 +263,9 @@ export default function PriceFormScreen({ navigation, route }) {
             </View>
           </View>
 
-          {/* Store Location Section,   // TODO: will be replaced with location and map integration */}
+          {/* Store Location Section */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Store Location</Text>
-
             <View style={styles.pickerContainer}>
               <Picker
                 selectedValue={selectedLocationId}
@@ -291,6 +298,7 @@ export default function PriceFormScreen({ navigation, route }) {
     </ScrollView>
   );
 }
+
 // Temporary styles
 const styles = StyleSheet.create({
   scrollViewContainer: {
