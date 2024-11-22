@@ -28,7 +28,9 @@ export default function PriceFormScreen({ navigation, route }) {
   );
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [imageUri, setImageUri] = useState(null);
+  const [imageUri, setImageUri] = useState(
+    editMode && priceData.imagePath ? priceData.imagePath : null
+  );
 
   useEffect(() => {
     if (!user) {
@@ -58,10 +60,10 @@ export default function PriceFormScreen({ navigation, route }) {
   const handleImageSelection = async (useCamera) => {
     try {
       const permissionType = useCamera
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+        ? await ImagePicker.getCameraPermissionsAsync()
+        : await ImagePicker.getMediaLibraryPermissionsAsync();
 
-      if (permissionType.status !== "granted") {
+      if (!permissionType.granted) {
         Alert.alert(
           `"MasterPrice" Would Like to Access Your ${
             useCamera ? "Camera" : "Photos"
@@ -73,11 +75,14 @@ export default function PriceFormScreen({ navigation, route }) {
             { text: "Don't Allow", style: "cancel" },
             {
               text: "OK",
-              onPress: () => {
-                if (useCamera) {
-                  ImagePicker.requestCameraPermissionsAsync();
-                } else {
-                  ImagePicker.requestMediaLibraryPermissionsAsync();
+              onPress: async () => {
+                const newPermission = useCamera
+                  ? await ImagePicker.requestCameraPermissionsAsync()
+                  : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+                if (newPermission.granted) {
+                  // Retry the image selection after permission is granted
+                  handleImageSelection(useCamera);
                 }
               },
             },
@@ -142,7 +147,7 @@ const handleSubmit = async () => {
 
     // Add image URI if image was selected
     if (imageUri) {
-      priceData.imageUri = imageUri;
+      priceData.imagePath = imageUri;
     }
 
     if (editMode) {
@@ -189,6 +194,10 @@ const handleSubmit = async () => {
                   <Image
                     source={{ uri: imageUri }}
                     style={styles.previewImage}
+                    onError={(error) => {
+                      console.error("Error loading image:", error);
+                      setImageUri(null); // Reset to placeholder if image fails to load
+                    }}
                   />
                   <PressableButton
                     onPress={() => setImageUri(null)}
