@@ -47,8 +47,8 @@ export default function MartDetailScreen({ navigation, route }) {
   useEffect(() => {
     // Cleanup subscription when component unmounts
     return () => {
-      if (LocationSubscription) {
-        LocationSubscription.remove();
+      if (locationSubscription) {
+        locationSubscription.remove();
       }
     };
   }, [locationSubscription]);
