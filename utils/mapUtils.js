@@ -56,6 +56,62 @@ const calculateRegion = (points) => {
   };
 };
 
+// Cleanup location subscription
+const cleanupLocationSubscription = ({
+  locationSubscription,
+  setLocationSubscription,
+  setUserLocation,
+}) => {
+  if (locationSubscription) {
+    locationSubscription.remove();
+    setLocationSubscription(null);
+    setUserLocation(null);
+    return true;
+  }
+  return false;
+};
+
+// Get current location
+const getCurrentLocation = async () => {
+  try {
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: LOCATION_TRACKING_CONFIG.accuracy,
+    });
+
+    return {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Start location tracking
+const startLocationTracking = async (setUserLocation) => {
+  try {
+    return await Location.watchPositionAsync(
+      LOCATION_TRACKING_CONFIG,
+      (newLocation) => {
+        setUserLocation({
+          latitude: newLocation.coords.latitude,
+          longitude: newLocation.coords.longitude,
+        });
+      },
+    );
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Update map view
+const updateMapView = (mapRef, points) => {
+  const region = calculateRegion(points);
+  if (region && mapRef.current) {
+    mapRef.current.animateToRegion(region, 1000); // Animate duration in ms (1 second)
+  }
+};
+
 // Handle location tracking
 export const handleLocationTracking = async ({
   setUserLocation,
@@ -65,47 +121,31 @@ export const handleLocationTracking = async ({
   points = [],
 }) => {
   try {
-    // Cleanup subscription, if it exists
-    if (locationSubscription) {
-      locationSubscription.remove();
-      setLocationSubscription(null);
-      setUserLocation(null);
+    // 1. Cleanup subscription, if it exists
+    if (cleanupLocationSubscription({
+      locationSubscription,
+      setLocationSubscription,
+      setUserLocation,
+    })) {
       return;
     }
 
-    // Request permission
+    // 2. Request permission
     const hasPermission = await requestLocationPermission();
     if (!hasPermission) {
       Alert.alert("Permission Denied", "Please allow location access to see your position on the map.");
       return;
     }
 
-    // Get initial user location
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: LOCATION_TRACKING_CONFIG.accuracy,
-    });
-
-    const userCoords = {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-    };
+    // 3. Get current location
+    const userCoords = await getCurrentLocation();
     setUserLocation(userCoords);
 
-    const allPoints = [userCoords, ...points];
-    const region = calculateRegion(allPoints);
-    mapRef.current?.animateToRegion(region, 1000); // Animate duration in ms (1 second)
+    // 4. Update map view
+    updateMapView(mapRef, [userCoords, ...points]);
 
-    const subscription = await Location.watchPositionAsync(
-      LOCATION_TRACKING_CONFIG,
-      (newLocation) => {
-        setUserLocation({
-          latitude: newLocation.coords.latitude,
-          longitude: newLocation.coords.longitude,
-        });
-      },
-    );
-
-    // Set location subscription
+    // 5. Start location tracking
+    const subscription = await startLocationTracking(setUserLocation);
     setLocationSubscription(subscription);
   } catch (error) {
     console.error("Error handling location: ", error);
