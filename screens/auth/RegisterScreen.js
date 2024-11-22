@@ -25,6 +25,19 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
+    // Check password strength
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password)
+    ) {
+      Alert.alert(
+        "Weak Password",
+        "Your password should be at least 8 characters long and contain at least one uppercase letter and one number."
+      );
+      return;
+    }
+
     try {
       // Create auth user
       const userCredential = await createUserWithEmailAndPassword(
@@ -45,7 +58,7 @@ export default function RegisterScreen({ navigation }) {
       if (error.code === "auth/invalid-email") {
         Alert.alert("Error", "The email address is not valid");
       } else {
-      Alert.alert("Error", error.message);
+        Alert.alert("Error", error.message);
       }
     }
   };
