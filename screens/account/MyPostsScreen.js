@@ -30,55 +30,79 @@ export default function MyPostsScreen({ navigation }) {
   }, []);
 
   // Load user's posts
-  useEffect(() => {
-    if (!user) {
-      navigation.replace("Login");
-      return;
-    }
+useEffect(() => {
+  if (!user) {
+    navigation.replace("Login");
+    return;
+  }
 
-    const pricesQuery = query(
-      collection(database, "prices"),
-      where("userId", "==", user.uid)
-    );
+  const pricesQuery = query(
+    collection(database, "prices"),
+    where("userId", "==", user.uid)
+  );
 
-    const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
-      const allPosts = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+  const unsubscribe = onSnapshot(pricesQuery, async (querySnapshot) => {
+    const allPosts = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-      // Process posts with validity and master price status
-      const processedPosts = allPosts.map((post) => {
+    // Fetch product details for each post
+    const processedPosts = await Promise.all(
+      allPosts.map(async (post) => {
         const locationCycle = martCycles[post.locationId];
         const isValid = locationCycle?.chain
           ? isWithinCurrentCycle(post.createdAt, locationCycle.chain)
           : false;
 
-        return {
-          id: post.id,
-          productId: post.code,
-          productName: post.productName,
-          productImageUrl: null,
-          price: post.price,
-          locationId: post.locationId,
-          createdAt: post.createdAt,
-          isValid,
-          isMasterPrice: isMasterPrice(post, allPosts, martCycles),
-        };
-      });
+        // Fetch product details to get image_url
+        try {
+          const response = await fetch(
+            `https://world.openfoodfacts.net/api/v2/product/${post.code}`
+          );
+          const data = await response.json();
+          const productImageUrl = data.product?.image_url || null;
 
-      // Sort by date, most recent first
-      const sortedPosts = processedPosts.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
+          return {
+            id: post.id,
+            productId: post.code,
+            productName: post.productName,
+            productImageUrl, // Add the image URL from API
+            price: post.price,
+            locationId: post.locationId,
+            createdAt: post.createdAt,
+            isValid,
+            isMasterPrice: isMasterPrice(post, allPosts, martCycles),
+          };
+        } catch (error) {
+          console.error("Error fetching product details:", error);
+          return {
+            id: post.id,
+            productId: post.code,
+            productName: post.productName,
+            productImageUrl: null,
+            price: post.price,
+            locationId: post.locationId,
+            createdAt: post.createdAt,
+            isValid,
+            isMasterPrice: isMasterPrice(post, allPosts, martCycles),
+          };
+        }
+      })
+    );
 
-      setPosts(sortedPosts);
-      setLoading(false);
-      setRefreshing(false);
-    });
+    // Sort by date, most recent first
+    const sortedPosts = processedPosts.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
 
-    return () => unsubscribe();
-  }, [user, martCycles]);
+    setPosts(sortedPosts);
+    setLoading(false);
+    setRefreshing(false);
+  });
+
+  return () => unsubscribe();
+}, [user, martCycles]);
 
   // Refresh handler
   const handleRefresh = () => {
