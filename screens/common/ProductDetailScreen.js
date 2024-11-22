@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
-  Switch,
 } from "react-native";
-import { subscribeToPricesByProduct } from "../../services/priceService";
-import { subscribeToMartCycles } from "../../services/martService";
-import { useAuth } from "../../contexts/AuthContext";
+import MapView, { Marker } from "react-native-maps";
+import { MaterialIcons } from "@expo/vector-icons";
 import { isWithinCurrentCycle, isMasterPrice } from "../../utils/priceUtils";
+import { handleLocationTracking } from "../../utils/mapUtils";
+import { subscribeToPricesByProduct } from "../../services/priceService";
+import { getLocationById, subscribeToMartCycles } from "../../services/martService";
+import { useAuth } from "../../contexts/AuthContext";
 import PressableButton from "../../components/PressableButton";
 import PriceListItem from "../../components/PriceListItem";
-
 
 // Import dummy data for backup
 const dummyProduct = require("../../assets/dummyData/dummyProduct.json");
@@ -26,8 +28,13 @@ export default function ProductDetailScreen({ navigation, route }) {
   const [product, setProduct] = useState(null);
   const [prices, setPrices] = useState([]);
   const [martCycles, setMartCycles] = useState({});
-  const [error, setError] = useState(null);
   const [sortByLowest, setSortByLowest] = useState(false);
+  const [martLocations, setMartLocations] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationSubscription, setLocationSubscription] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const mapRef = useRef(null);
 
   // Fetch product details from API
   useEffect(() => {
@@ -53,6 +60,35 @@ export default function ProductDetailScreen({ navigation, route }) {
 
     fetchProductDetail();
   }, [code]);
+
+  // Fetch mart locations for Firebase
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const locationPromises = prices.map((price) => {
+          return getLocationById(price.locationId);
+        });
+        const locations = await Promise.all(locationPromises);
+
+        // Filter invalid locations and remove duplicates using Map
+        const uniqueLocations = [...new Map(
+          locations
+            .filter(loc => loc?.location?.coordinates)
+            .map(loc => [loc.location.id, loc.location])
+        ).values()];
+
+        console.log("unique locations: ", uniqueLocations);
+
+        setMartLocations(uniqueLocations);
+      } catch (err) {
+        console.error("Error fetching mart locations: ", err);
+      }
+    };
+
+    if (prices.length > 0) {
+      fetchLocations();
+    }
+  }, [prices]);
 
   // Subscribe to mart cycles
   useEffect(() => {
@@ -93,6 +129,23 @@ export default function ProductDetailScreen({ navigation, route }) {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
+  // Handle locating user
+  const handleLocateUser = useCallback(async () => {
+    // Get all the mart points
+    const martPoints = martLocations.map((location) => ({
+      latitude: location.coordinates.latitude,
+      longitude: location.coordinates.longitude,
+    }));
+
+    await handleLocationTracking({
+      setUserLocation,
+      setLocationSubscription,
+      locationSubscription,
+      mapRef,
+      points: martPoints,
+    });
+  }, [locationSubscription, martLocations]);
+
   // Handle add price button press
   const handleAddPrice = () => {
     if (!user) {
@@ -129,6 +182,7 @@ export default function ProductDetailScreen({ navigation, route }) {
     />
   );
 
+  // Error state
   if (error) {
     return (
       <View style={styles.centerContainer}>
@@ -137,6 +191,7 @@ export default function ProductDetailScreen({ navigation, route }) {
     );
   }
 
+  // No product state
   if (!product) {
     return (
       <View style={styles.centerContainer}>
@@ -147,6 +202,7 @@ export default function ProductDetailScreen({ navigation, route }) {
 
   return (
     <ScrollView style={styles.container}>
+      {/* Product Card */}
       <View style={styles.productCard}>
         {/* Product Image */}
         {product.image_url && (
