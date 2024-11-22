@@ -13,7 +13,11 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { signOut } from "firebase/auth";
 import { auth } from "../../services/firebaseSetup";
 import { useAuth } from "../../contexts/AuthContext";
-import { getUserData } from "../../services/userService";
+import {
+  getUserData,
+  deleteUserData,
+  writeUserToDB,
+} from "../../services/userService";
 
 export default function AccountScreen({ navigation }) {
   const { user } = useAuth();
@@ -76,7 +80,7 @@ const loadUserData = async () => {
     ]);
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     Alert.alert(
       "Delete Account",
       "Are you sure you want to delete your account? This action cannot be undone.",
@@ -85,11 +89,14 @@ const loadUserData = async () => {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Feature Coming Soon",
-              "Account deletion will be available in a future update."
-            );
+          onPress: async () => {
+            try {
+              await deleteUserData(user.uid);
+              // Navigation will be handled automatically by AuthContext
+            } catch (error) {
+              console.error("Delete account error:", error);
+              Alert.alert("Error", "Failed to delete account");
+            }
           },
         },
       ]

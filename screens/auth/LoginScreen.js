@@ -8,7 +8,10 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { auth } from "../../services/firebaseSetup";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -17,10 +20,11 @@ export default function LoginScreen({ navigation, route }) {
   const returnParams = route.params?.returnParams;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const { loading } = useAuth();
 
   const handleLogin = async () => {
-    // validation
+    // Validation
     if (email.length === 0 || password.length === 0) {
       Alert.alert("Error", "All fields should be provided");
       return;
@@ -46,8 +50,30 @@ export default function LoginScreen({ navigation, route }) {
       if (error.code === "auth/invalid-credential") {
         Alert.alert("Error", "Invalid email or password");
       } else {
-      Alert.alert("Error", error.message);
-      };
+        Alert.alert("Error", error.message);
+      }
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert("Error", "Please enter your email address.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert(
+        "Password Reset Email Sent",
+        "Please check your email to reset your password."
+      );
+    } catch (error) {
+      console.log("Forgot password error:", error);
+      if (error.code === "auth/invalid-email") {
+        Alert.alert("Error", "Please enter a valid email address.");
+      } else {
+        Alert.alert("Error", error.message);
+      }
     }
   };
 
@@ -81,6 +107,7 @@ export default function LoginScreen({ navigation, route }) {
       />
 
       <Button title="Login" onPress={handleLogin} />
+      <Button title="Forgot Password?" onPress={handleForgotPassword} />
       <Button
         title="New User? Create An Account"
         onPress={() => {
