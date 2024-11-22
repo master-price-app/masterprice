@@ -268,9 +268,9 @@ export default function MartDetailScreen({ navigation, route }) {
             userLocation && styles.locationButtonActive
           ]}
         >
-          <MaterialIcons 
-            name="my-location" 
-            size={24} 
+          <MaterialIcons
+            name="my-location"
+            size={24}
             color={userLocation ? "#007AFF" : "#666"}
           />
         </PressableButton>

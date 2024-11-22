@@ -12,7 +12,7 @@ import {
 import MapView, { Marker } from "react-native-maps";
 import { MaterialIcons } from "@expo/vector-icons";
 import { isWithinCurrentCycle, isMasterPrice } from "../../utils/priceUtils";
-import { handleLocationTracking } from "../../utils/mapUtils";
+import { calculateRegion, handleLocationTracking } from "../../utils/mapUtils";
 import { subscribeToPricesByProduct } from "../../services/priceService";
 import { getLocationById, subscribeToMartCycles } from "../../services/martService";
 import { useAuth } from "../../contexts/AuthContext";
@@ -223,6 +223,52 @@ export default function ProductDetailScreen({ navigation, route }) {
         </View>
       </View>
 
+      {/* Map Section */}
+      <View style={styles.mapSection}>
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          initialRegion={calculateRegion(martLocations.map(location => ({
+            latitude: location.coordinates.latitude,
+            longitude: location.coordinates.longitude,
+          })))}
+        >
+          {martLocations.map((location) => (
+            <Marker
+              key={location.id}
+              coordinate={{
+                latitude: location.coordinates.latitude,
+                longitude: location.coordinates.longitude,
+              }}
+              title={location.name}
+              pinColor="#E31837"
+            />
+          ))}
+          {userLocation && (
+            <Marker coordinate={userLocation}>
+              <View style={styles.userLocationMarker}>
+                <View style={styles.userLocationDot} />
+              </View>
+            </Marker>
+          )}
+        </MapView>
+
+        {/* Location Button */}
+        <PressableButton
+          onPress={handleLocateUser}
+          componentStyle={[
+            styles.locationButton,
+            userLocation && styles.locationButtonActive
+          ]}
+        >
+          <MaterialIcons
+            name="my-location"
+            size={24}
+            color={userLocation ? "#007AFF" : "#666"}
+          />
+        </PressableButton>
+      </View>
+
       {/* Prices Section */}
       <View style={styles.priceSection}>
         <View style={styles.sectionHeader}>
@@ -309,7 +355,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
-
+  // Map Section
+  mapSection: {
+    height: 300,
+    margin: 16,
+    borderRadius: 12,
+    overflow: "hidden",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  markerLogo: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
+  },
+  userLocationMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 122, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userLocationDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#007AFF",
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  locationButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    backgroundColor: "white",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  locationButtonActive: {
+    backgroundColor: "#f0f9ff",
+  },
   // Prices Section
   priceSection: {
     backgroundColor: "white",

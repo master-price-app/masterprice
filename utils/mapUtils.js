@@ -13,7 +13,7 @@ const LOCATION_TRACKING_CONFIG = {
 };
 
 // Calculate region for map
-const calculateRegion = (points) => {
+export const calculateRegion = (points) => {
   // Check if points are valid
   if (!points || points.length === 0) {
     return null;
@@ -121,12 +121,14 @@ export const handleLocationTracking = async ({
   points = [],
 }) => {
   try {
-    // 1. Cleanup subscription, if it exists
+    // 1. Cleanup subscription and reset map view
     if (cleanupLocationSubscription({
       locationSubscription,
       setLocationSubscription,
       setUserLocation,
     })) {
+      // Reset map view to show original points
+      updateMapView(mapRef, points);
       return;
     }
 
