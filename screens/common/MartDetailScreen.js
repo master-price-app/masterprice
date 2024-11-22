@@ -21,6 +21,7 @@ export default function MartDetailScreen({ navigation, route }) {
   const { locationId } = route.params;
   const [martData, setMartData] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [locationSubscription, setLocationSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -44,48 +45,59 @@ export default function MartDetailScreen({ navigation, route }) {
 
   // Get user location
   useEffect(() => {
-    const getUserLocation = async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          Alert.alert("Permission Denied", "Please allow location access to see your position on the map.");
-          return;
-        }
-
-        // Get initial user location
-        const location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        setUserLocation({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
-
-        // Watch for location updates
-        LocationSubscription = await Location.watchPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-          timeInterval: 1000,   // Update every second
-          distanceInterval: 1,  // Update every meter
-        }, (location) => {
-          setUserLocation({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          });
-        });
-      } catch (err) {
-        console.error("Error getting user location: ", err);
-      }
-    };
-
-    getUserLocation();
-
     // Cleanup subscription when component unmounts
     return () => {
       if (LocationSubscription) {
         LocationSubscription.remove();
       }
     };
-  }, []);
+  }, [locationSubscription]);
+
+  // Handle locating user
+  const handleLocateUser = useCallback(async () => {
+    try {
+      // Check if subscription exists
+      if (locationSubscription) {
+        locationSubscription.remove();
+        setLocationSubscription(null);
+        setUserLocation(null);
+        return;
+      }
+
+      // Request permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Please allow location access to see your position on the map.");
+        return;
+      }
+
+      // Get initial user location
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      // Watch for location updates
+      const subscription = await Location.watchPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+        timeInterval: 1000,   // Update every second
+        distanceInterval: 1,  // Update every meter
+      }, (location) => {
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      });
+
+      setLocationSubscription(subscription);
+    } catch (err) {
+      console.error("Error getting location: ", err);
+      Alert.alert("Error", "Failed to get your location. Please try again.");
+    }
+  }, [locationSubscription]);
 
   // Handle navigation
   const handleNavigation = useCallback(() => {
@@ -260,6 +272,7 @@ export default function MartDetailScreen({ navigation, route }) {
             }}
             title={location.name}
             description={location.address.street}
+            pinColor="#E31837"
           />
           {/* User location */}
           {userLocation && (
@@ -275,6 +288,22 @@ export default function MartDetailScreen({ navigation, route }) {
           )}
         </MapView>
 
+        {/* Location button */}
+        <PressableButton
+          onPress={handleLocateUser}
+          componentStyle={[
+            styles.locationButton,
+            userLocation && styles.locationButtonActive
+          ]}
+        >
+          <MaterialIcons 
+            name="my-location" 
+            size={24} 
+            color={userLocation ? "#007AFF" : "#666"}
+          />
+        </PressableButton>
+
+        {/* Navigate button */}
         <PressableButton
           onPress={handleNavigation}
           componentStyle={styles.navigateButton}
@@ -396,6 +425,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#007AFF",
     borderWidth: 2,
     borderColor: "white",
+  },
+  locationButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    backgroundColor: "white",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  locationButtonActive: {
+    backgroundColor: "#f0f9ff",
   },
   navigateButton: {
     position: "absolute",
