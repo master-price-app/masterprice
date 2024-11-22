@@ -14,6 +14,7 @@ import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
+import { requestLocationPermission } from "../../utils/permissionUtils";
 import PressableButton from "../../components/PressableButton";
 
 // TODO: will be updated with notification
@@ -90,8 +91,8 @@ export default function MartDetailScreen({ navigation, route }) {
       }
 
       // Request permission
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) {
         Alert.alert("Permission Denied", "Please allow location access to see your position on the map.");
         return;
       }
