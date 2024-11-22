@@ -97,12 +97,15 @@ export async function writeToDB(userId, data, collectionName) {
     // Remove the local imageUri and add Firebase storage path
     const { imageUri, ...restData } = data;
 
+    const now = new Date().toISOString();
+
     const docRef = await addDoc(collection(database, collectionName), {
       ...restData,
       imagePath,
       userId,
       comments: {},
-      updatedAt: new Date().toISOString(),
+      createdAt: now, // Add createdAt for new documents
+      updatedAt: now,
     });
 
     console.log("Price Document written with ID: ", docRef.id);
@@ -150,6 +153,7 @@ export async function updateData(userId, data, collectionName, id) {
       ...restData,
       imagePath,
       updatedAt: new Date().toISOString(),
+      // Do NOT update createdAt on updates
     });
 
     console.log("Price document updated");
