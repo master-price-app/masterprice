@@ -16,6 +16,7 @@ import {
   subscribeToPriceDetails,
   writeComment,
   deleteData,
+  getPriceImageUrl,
 } from "../../services/priceService";
 import {
   isInShoppingList,
@@ -71,6 +72,7 @@ export default function PriceDetailScreen({ navigation, route }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userNicknames, setUserNicknames] = useState({});
+  const [imageUrl, setImageUrl] = useState(null);
 
   // Format comments helper function
   const formatComments = (priceData) => {
@@ -81,6 +83,29 @@ export default function PriceDetailScreen({ navigation, route }) {
         }))
       : [];
   };
+
+  // useeffect to handle image loading
+ useEffect(() => {
+   async function loadImage() {
+     try {
+       if (priceData?.imagePath) {
+         // If there's a user uploaded image, get its URL
+         const url = await getPriceImageUrl(priceData.imagePath);
+         setImageUrl(url);
+       } else if (productImage) {
+         // If there's an API product image
+         setImageUrl(productImage);
+       } else {
+         setImageUrl(null);
+       }
+     } catch (error) {
+       console.error("Error loading image:", error);
+       setImageUrl(null);
+     }
+   }
+
+   loadImage();
+ }, [priceData?.imagePath, productImage]);
 
   // Subscribe to price updates and setup menu
   useEffect(() => {
@@ -301,13 +326,14 @@ export default function PriceDetailScreen({ navigation, route }) {
       <View style={styles.header}>
         <View style={styles.productCard}>
           {/* Product Image */}
-          {productImage && (
+          {imageUrl && (
             <Image
-              source={{ uri: productImage }}
-              onError={(error) =>
-                console.log("Error loading product image: ", error)
-              }
+              source={{ uri: imageUrl }}
               style={styles.productImage}
+              onError={(error) => {
+                console.log("Error loading image:", error);
+                setImageUrl(null); // Clear image URL on error
+              }}
             />
           )}
 

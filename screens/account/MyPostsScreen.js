@@ -125,8 +125,10 @@ export default function MyPostsScreen({ navigation }) {
                 createdAt: item.createdAt,
                 updatedAt: item.createdAt,
                 comments: {},
+                imagePath: item.imagePath, // Include imagePath if it exists
               },
               productName: item.productName,
+              productImage: null, // This will be overridden by imagePath if it exists
             })
           }
         />
