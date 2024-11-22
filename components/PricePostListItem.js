@@ -6,7 +6,9 @@ import PressableButton from "./PressableButton";
 
 export default function PricePostListItem({ post, onPress }) {
   const [locationData, setLocationData] = useState(null);
+  const [productImage, setProductImage] = useState(null);
 
+  // Load location data
   useEffect(() => {
     async function loadLocationData() {
       if (post.locationId) {
@@ -16,6 +18,24 @@ export default function PricePostListItem({ post, onPress }) {
     }
     loadLocationData();
   }, [post.locationId]);
+
+  // Load product image
+  useEffect(() => {
+    if (post.productImageUrl) {
+      setProductImage(post.productImageUrl);
+    } else if (post.productId) {
+      fetch(`https://world.openfoodfacts.net/api/v2/product/${post.productId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.product?.image_url) {
+            setProductImage(data.product.image_url);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching product image:", error);
+        });
+    }
+  }, [post.productId, post.productImageUrl]);
 
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString("en-CA", {
@@ -30,15 +50,23 @@ export default function PricePostListItem({ post, onPress }) {
     return chainLogoMapping[chainId.toLowerCase()] || null;
   };
 
+  const isExpired = new Date(post.expiryDate) < new Date();
+
   return (
     <PressableButton onPress={onPress}>
-      <View style={[styles.card, !post.isValid && styles.expiredCard]}>
+      <View style={styles.card}>
         <View style={styles.cardContent}>
           {/* Left: Product Image */}
           <Image
-            source={{ uri: post.productImageUrl }}
+            source={
+              productImage
+                ? { uri: productImage }
+                : require("../assets/default-product.png")
+            }
             style={styles.productImage}
-            onError={(error) => console.log("Error loading image:", error)}
+            onError={(error) =>
+              console.log("Error loading product image:", error)
+            }
             defaultSource={require("../assets/default-product.png")}
           />
 
@@ -47,13 +75,7 @@ export default function PricePostListItem({ post, onPress }) {
             {/* Header with product name and price */}
             <View style={styles.header}>
               <View style={styles.titleContainer}>
-                <Text
-                  style={[
-                    styles.productName,
-                    !post.isValid && styles.expiredText,
-                  ]}
-                  numberOfLines={2}
-                >
+                <Text style={styles.productName} numberOfLines={2}>
                   {post.productName}
                 </Text>
                 {post.isMasterPrice && (
@@ -63,9 +85,7 @@ export default function PricePostListItem({ post, onPress }) {
                   </View>
                 )}
               </View>
-              <Text style={[styles.price, !post.isValid && styles.expiredText]}>
-                ${post.price.toFixed(2)}
-              </Text>
+              <Text style={styles.price}>${post.price.toFixed(2)}</Text>
             </View>
 
             {/* Details */}
@@ -121,9 +141,6 @@ export default function PricePostListItem({ post, onPress }) {
             </View>
           </View>
         </View>
-
-        {/* Expired overlay */}
-        {!post.isValid && <View style={styles.expiredOverlay} />}
       </View>
     </PressableButton>
   );
@@ -133,30 +150,22 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
+    marginHorizontal: 16,
     marginVertical: 8,
-    overflow: "hidden",
+    padding: 12,
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    position: "relative",
-  },
-  expiredCard: {
-    backgroundColor: "#f8f8f8",
-  },
-  expiredOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.6)",
-    zIndex: 1,
   },
   cardContent: {
     flexDirection: "row",
-    padding: 12,
+    alignItems: "center",
   },
   productImage: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     borderRadius: 8,
     backgroundColor: "#f5f5f5",
   },
@@ -236,7 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E8F5E9",
   },
   expiredBadge: {
-    backgroundColor: "#dedede",
+    backgroundColor: "#FFEBEE",
   },
   statusText: {
     fontSize: 12,
@@ -246,6 +255,6 @@ const styles = StyleSheet.create({
     color: "#2E7D32",
   },
   expiredText: {
-    color: "#333",
+    color: "#C62828",
   },
 });

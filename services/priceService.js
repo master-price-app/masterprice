@@ -1,4 +1,4 @@
-import { database } from "./firebaseSetup";
+import { database, storage } from "./firebaseSetup";
 import {
   collection,
   addDoc,
@@ -10,6 +10,76 @@ import {
   where,
   onSnapshot,
 } from "firebase/firestore";
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+
+// Upload image to Firebase Storage and return the storage path
+export async function uploadPriceImage(uri, userId) {
+  try {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    // Create unique filename using userId and timestamp
+    const filename = `price_images/${userId}_${Date.now()}.jpg`;
+    const storageRef = ref(storage, filename);
+
+    // Create upload task
+    const uploadTask = uploadBytesResumable(storageRef, blob);
+
+    // Return promise that resolves with storage path
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Calculate progress percentage
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log("Upload progress:", progress);
+        },
+        (error) => {
+          console.error("Upload error:", error);
+          reject(error);
+        },
+        () => {
+          resolve(filename);
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Error preparing image upload:", error);
+    throw error;
+  }
+}
+
+// Delete image from Firebase Storage
+export async function deletePriceImage(imagePath) {
+  if (!imagePath) return;
+  
+  try {
+    const imageRef = ref(storage, imagePath);
+    await deleteObject(imageRef);
+    console.log("Image deleted successfully");
+  } catch (error) {
+    console.error("Error deleting image:", error);
+    throw error;
+  }
+}
+
+// Get download URL for an image path
+export async function getPriceImageUrl(imagePath) {
+  if (!imagePath) return null;
+
+  try {
+    const imageRef = ref(storage, imagePath);
+    return await getDownloadURL(imageRef);
+  } catch (error) {
+    console.error("Error getting image URL:", error);
+    return null;
+  }
+}
 
 
 // Write price data to the database
@@ -17,12 +87,27 @@ export async function writeToDB(userId, data, collectionName) {
   if (!userId) throw new Error("User ID is required");
 
   try {
+    let imagePath = null;
+
+    // Handle image upload if present
+    if (data.imageUri) {
+      imagePath = await uploadPriceImage(data.imageUri, userId);
+    }
+
+    // Remove the local imageUri and add Firebase storage path
+    const { imageUri, ...restData } = data;
+
+    const now = new Date().toISOString();
+
     const docRef = await addDoc(collection(database, collectionName), {
-      ...data,
+      ...restData,
+      imagePath,
       userId,
       comments: {},
-      updatedAt: new Date().toISOString(),
+      createdAt: now, // Add createdAt for new documents
+      updatedAt: now,
     });
+
     console.log("Price Document written with ID: ", docRef.id);
     return docRef.id;
   } catch (err) {
@@ -31,12 +116,12 @@ export async function writeToDB(userId, data, collectionName) {
   }
 }
 
+
 // Update price data in the database
 export async function updateData(userId, data, collectionName, id) {
   if (!userId) throw new Error("User ID is required");
 
   try {
-    // Verify the user owns this price
     const priceRef = doc(database, collectionName, id);
     const priceDoc = await getDoc(priceRef);
 
@@ -48,10 +133,29 @@ export async function updateData(userId, data, collectionName, id) {
       throw new Error("Unauthorized to update this price");
     }
 
+    const currentData = priceDoc.data();
+    let imagePath = currentData.imagePath;
+
+    // Handle image update
+    if (data.imageUri) {
+      // Delete old image if exists
+      if (currentData.imagePath) {
+        await deletePriceImage(currentData.imagePath);
+      }
+      // Upload new image
+      imagePath = await uploadPriceImage(data.imageUri, userId);
+    }
+
+    // Remove the local imageUri and update storage path
+    const { imageUri, ...restData } = data;
+
     await updateDoc(priceRef, {
-      ...data,
+      ...restData,
+      imagePath,
       updatedAt: new Date().toISOString(),
+      // Do NOT update createdAt on updates
     });
+
     console.log("Price document updated");
   } catch (err) {
     console.log("Update data error: ", err);
@@ -64,7 +168,6 @@ export async function deleteData(userId, collectionName, id) {
   if (!userId) throw new Error("User ID is required");
 
   try {
-    // Verify the user owns this price
     const priceRef = doc(database, collectionName, id);
     const priceDoc = await getDoc(priceRef);
 
@@ -76,8 +179,13 @@ export async function deleteData(userId, collectionName, id) {
       throw new Error("Unauthorized to delete this price");
     }
 
+    // Delete associated image if exists
+    if (priceDoc.data().imagePath) {
+      await deletePriceImage(priceDoc.data().imagePath);
+    }
+
     await deleteDoc(priceRef);
-    console.log("Document deleted");
+    console.log("Document and associated image deleted");
   } catch (err) {
     console.log("Delete data error: ", err);
     throw err;
@@ -107,6 +215,39 @@ export function subscribeToPricesByProduct(code, onPricesUpdate) {
   }
 }
 
+
+
+// Listen for price details
+export function subscribeToPriceDetails(priceId, onPriceUpdate) {
+  try {
+    const priceRef = doc(database, "prices", priceId);
+
+    const unsubscribe = onSnapshot(priceRef, async (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        let imageUrl = null;
+
+        // Get download URL if image exists
+        if (data.imagePath) {
+          imageUrl = await getPriceImageUrl(data.imagePath);
+        }
+
+        const priceData = {
+          id: doc.id,
+          ...data,
+          imageUrl,
+        };
+        onPriceUpdate(priceData);
+      }
+    });
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error in price details listener:", error);
+    throw error;
+  }
+}
+
 // Listen for prices by location
 export function subscribeToPricesByLocation(locationId, onPricesUpdate) {
   try {
@@ -130,27 +271,6 @@ export function subscribeToPricesByLocation(locationId, onPricesUpdate) {
   }
 }
 
-// Listen for price details
-export function subscribeToPriceDetails(priceId, onPriceUpdate) {
-  try {
-    const priceRef = doc(database, "prices", priceId);
-
-    const unsubscribe = onSnapshot(priceRef, (doc) => {
-      if (doc.exists()) {
-        const priceData = {
-          id: doc.id,
-          ...doc.data(),
-        };
-        onPriceUpdate(priceData);
-      }
-    });
-
-    return unsubscribe;
-  } catch (error) {
-    console.error("Error in price details listener:", error);
-    throw error;
-  }
-}
 
 // Write comment to a price
 export async function writeComment(userId, comment, priceId) {

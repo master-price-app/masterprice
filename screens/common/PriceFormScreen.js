@@ -28,7 +28,9 @@ export default function PriceFormScreen({ navigation, route }) {
   );
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [imageUri, setImageUri] = useState(null);
+  const [imageUri, setImageUri] = useState(
+    editMode && priceData.imagePath ? priceData.imagePath : null
+  );
 
   useEffect(() => {
     if (!user) {
@@ -37,7 +39,7 @@ export default function PriceFormScreen({ navigation, route }) {
     }
   }, [user]);
 
-  // TODO: will be replaced with location and map integration
+  // Load locations
   useEffect(() => {
     async function loadLocations() {
       try {
@@ -58,15 +60,33 @@ export default function PriceFormScreen({ navigation, route }) {
   const handleImageSelection = async (useCamera) => {
     try {
       const permissionType = useCamera
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+        ? await ImagePicker.getCameraPermissionsAsync()
+        : await ImagePicker.getMediaLibraryPermissionsAsync();
 
-      if (permissionType.status !== "granted") {
+      if (!permissionType.granted) {
         Alert.alert(
-          "Sorry",
-          `Need ${
-            useCamera ? "camera" : "photo library"
-          } permission to upload images`
+          `"MasterPrice" Would Like to Access Your ${
+            useCamera ? "Camera" : "Photos"
+          }`,
+          `This lets you ${
+            useCamera ? "take" : "choose"
+          } photos to share product prices.`,
+          [
+            { text: "Don't Allow", style: "cancel" },
+            {
+              text: "OK",
+              onPress: async () => {
+                const newPermission = useCamera
+                  ? await ImagePicker.requestCameraPermissionsAsync()
+                  : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+                if (newPermission.granted) {
+                  // Retry the image selection after permission is granted
+                  handleImageSelection(useCamera);
+                }
+              },
+            },
+          ]
         );
         return;
       }
@@ -90,69 +110,68 @@ export default function PriceFormScreen({ navigation, route }) {
       }
     } catch (error) {
       console.error("Error selecting image:", error);
-      Alert.alert("Error", "Error selecting image");
+      Alert.alert("Error", "Failed to select image");
     }
   };
 
-  // Validate price
-  function validatePrice(price) {
-    if (isNaN(price)) {
-      Alert.alert("Error", "Price must be a number");
+  // Form validation
+  const validateForm = () => {
+    if (isNaN(price) || price.trim() === "") {
+      Alert.alert("Error", "Please enter a valid price");
       return false;
     }
-    return true;
-  }
-
-  // Validate location
-  function validateLocation() {
     if (!selectedLocationId) {
       Alert.alert("Error", "Please select a store location");
       return false;
     }
     return true;
+  };
+
+  // Handle form submission
+const handleSubmit = async () => {
+  if (!user) {
+    navigation.replace("Login");
+    return;
   }
 
-  // Submit price
-  const handleSubmit = async () => {
-    if (!user) {
-      navigation.replace("Login");
-      return;
+  if (!validateForm()) return;
+
+  try {
+    const priceData = {
+      code,
+      productName,
+      price: parseFloat(price),
+      locationId: selectedLocationId,
+      // Don't include createdAt here, let the service handle it
+    };
+
+    // Add image URI if image was selected
+    if (imageUri) {
+      priceData.imagePath = imageUri;
     }
 
-    try {
-      if (!validatePrice(price)) return;
-      if (!validateLocation()) return;
-
-      const newPriceData = {
-        code,
-        productName,
-        price: parseFloat(price),
-        locationId: selectedLocationId,
-        createdAt: new Date().toISOString(),
-      };
-
-      if (editMode) {
-        await updateData(
-          user.uid,
-          newPriceData,
-          "prices",
-          route.params.priceData.id
-        );
-        Alert.alert("Success", "Price updated successfully!");
-      } else {
-        await writeToDB(user.uid, newPriceData, "prices");
-        Alert.alert("Success", "New price shared successfully!");
-      }
-
-      navigation.goBack();
-    } catch (error) {
-      console.error("Error submitting price:", error);
-      Alert.alert(
-        "Error",
-        editMode ? "Failed to update price" : "Failed to submit price"
+    if (editMode) {
+      await updateData(
+        user.uid,
+        priceData,
+        "prices",
+        route.params.priceData.id
       );
+      Alert.alert("Success", "Price updated successfully!");
+    } else {
+      await writeToDB(user.uid, priceData, "prices");
+      Alert.alert("Success", "New price shared successfully!");
     }
-  };
+
+    navigation.goBack();
+  } catch (error) {
+    console.error("Error submitting price:", error);
+    Alert.alert(
+      "Error",
+      editMode ? "Failed to update price" : "Failed to submit price"
+    );
+  }
+};
 
   if (loading) {
     return (
@@ -174,12 +193,12 @@ export default function PriceFormScreen({ navigation, route }) {
                 <View style={styles.imageContainer}>
                   <Image
                     source={{ uri: imageUri }}
-                    onError={(error) =>
-                      console.log("Error loading product image: ", error)
-                    }
                     style={styles.previewImage}
+                    onError={(error) => {
+                      console.error("Error loading image:", error);
+                      setImageUri(null); // Reset to placeholder if image fails to load
+                    }}
                   />
-                  {/* Remove image button */}
                   <PressableButton
                     onPress={() => setImageUri(null)}
                     componentStyle={styles.removeImageButton}
@@ -199,9 +218,9 @@ export default function PriceFormScreen({ navigation, route }) {
                   </Text>
                 </View>
               )}
+
               {/* Image selection buttons */}
               <View style={styles.imageButtons}>
-                {/* Take photo */}
                 <PressableButton
                   onPress={() => handleImageSelection(true)}
                   componentStyle={styles.imageButton}
@@ -210,7 +229,6 @@ export default function PriceFormScreen({ navigation, route }) {
                   <MaterialIcons name="camera-alt" size={20} color="#007AFF" />
                   <Text style={styles.imageButtonText}>Take Photo</Text>
                 </PressableButton>
-                {/* Choose photo from library */}
                 <PressableButton
                   onPress={() => handleImageSelection(false)}
                   componentStyle={styles.imageButton}
@@ -255,10 +273,9 @@ export default function PriceFormScreen({ navigation, route }) {
             </View>
           </View>
 
-          {/* Store Location Section,   // TODO: will be replaced with location and map integration */}
+          {/* Store Location Section */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Store Location</Text>
-
             <View style={styles.pickerContainer}>
               <Picker
                 selectedValue={selectedLocationId}
@@ -291,6 +308,7 @@ export default function PriceFormScreen({ navigation, route }) {
     </ScrollView>
   );
 }
+
 // Temporary styles
 const styles = StyleSheet.create({
   scrollViewContainer: {
