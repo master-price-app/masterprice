@@ -82,6 +82,68 @@ export default function MartDetailScreen({ navigation, route }) {
     });
   }, [martData]);
 
+  // Helper function: Format time string to "HH:MM AM/PM"
+  const formatHours = (timeStr) => {
+    return new Date(`2000-01-01T${timeStr}`).toLocaleTimeString('en-CA', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    });
+  };
+
+  // Get business hours component
+  const BusinessHours = ({ hours }) => {
+    console.log("hours: ", hours);
+    // Get today's day of the week (0-6, Sunday is 0)
+    const today = new Date().getDay();
+
+    // If store is open 24 hours, display that
+    if (hours.is24Hours) {
+      return (
+        <View style={styles.hoursContainer}>
+          <Text style={styles.hours24Text}>Open 24 Hours</Text>
+        </View>
+      );
+    }
+
+    // Display regular hours
+    return (
+      <View style={styles.hoursContainer}>
+        {Object.entries(hours.regularHours).map(([day, regularHours]) => {
+          // Get day number (0-6)
+          const dayNum = parseInt(day);
+          // Check if today
+          const isToday = dayNum === today;
+
+          return (
+            <View 
+              key={day}
+              style={[
+                styles.hoursRow,
+                isToday && styles.hoursRowHighlight
+              ]}
+            >
+              {/* Display the day of the week */}
+              <Text style={[
+                styles.hoursLabel,
+                isToday && styles.hoursLabelHighlight
+              ]}>
+                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayNum]}
+              </Text>
+              {/* Display the hours */}
+              <Text style={[
+                styles.hoursText,
+                isToday && styles.hoursTextHighlight,
+              ]}>
+                {`${formatHours(regularHours.open)} - ${formatHours(regularHours.close)}`}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -188,7 +250,7 @@ export default function MartDetailScreen({ navigation, route }) {
             <MaterialIcons name="access-time" size={24} color="#E31837" />
             <Text style={styles.sectionTitle}>Hours</Text>
           </View>
-          <Text style={styles.hoursText}>{location.hours}</Text>
+          <BusinessHours hours={location.hours} />
         </View>
       )}
     </ScrollView>
@@ -295,7 +357,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -323,8 +385,42 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   // Hours Section
-  hoursText: {
+  hoursContainer: {
+    marginTop: 8,
+  },
+  hoursRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+  },
+  hoursRowHighlight: {
+    backgroundColor: "#f0f9ff",
+  },
+  hoursLabel: {
     fontSize: 14,
     color: "#666",
+    flex: 1,
+  },
+  hoursLabelHighlight: {
+    color: "#0066cc",
+    fontWeight: "600",
+  },
+  hoursText: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+    textAlign: "right",
+  },
+  hoursTextHighlight: {
+    color: "#0066cc",
+    fontWeight: "600",
+  },
+  hours24Text: {
+    fontSize: 14,
+    color: "#333",
+    textAlign: "center",
+    paddingVertical: 8,
   },
 });
