@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -24,6 +24,7 @@ export default function MartDetailScreen({ navigation, route }) {
   const [locationSubscription, setLocationSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const mapRef = useRef(null);
 
   // Fetch mart data
   useEffect(() => {
@@ -75,20 +76,30 @@ export default function MartDetailScreen({ navigation, route }) {
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      setUserLocation({
+
+      const userCoords = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
-      });
+      };
+
+      setUserLocation(userCoords);
+
+      // Animate map to user location
+      mapRef.current?.animateToRegion({
+        ...userCoords,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 1000); // Animate duration in ms (1 second)
 
       // Watch for location updates
       const subscription = await Location.watchPositionAsync({
         accuracy: Location.Accuracy.Balanced,
         timeInterval: 1000,   // Update every second
         distanceInterval: 1,  // Update every meter
-      }, (location) => {
+      }, (newLocation) => {
         setUserLocation({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
+          latitude: newLocation.coords.latitude,
+          longitude: newLocation.coords.longitude,
         });
       });
 
@@ -256,12 +267,13 @@ export default function MartDetailScreen({ navigation, route }) {
       {/* Map */}
       <View style={styles.mapContainer}>
         <MapView
+          ref={mapRef}
           style={styles.map}
           initialRegion={{
             latitude: location.coordinates.latitude,
             longitude: location.coordinates.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
           }}
         >
           {/* Mart location */}
