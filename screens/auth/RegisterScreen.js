@@ -42,7 +42,11 @@ export default function RegisterScreen({ navigation }) {
       console.log("Registered user:", userCredential.user.uid);
     } catch (error) {
       console.log("Register error:", error);
+      if (error.code === "auth/invalid-email") {
+        Alert.alert("Error", "The email address is not valid");
+      } else {
       Alert.alert("Error", error.message);
+      }
     }
   };
 

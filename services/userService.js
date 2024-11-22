@@ -6,7 +6,9 @@ import {
   getDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { database } from "./firebaseSetup";
+import { deleteUser } from "firebase/auth";
+import { database, firestore, auth } from "./firebaseSetup";
+import { signOut } from "firebase/auth";
 
 // Write new user to database
 export async function writeUserToDB(userId, userData) {
@@ -65,13 +67,15 @@ export async function updateUser(userId, updates) {
 }
 
 // Delete user
-export async function deleteUser(userId) {
+export async function deleteUserData(userId) {
   try {
-    const userRef = doc(database, "users", userId);
-    await deleteDoc(userRef);
-    console.log("User deleted:", userId);
+    // Delete user document from Firestore
+    await deleteDoc(doc(database, "users", userId));
+
+    // Logout the user
+    await signOut(auth);
   } catch (error) {
-    console.error("Error deleting user:", error);
+    console.error("Error deleting user account:", error);
     throw error;
   }
 }
