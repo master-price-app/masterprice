@@ -23,6 +23,7 @@ export default function ShoppingListScreen({ navigation }) {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [selectedTotal, setSelectedTotal] = useState(0);
 
   // Subscribe to shopping list
   useEffect(() => {
@@ -46,19 +47,38 @@ export default function ShoppingListScreen({ navigation }) {
         0
       );
       setTotalPrice(total);
-
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [user]);
 
+  // Update selected total when selections change
+  useEffect(() => {
+    const selected = Array.from(selectedItems);
+    const selectedSum = shoppingList.reduce((total, section) => {
+      return (
+        total +
+        section.data.reduce((sum, item) => {
+          if (selected.includes(item.id) && item.isValid) {
+            return sum + item.price;
+          }
+          return sum;
+        }, 0)
+      );
+    }, 0);
+    setSelectedTotal(selectedSum);
+  }, [selectedItems, shoppingList]);
+
   // Set the header right button
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <PressableButton
-          onPress={() => setIsManaging(!isManaging)}
+          onPress={() => {
+            setIsManaging(!isManaging);
+            setSelectedItems(new Set()); // Clear selections when toggling manage mode
+          }}
           componentStyle={styles.headerButton}
           pressedStyle={styles.headerButtonPressed}
         >
@@ -151,7 +171,10 @@ export default function ShoppingListScreen({ navigation }) {
           />
         )}
         stickySectionHeadersEnabled={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          isManaging && styles.listContentWithActions,
+        ]}
         renderSectionHeader={({ section: { title, data } }) => (
           <View style={styles.sectionHeader}>
             <MaterialIcons name="store" size={20} color="#666" />
@@ -174,26 +197,37 @@ export default function ShoppingListScreen({ navigation }) {
             </View>
           );
         }}
-        ListFooterComponent={() => (
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Total (Valid Items):</Text>
-            <Text style={styles.totalAmount}>${totalPrice.toFixed(2)}</Text>
-          </View>
-        )}
+        ListFooterComponent={
+          !isManaging && (
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalAmount}>${totalPrice.toFixed(2)}</Text>
+            </View>
+          )
+        }
       />
 
-      {isManaging && selectedItems.size > 0 && (
-        <View style={styles.deleteButtonContainer}>
+      {isManaging && (
+        <View style={styles.bottomActionsContainer}>
           <PressableButton
             onPress={handleDelete}
-            componentStyle={styles.deleteButton}
+            componentStyle={[
+              styles.actionButton,
+              styles.deleteButton,
+              !selectedItems.size && styles.disabledButton,
+            ]}
             pressedStyle={styles.deleteButtonPressed}
+            disabled={!selectedItems.size}
           >
-            <MaterialIcons name="delete" size={24} color="#fff" />
-            <Text style={styles.deleteButtonText}>
-              Delete Selected ({selectedItems.size})
-            </Text>
+            <Text style={styles.actionButtonText}>Delete</Text>
           </PressableButton>
+
+          <View style={styles.selectedTotalContainer}>
+            <Text style={styles.selectedTotalLabel}>Selected:</Text>
+            <Text style={styles.selectedTotalAmount}>
+              ${selectedTotal.toFixed(2)}
+            </Text>
+          </View>
         </View>
       )}
     </View>
@@ -238,7 +272,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 90, // Extra padding for delete button
+    paddingBottom: 24,
+  },
+  listContentWithActions: {
+    paddingBottom: 90, // Extra padding when actions are shown
   },
   sectionHeader: {
     flexDirection: "row",
@@ -285,7 +322,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginTop: 8,
-    marginBottom: 24,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -300,27 +336,57 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#007AFF",
   },
-  deleteButtonContainer: {
+  bottomActionsContainer: {
     position: "absolute",
-    bottom: 24,
-    left: 16,
-    right: 16,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "white",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  actionButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minWidth: 100,
   },
   deleteButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     backgroundColor: "#ff3b30",
-    padding: 16,
-    borderRadius: 12,
-    gap: 8,
   },
   deleteButtonPressed: {
-    opacity: 0.8,
+    backgroundColor: "#dd3228",
   },
-  deleteButtonText: {
+  disabledButton: {
+    backgroundColor: "#ccc",
+  },
+  actionButtonText: {
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  selectedTotalContainer: {
+    alignItems: "flex-end",
+  },
+  selectedTotalLabel: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+  },
+  selectedTotalAmount: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#007AFF",
   },
 });
