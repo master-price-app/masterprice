@@ -43,7 +43,7 @@ const CommentsList = ({ comments, userNicknames }) => {
         <View style={styles.commentUser}>
           <MaterialIcons name="account-circle" size={24} color="#666" />
           <Text style={styles.commentAuthor}>
-            {userNicknames[comment.userId] || "Loading..."}
+            {userNicknames[comment.userId] || "Anonymous User"}
           </Text>
         </View>
         <Text style={styles.commentDate}>
@@ -74,38 +74,54 @@ export default function PriceDetailScreen({ navigation, route }) {
   const [userNicknames, setUserNicknames] = useState({});
   const [imageUrl, setImageUrl] = useState(null);
 
-  // Format comments helper function
-  const formatComments = (priceData) => {
-    return priceData?.comments
-      ? Object.entries(priceData.comments).map(([id, comment]) => ({
-          id,
-          ...comment,
-        }))
-      : [];
-  };
+  // Load poster's nickname immediately when priceData changes
+  useEffect(() => {
+    async function loadPosterNickname() {
+      if (!priceData?.userId) return;
 
-  // useeffect to handle image loading
- useEffect(() => {
-   async function loadImage() {
-     try {
-       if (priceData?.imagePath) {
-         // If there's a user uploaded image, get its URL
-         const url = await getPriceImageUrl(priceData.imagePath);
-         setImageUrl(url);
-       } else if (productImage) {
-         // If there's an API product image
-         setImageUrl(productImage);
-       } else {
-         setImageUrl(null);
-       }
-     } catch (error) {
-       console.error("Error loading image:", error);
-       setImageUrl(null);
-     }
-   }
+      try {
+        const userData = await getUserData(priceData.userId);
+        setUserNicknames((prev) => ({
+          ...prev,
+          [priceData.userId]:
+            userData.nickname ||
+            userData.email?.split("@")[0] ||
+            "Anonymous User",
+        }));
+      } catch (error) {
+        console.error(`Error loading poster nickname:`, error);
+        setUserNicknames((prev) => ({
+          ...prev,
+          [priceData.userId]: "Anonymous User",
+        }));
+      }
+    }
 
-   loadImage();
- }, [priceData?.imagePath, productImage]);
+    loadPosterNickname();
+  }, [priceData?.userId]);
+
+  // Handle image loading
+  useEffect(() => {
+    async function loadImage() {
+      try {
+        if (priceData?.imagePath) {
+          // If there's a user uploaded image, get its URL
+          const url = await getPriceImageUrl(priceData.imagePath);
+          setImageUrl(url);
+        } else if (productImage) {
+          // If there's an API product image
+          setImageUrl(productImage);
+        } else {
+          setImageUrl(null);
+        }
+      } catch (error) {
+        console.error("Error loading image:", error);
+        setImageUrl(null);
+      }
+    }
+
+    loadImage();
+  }, [priceData?.imagePath, productImage]);
 
   // Subscribe to price updates and setup menu
   useEffect(() => {
@@ -169,42 +185,41 @@ export default function PriceDetailScreen({ navigation, route }) {
     return unsubscribe;
   }, [navigation, priceData, user]);
 
-  // Function to load user nicknames
-  const loadUserNickname = async (userId) => {
-    if (!userId) return;
+  // Load comment user nicknames
+  const loadCommentUserNickname = async (userId) => {
+    if (!userId || userNicknames[userId]) return;
 
     try {
       const userData = await getUserData(userId);
       setUserNicknames((prev) => ({
         ...prev,
-        [userId]: userData.nickname || userData.email.split("@")[0],
+        [userId]:
+          userData.nickname ||
+          userData.email?.split("@")[0] ||
+          "Anonymous User",
       }));
     } catch (error) {
       console.error(`Error loading nickname for user ${userId}:`, error);
       setUserNicknames((prev) => ({
         ...prev,
-        [userId]: userId, // Fallback to userId if nickname can't be loaded
+        [userId]: "Anonymous User",
       }));
     }
   };
 
-  // Load nicknames when comments change
+  // Load nicknames for comment authors
   useEffect(() => {
-    if (!priceData?.comments) return;
-
-    const comments = formatComments(priceData);
+    const comments = priceData?.comments
+      ? Object.values(priceData.comments)
+      : [];
     const userIds = new Set(
       comments.map((comment) => comment.userId).filter(Boolean)
     );
 
-    userIds.forEach((userId) => {
-      if (!userNicknames[userId]) {
-        loadUserNickname(userId);
-      }
-    });
-  }, [priceData?.comments, userNicknames]);
+    userIds.forEach(loadCommentUserNickname);
+  }, [priceData?.comments]);
 
-  // Render the price detail management menu if posted by the current user
+  // Menu rendering and handlers
   const renderMenu = () => (
     <Menu
       visible={menuVisible}
@@ -310,6 +325,16 @@ export default function PriceDetailScreen({ navigation, route }) {
     }
   };
 
+  // Format comments helper
+  const formatComments = (priceData) => {
+    return priceData?.comments
+      ? Object.entries(priceData.comments).map(([id, comment]) => ({
+          id,
+          ...comment,
+        }))
+      : [];
+  };
+
   // Loading state
   if (!priceData || !priceData.id || loading) {
     return (
@@ -325,24 +350,23 @@ export default function PriceDetailScreen({ navigation, route }) {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.productCard}>
-          {/* Product Image */}
           {imageUrl && (
             <Image
               source={{ uri: imageUrl }}
               style={styles.productImage}
               onError={(error) => {
                 console.log("Error loading image:", error);
-                setImageUrl(null); // Clear image URL on error
+                setImageUrl(null);
               }}
             />
           )}
 
           <View style={styles.productInfo}>
-            {/* User Info */}
             <View style={styles.userInfo}>
               <MaterialIcons name="account-circle" size={24} color="#666" />
               <Text style={styles.userText}>
-                By {userNicknames[priceData.userId] || "Loading..."} Found At{" "}
+                By {userNicknames[priceData.userId] || "Anonymous User"} Found
+                At{" "}
               </Text>
               {martData && (
                 <Image
