@@ -15,6 +15,7 @@ import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import { requestLocationPermission } from "../../utils/permissionUtils";
+import { calculateRegion } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
 // TODO: will be updated with notification
@@ -55,30 +56,6 @@ export default function MartDetailScreen({ navigation, route }) {
     };
   }, [locationSubscription]);
 
-  const calculateRegion = useCallback((userCoords, martCoords) => {
-    const PADDING = 2;  // Padding multiplier for better zoom
-
-    // Calculate padding
-    const latitudeDelta = Math.abs(userCoords.latitude - martCoords.latitude) * PADDING;
-    const longitudeDelta = Math.abs(userCoords.longitude - martCoords.longitude) * PADDING;
-
-    // Ensure minimum zoom level
-    const MIN_DELTA = 0.01;
-    const finalLatDelta = Math.max(latitudeDelta, MIN_DELTA);
-    const finalLongDelta = Math.max(longitudeDelta, MIN_DELTA);
-
-    // Calculate center coordinates
-    const centerLatitude = (userCoords.latitude + martCoords.latitude) / 2;
-    const centerLongitude = (userCoords.longitude + martCoords.longitude) / 2;
-
-    return {
-      latitude: centerLatitude,
-      longitude: centerLongitude,
-      latitudeDelta: finalLatDelta,
-      longitudeDelta: finalLongDelta,
-    };
-  }, []);
-
   // Handle locating user
   const handleLocateUser = useCallback(async () => {
     try {
@@ -113,7 +90,7 @@ export default function MartDetailScreen({ navigation, route }) {
         latitude: martData.location.coordinates.latitude,
         longitude: martData.location.coordinates.longitude,
       };
-      const newRegion = calculateRegion(userCoords, martCoords);
+      const newRegion = calculateRegion([userCoords, martCoords]);
 
       // Animate map to user location
       mapRef.current?.animateToRegion(newRegion, 1000); // Animate duration in ms (1 second)
@@ -135,7 +112,7 @@ export default function MartDetailScreen({ navigation, route }) {
       console.error("Error getting location: ", err);
       Alert.alert("Error", "Failed to get your location. Please try again.");
     }
-  }, [locationSubscription, martData, calculateRegion]);
+  }, [locationSubscription, martData]);
 
   // Handle navigation
   const handleNavigation = useCallback(() => {
