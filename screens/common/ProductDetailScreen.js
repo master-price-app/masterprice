@@ -77,8 +77,6 @@ export default function ProductDetailScreen({ navigation, route }) {
             .map(loc => [loc.location.id, loc.location])
         ).values()];
 
-        console.log("unique locations: ", uniqueLocations);
-
         setMartLocations(uniqueLocations);
       } catch (err) {
         console.error("Error fetching mart locations: ", err);
@@ -202,33 +200,30 @@ export default function ProductDetailScreen({ navigation, route }) {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Product Card */}
-      <View style={styles.productCard}>
-        {/* Product Image */}
-        {product.image_url && (
-          <Image
-            source={{ uri: product.image_url }}
-            onError={(error) =>
-              console.log("Error loading product image: ", error)
-            }
-            style={styles.productImage}
-          />
-        )}
-        {/* Product Info */}
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{product.product_name}</Text>
-          {product.brands && (
-            <Text style={styles.brandText}>{product.brands}</Text>
+      {/* Product Header */}
+      <View style={styles.productHeader}>
+        <View style={styles.productBasicInfo}>
+          {product.image_url && (
+            <Image
+              source={{ uri: product.image_url }}
+              onError={(error) =>
+                console.log("Error loading product image: ", error)
+              }
+              style={styles.productThumbnail}
+            />
           )}
-          <Text style={styles.quantityText}>
-            {product.product_quantity}
-            {product.product_quantity_unit}
-          </Text>
-          <Text style={styles.codeText}>Barcode: {code}</Text>
+          <View style={styles.productTextInfo}>
+            <Text style={styles.productName} numberOfLines={1}>
+              {product.product_name}
+            </Text>
+            <Text style={styles.productSubInfo} numberOfLines={1}>
+              {product.brands} · {product.product_quantity}{product.product_quantity_unit}
+            </Text>
+          </View>
         </View>
       </View>
 
-      {/* Price Section */}
+      {/* Prices Section */}
       <View style={styles.priceSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Price History</Text>
@@ -281,45 +276,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  productCard: {
+  errorText: {
+    color: "#ff3b30",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  // Product Header
+  productHeader: {
     backgroundColor: "white",
-    borderRadius: 12,
-    margin: 16,
-    overflow: "hidden",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    padding: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#e0e0e0",
   },
-  productImage: {
-    width: "100%",
-    aspectRatio: 1,
-    backgroundColor: "#f5f5f5",
+  productBasicInfo: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  productInfo: {
-    padding: 16,
+  productThumbnail: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  productTextInfo: {
+    flex: 1,
   },
   productName: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  brandText: {
     fontSize: 16,
-    color: "#666",
-    marginBottom: 4,
+    fontWeight: "600",
   },
-  quantityText: {
+  productSubInfo: {
     fontSize: 14,
     color: "#666",
-    marginBottom: 4,
   },
-  codeText: {
-    fontSize: 12,
-    color: "#999",
-  },
+
+  // Prices Section
   priceSection: {
     backgroundColor: "white",
     borderRadius: 12,
@@ -367,10 +358,5 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 14,
     marginTop: 16,
-  },
-  errorText: {
-    color: "#ff3b30",
-    fontSize: 16,
-    textAlign: "center",
   },
 });
