@@ -54,6 +54,30 @@ export default function MartDetailScreen({ navigation, route }) {
     };
   }, [locationSubscription]);
 
+  const calculateRegion = useCallback((userCoords, martCoords) => {
+    const PADDING = 2;  // Padding multiplier for better zoom
+
+    // Calculate padding
+    const latitudeDelta = Math.abs(userCoords.latitude - martCoords.latitude) * PADDING;
+    const longitudeDelta = Math.abs(userCoords.longitude - martCoords.longitude) * PADDING;
+
+    // Ensure minimum zoom level
+    const MIN_DELTA = 0.01;
+    const finalLatDelta = Math.max(latitudeDelta, MIN_DELTA);
+    const finalLongDelta = Math.max(longitudeDelta, MIN_DELTA);
+
+    // Calculate center coordinates
+    const centerLatitude = (userCoords.latitude + martCoords.latitude) / 2;
+    const centerLongitude = (userCoords.longitude + martCoords.longitude) / 2;
+
+    return {
+      latitude: centerLatitude,
+      longitude: centerLongitude,
+      latitudeDelta: finalLatDelta,
+      longitudeDelta: finalLongDelta,
+    };
+  }, []);
+
   // Handle locating user
   const handleLocateUser = useCallback(async () => {
     try {
@@ -73,23 +97,25 @@ export default function MartDetailScreen({ navigation, route }) {
       }
 
       // Get initial user location
-      const location = await Location.getCurrentPositionAsync({
+      const userLocation = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
 
       const userCoords = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: userLocation.coords.latitude,
+        longitude: userLocation.coords.longitude,
       };
-
       setUserLocation(userCoords);
 
+      // Calculate region that shows both user and mart
+      const martCoords = {
+        latitude: martData.location.coordinates.latitude,
+        longitude: martData.location.coordinates.longitude,
+      };
+      const newRegion = calculateRegion(userCoords, martCoords);
+
       // Animate map to user location
-      mapRef.current?.animateToRegion({
-        ...userCoords,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }, 1000); // Animate duration in ms (1 second)
+      mapRef.current?.animateToRegion(newRegion, 1000); // Animate duration in ms (1 second)
 
       // Watch for location updates
       const subscription = await Location.watchPositionAsync({
@@ -108,7 +134,7 @@ export default function MartDetailScreen({ navigation, route }) {
       console.error("Error getting location: ", err);
       Alert.alert("Error", "Failed to get your location. Please try again.");
     }
-  }, [locationSubscription]);
+  }, [locationSubscription, martData, calculateRegion]);
 
   // Handle navigation
   const handleNavigation = useCallback(() => {
