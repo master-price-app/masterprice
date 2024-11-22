@@ -11,11 +11,9 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
-import { requestLocationPermission } from "../../utils/permissionUtils";
-import { calculateRegion } from "../../utils/mapUtils";
+import { handleLocationTracking } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
 // TODO: will be updated with notification
@@ -58,60 +56,18 @@ export default function MartDetailScreen({ navigation, route }) {
 
   // Handle locating user
   const handleLocateUser = useCallback(async () => {
-    try {
-      // Check if subscription exists
-      if (locationSubscription) {
-        locationSubscription.remove();
-        setLocationSubscription(null);
-        setUserLocation(null);
-        return;
-      }
+    const martCoords = [{
+      latitude: martData.location.coordinates.latitude,
+      longitude: martData.location.coordinates.longitude,
+    }];
 
-      // Request permission
-      const hasPermission = await requestLocationPermission();
-      if (!hasPermission) {
-        Alert.alert("Permission Denied", "Please allow location access to see your position on the map.");
-        return;
-      }
-
-      // Get initial user location
-      const userLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const userCoords = {
-        latitude: userLocation.coords.latitude,
-        longitude: userLocation.coords.longitude,
-      };
-      setUserLocation(userCoords);
-
-      // Calculate region that shows both user and mart
-      const martCoords = {
-        latitude: martData.location.coordinates.latitude,
-        longitude: martData.location.coordinates.longitude,
-      };
-      const newRegion = calculateRegion([userCoords, martCoords]);
-
-      // Animate map to user location
-      mapRef.current?.animateToRegion(newRegion, 1000); // Animate duration in ms (1 second)
-
-      // Watch for location updates
-      const subscription = await Location.watchPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-        timeInterval: 1000,   // Update every second
-        distanceInterval: 1,  // Update every meter
-      }, (newLocation) => {
-        setUserLocation({
-          latitude: newLocation.coords.latitude,
-          longitude: newLocation.coords.longitude,
-        });
-      });
-
-      setLocationSubscription(subscription);
-    } catch (err) {
-      console.error("Error getting location: ", err);
-      Alert.alert("Error", "Failed to get your location. Please try again.");
-    }
+    await handleLocationTracking({
+      setUserLocation,
+      setLocationSubscription,
+      locationSubscription,
+      mapRef,
+      points: martCoords,
+    });
   }, [locationSubscription, martData]);
 
   // Handle navigation
