@@ -14,9 +14,11 @@ export default function ShoppingListItem({
         style={[
           styles.container,
           price.isMasterPrice && styles.masterPriceContainer,
+          !price.isValid && styles.expiredContainer,
         ]}
       >
         <View style={styles.content}>
+          {/* Header - Name, Location, Price */}
           <View style={styles.header}>
             {showCheckbox && (
               <MaterialIcons
@@ -27,51 +29,97 @@ export default function ShoppingListItem({
               />
             )}
             <View style={styles.nameContainer}>
-              <Text style={styles.productName} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.productName,
+                  !price.isValid && styles.expiredText,
+                ]}
+                numberOfLines={1}
+              >
                 {price.productName}
               </Text>
-              <Text style={styles.locationName} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.locationName,
+                  !price.isValid && styles.expiredText,
+                ]}
+                numberOfLines={1}
+              >
                 {price.locationName}
               </Text>
             </View>
             <Text
-              style={[styles.price, price.isMasterPrice && styles.masterPrice]}
+              style={[
+                styles.price,
+                price.isMasterPrice && styles.masterPrice,
+                !price.isValid && styles.expiredText,
+              ]}
             >
               ${price.price.toFixed(2)}
             </Text>
           </View>
 
-          <View style={styles.details}>
-            <Text style={styles.quantity}>{price.productQuantity}</Text>
+          {/* Status Badges */}
+          <View style={styles.badgeContainer}>
             {price.isMasterPrice && (
               <View style={styles.masterBadge}>
                 <MaterialIcons name="verified" size={14} color="#007AFF" />
                 <Text style={styles.masterText}>Master Price</Text>
               </View>
             )}
+            <View
+              style={[
+                styles.statusBadge,
+                price.isValid ? styles.validBadge : styles.expiredBadge,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  price.isValid ? styles.validText : styles.expiredText,
+                ]}
+              >
+                {price.isValid ? "Valid" : "Expired"}
+              </Text>
+            </View>
           </View>
 
+          {/* Date */}
           <View style={styles.footer}>
             <MaterialIcons name="schedule" size={16} color="#666" />
-            <Text style={styles.dateText}>
+            <Text
+              style={[styles.dateText, !price.isValid && styles.expiredText]}
+            >
               {new Date(price.createdAt).toLocaleDateString()}
             </Text>
           </View>
         </View>
+
+        {/* Expired overlay */}
+        {!price.isValid && <View style={styles.expiredOverlay} />}
       </View>
     </PressableButton>
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+    position: "relative",
+    overflow: "hidden",
   },
   masterPriceContainer: {
     backgroundColor: "#f0f9ff",
+  },
+  expiredContainer: {
+    backgroundColor: "#f8f8f8",
+  },
+  expiredOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    zIndex: 1,
   },
   content: {
     padding: 16,
@@ -79,8 +127,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   checkbox: {
     marginRight: 8,
@@ -96,7 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   locationName: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#666",
   },
   price: {
@@ -107,15 +154,11 @@ const styles = StyleSheet.create({
   masterPrice: {
     color: "#007AFF",
   },
-  details: {
+  badgeContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 8,
-  },
-  quantity: {
-    fontSize: 14,
-    color: "#666",
   },
   masterBadge: {
     flexDirection: "row",
@@ -127,6 +170,27 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontWeight: "500",
   },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  validBadge: {
+    backgroundColor: "#E8F5E9",
+  },
+  expiredBadge: {
+    backgroundColor: "#dedede",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  validText: {
+    color: "#2E7D32",
+  },
+  expiredText: {
+    color: "#666",
+  },
   footer: {
     flexDirection: "row",
     alignItems: "center",
@@ -135,5 +199,25 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
     color: "#666",
+  },
+  masterPrice: {
+    color: "#007AFF",
+    fontWeight: "700", // Make it bolder
+  },
+  masterBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f9ff", // Light blue background
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#007AFF20", // Very light blue border
+  },
+  masterText: {
+    marginLeft: 4,
+    fontSize: 12,
+    color: "#007AFF",
+    fontWeight: "600", // Make it slightly bolder
   },
 });

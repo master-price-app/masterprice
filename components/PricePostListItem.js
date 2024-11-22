@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { getLocationById, chainLogoMapping } from "../services/martService";
+import PressableButton from "./PressableButton";
 
 export default function PricePostListItem({ post, onPress }) {
   const [locationData, setLocationData] = useState(null);
-  const isExpired = new Date(post.expiryDate) < new Date();
 
   useEffect(() => {
     async function loadLocationData() {
@@ -14,7 +14,6 @@ export default function PricePostListItem({ post, onPress }) {
         setLocationData(data);
       }
     }
-
     loadLocationData();
   }, [post.locationId]);
 
@@ -32,106 +31,124 @@ export default function PricePostListItem({ post, onPress }) {
   };
 
   return (
-    // TODO: Replace with PressableButton
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <View style={styles.cardContent}>
-        {/* Left: Product Image */}
-        <Image
-          source={{ uri: post.productImageUrl }}
-          style={styles.productImage}
-          onError={(error) =>
-            console.log("Error loading product image: ", error)
-          }
-          defaultSource={require("../assets/default-product.png")}
-        />
+    <PressableButton onPress={onPress}>
+      <View style={[styles.card, !post.isValid && styles.expiredCard]}>
+        <View style={styles.cardContent}>
+          {/* Left: Product Image */}
+          <Image
+            source={{ uri: post.productImageUrl }}
+            style={styles.productImage}
+            onError={(error) => console.log("Error loading image:", error)}
+            defaultSource={require("../assets/default-product.png")}
+          />
 
-        {/* Right: Product Info */}
-        <View style={styles.infoContainer}>
-          {/* Header with product name and price */}
-          <View style={styles.header}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.productName} numberOfLines={2}>
-                {post.productName}
-              </Text>
-              {post.isMasterPrice && (
-                <View style={styles.masterBadge}>
-                  <MaterialIcons name="verified" size={16} color="#007AFF" />
-                  <Text style={styles.masterText}>Master Price</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.price}>${post.price.toFixed(2)}</Text>
-          </View>
-
-          {/* Details */}
-          <View style={styles.details}>
-            <View style={styles.storeDetail}>
-              {locationData?.chain?.chainId ? (
-                <View style={styles.chainLogoContainer}>
-                  <Image
-                    source={getChainLogo(locationData.chain.chainId)}
-                    onError={(error) =>
-                      console.log("Error loading chain logo: ", error)
-                    }
-                    style={styles.chainLogo}
-                  />
-                </View>
-              ) : (
-                <View style={styles.detailRow}>
-                  <MaterialIcons name="store" size={16} color="#666" />
-                  <Text style={styles.detailText}>
-                    {locationData?.location?.name || "Loading..."}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Date */}
-            <View style={styles.detailRow}>
-              <MaterialIcons name="schedule" size={16} color="#666" />
-              <Text style={styles.detailText}>
-                Posted: {formatDate(post.createdAt)}
+          {/* Right: Product Info */}
+          <View style={styles.infoContainer}>
+            {/* Header with product name and price */}
+            <View style={styles.header}>
+              <View style={styles.titleContainer}>
+                <Text
+                  style={[
+                    styles.productName,
+                    !post.isValid && styles.expiredText,
+                  ]}
+                  numberOfLines={2}
+                >
+                  {post.productName}
+                </Text>
+                {post.isMasterPrice && (
+                  <View style={styles.masterBadge}>
+                    <MaterialIcons name="verified" size={16} color="#007AFF" />
+                    <Text style={styles.masterText}>Master Price</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.price, !post.isValid && styles.expiredText]}>
+                ${post.price.toFixed(2)}
               </Text>
             </View>
-          </View>
 
-          {/* Status */}
-          <View style={styles.footer}>
-            <View
-              style={[
-                styles.statusBadge,
-                isExpired ? styles.expiredBadge : styles.validBadge,
-              ]}
-            >
-              <Text
+            {/* Details */}
+            <View style={styles.details}>
+              <View style={styles.storeDetail}>
+                {locationData?.chain?.chainId ? (
+                  <View style={styles.chainLogoContainer}>
+                    <Image
+                      source={getChainLogo(locationData.chain.chainId)}
+                      onError={(error) =>
+                        console.log("Error loading chain logo:", error)
+                      }
+                      style={styles.chainLogo}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.detailRow}>
+                    <MaterialIcons name="store" size={16} color="#666" />
+                    <Text style={styles.detailText}>
+                      {locationData?.location?.name || "Loading..."}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Date */}
+              <View style={styles.detailRow}>
+                <MaterialIcons name="schedule" size={16} color="#666" />
+                <Text style={styles.detailText}>
+                  Posted: {formatDate(post.createdAt)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Status */}
+            <View style={styles.footer}>
+              <View
                 style={[
-                  styles.statusText,
-                  isExpired ? styles.expiredText : styles.validText,
+                  styles.statusBadge,
+                  post.isValid ? styles.validBadge : styles.expiredBadge,
                 ]}
               >
-                {isExpired ? "Expired" : "Valid"}
-              </Text>
+                <Text
+                  style={[
+                    styles.statusText,
+                    post.isValid ? styles.validText : styles.expiredText,
+                  ]}
+                >
+                  {post.isValid ? "Valid" : "Expired"}
+                </Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color="#999" />
             </View>
-            <MaterialIcons name="chevron-right" size={20} color="#999" />
           </View>
         </View>
+
+        {/* Expired overlay */}
+        {!post.isValid && <View style={styles.expiredOverlay} />}
       </View>
-    </TouchableOpacity>
+    </PressableButton>
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
-    marginHorizontal: 16,
     marginVertical: 8,
+    overflow: "hidden",
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    position: "relative",
+  },
+  expiredCard: {
+    backgroundColor: "#f8f8f8",
+  },
+  expiredOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    zIndex: 1,
   },
   cardContent: {
     flexDirection: "row",
@@ -141,11 +158,11 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 8,
-    marginRight: 12,
+    backgroundColor: "#f5f5f5",
   },
   infoContainer: {
     flex: 1,
-    justifyContent: "space-between",
+    marginLeft: 12,
   },
   header: {
     flexDirection: "row",
@@ -182,6 +199,19 @@ const styles = StyleSheet.create({
   details: {
     marginBottom: 8,
   },
+  storeDetail: {
+    marginBottom: 4,
+  },
+  chainLogoContainer: {
+    width: 80,
+    height: 24,
+    marginVertical: 4,
+  },
+  chainLogo: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
+  },
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -206,7 +236,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E8F5E9",
   },
   expiredBadge: {
-    backgroundColor: "#FFEBEE",
+    backgroundColor: "#dedede",
   },
   statusText: {
     fontSize: 12,
@@ -216,19 +246,6 @@ const styles = StyleSheet.create({
     color: "#2E7D32",
   },
   expiredText: {
-    color: "#C62828",
-  },
-  chainLogoContainer: {
-    width: 80,
-    height: 24,
-    marginVertical: 4,
-  },
-  chainLogo: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "contain",
-  },
-  storeDetail: {
-    marginBottom: 4,
+    color: "#333",
   },
 });

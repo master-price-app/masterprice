@@ -1,5 +1,5 @@
 import { database } from "./firebaseSetup";
-import { collection, addDoc, query, where, getDocs, getDoc, doc } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, getDoc, doc, onSnapshot } from "firebase/firestore";
 import { martChainsData, martLocationsData } from "./martHelper";
 
 // Initialize mart chains data and mart locations data in Firestore
@@ -110,6 +110,41 @@ export async function getLocationById(locationId) {
     return null;
   }
 }
+
+
+// Subscribe to mart cycles data
+export function subscribeToMartCycles(onMartCyclesUpdate) {
+  try {
+    // First get all locations
+    const locationsQuery = query(collection(database, "martLocations"));
+
+    const unsubscribe = onSnapshot(locationsQuery, async (querySnapshot) => {
+      const locationCycles = {};
+
+      // For each location, get its chain data
+      querySnapshot.forEach((doc) => {
+        const locationData = doc.data();
+        const chainData = martChainsData[locationData.chainId];
+
+        if (chainData?.dealCycle) {
+          locationCycles[doc.id] = {
+            chain: chainData.dealCycle,
+            chainId: locationData.chainId,
+            chainName: chainData.chainName,
+          };
+        }
+      });
+
+      onMartCyclesUpdate(locationCycles);
+    });
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error in mart cycles listener:", error);
+    throw error;
+  }
+}
+
 
 // mart chain logos stored in assets/martLogos used for displaying chain logos in UI
 export const chainLogoMapping = {

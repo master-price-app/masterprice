@@ -10,8 +10,10 @@ import {
   query,
   collection,
   where,  
+  getDocs,
 } from "firebase/firestore";
 import { getLocationById } from "./martService";
+import { isWithinCurrentCycle, isMasterPrice } from "../utils/priceUtils";
 
 // CREATE - Add item to shopping list
 export async function addToShoppingList(userId, priceId, locationId) {
@@ -77,7 +79,6 @@ export function subscribeToShoppingList(userId, onUpdate) {
   const listRef = doc(database, "shoppingLists", userId);
 
   try {
-    // First get the list of priceIds from shopping list
     const unsubscribe = onSnapshot(listRef, async (snapshot) => {
       if (!snapshot.exists() || !snapshot.data()?.items) {
         onUpdate([]);
@@ -90,64 +91,83 @@ export function subscribeToShoppingList(userId, onUpdate) {
         priceIds.push(...Object.keys(locationPrices));
       });
 
-      // If no prices in the list, return empty array
       if (priceIds.length === 0) {
         onUpdate([]);
         return;
       }
 
-      // Create a query to listen to these prices
+      // Get all prices
       const pricesQuery = query(
         collection(database, "prices"),
         where("__name__", "in", priceIds)
       );
 
-      // Subscribe to price updates
-      const priceUnsubscribe = onSnapshot(
-        pricesQuery, 
-        async (querySnapshot) => {
-          try {
-            // Get all prices with location data
-            const pricesPromises = querySnapshot.docs.map(async (doc) => {
-              const priceData = doc.data();
-              const locationData = await getLocationById(priceData.locationId);
+      const pricesSnapshot = await getDocs(pricesQuery);
+      const allPrices = pricesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-              if (!locationData) return null;
-              
-              return {
-                id: doc.id,
-                locationId: priceData.locationId,
-                locationName: locationData.location.name,
-                chainName: locationData.chain?.chainName || "Other",
-                ...priceData,
-                isMasterPrice: false, // temporary value, will be updated using application code logic
-              };
-            });
+      // Get all prices with location data
+      const pricesPromises = allPrices.map(async (priceData) => {
+        const locationData = await getLocationById(priceData.locationId);
 
-            const prices = (await Promise.all(pricesPromises)).filter(Boolean);
+        if (!locationData) return null;
 
-            // Group by chain for UI
-            const chainGroups = prices.reduce((groups, price) => {
-              if (!groups[price.chainName]) {
-                groups[price.chainName] = {
-                  title: price.chainName,
-                  data: [],
-                };
-              }
-              groups[price.chainName].data.push(price);
-              return groups;
-            }, {});
-            // Convert object to array to send to UI
-            onUpdate(Object.values(chainGroups));
-          } catch (error) {
-            console.error("Error processing prices:", error);
-            onUpdate([]);
-          }
+        // Check validity using mart cycle
+        const isValid = locationData.chain?.dealCycle
+          ? isWithinCurrentCycle(
+              priceData.createdAt,
+              locationData.chain.dealCycle
+            )
+          : false;
+
+        // Group prices by product code for master price check
+        const productPrices = allPrices.filter(
+          (p) => p.code === priceData.code
+        );
+
+        return {
+          id: priceData.id,
+          locationId: priceData.locationId,
+          locationName: locationData.location.name,
+          chainName: locationData.chain?.chainName || "Other",
+          ...priceData,
+          isValid,
+          isMasterPrice:
+            isValid &&
+            productPrices.length > 0 &&
+            Math.min(...productPrices.map((p) => p.price)) === priceData.price,
+        };
+      });
+
+      const validPrices = (await Promise.all(pricesPromises)).filter(Boolean);
+
+      // Group by chain for UI
+      const chainGroups = validPrices.reduce((groups, price) => {
+        if (!groups[price.chainName]) {
+          groups[price.chainName] = {
+            title: price.chainName,
+            data: [],
+          };
         }
+        groups[price.chainName].data.push(price);
+        return groups;
+      }, {});
+
+      // Convert to array and calculate section totals
+      const sectionsWithTotals = Object.entries(chainGroups).map(
+        ([title, section]) => ({
+          title,
+          data: section.data,
+          total: section.data.reduce(
+            (sum, price) => sum + (price.isValid ? price.price : 0),
+            0
+          ),
+        })
       );
 
-      // Clean up price subscription when shopping list changes
-      return () => priceUnsubscribe();
+      onUpdate(sectionsWithTotals);
     });
 
     return unsubscribe;
