@@ -11,14 +11,16 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import PressableButton from "../../components/PressableButton";
 
-// TODO: will be updated with notification, location and map integration
+// TODO: will be updated with notification
 export default function MartDetailScreen({ navigation, route }) {
   const { locationId } = route.params;
   const [martData, setMartData] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,6 +42,52 @@ export default function MartDetailScreen({ navigation, route }) {
     fetchMartData();
   }, [locationId]);
 
+  // Get user location
+  useEffect(() => {
+    const getUserLocation = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission Denied", "Please allow location access to see your position on the map.");
+          return;
+        }
+
+        // Get initial user location
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        // Watch for location updates
+        LocationSubscription = await Location.watchPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 1000,   // Update every second
+          distanceInterval: 1,  // Update every meter
+        }, (location) => {
+          setUserLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+        });
+      } catch (err) {
+        console.error("Error getting user location: ", err);
+      }
+    };
+
+    getUserLocation();
+
+    // Cleanup subscription when component unmounts
+    return () => {
+      if (LocationSubscription) {
+        LocationSubscription.remove();
+      }
+    };
+  }, []);
+
+  // Handle navigation
   const handleNavigation = useCallback(() => {
     if (!martData?.location) return;
 
@@ -93,7 +141,6 @@ export default function MartDetailScreen({ navigation, route }) {
 
   // Get business hours component
   const BusinessHours = ({ hours }) => {
-    console.log("hours: ", hours);
     // Get today's day of the week (0-6, Sunday is 0)
     const today = new Date().getDay();
 
@@ -180,13 +227,6 @@ export default function MartDetailScreen({ navigation, route }) {
 
   const { chain, location } = martData;
 
-  const region = {
-    latitude: location.coordinates.latitude,
-    longitude: location.coordinates.longitude,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  };
-
   return (
     <ScrollView style={styles.container} bounces={false}>
       {/* Header */}
@@ -205,8 +245,14 @@ export default function MartDetailScreen({ navigation, route }) {
       <View style={styles.mapContainer}>
         <MapView
           style={styles.map}
-          initialRegion={region}
+          initialRegion={{
+            latitude: location.coordinates.latitude,
+            longitude: location.coordinates.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
         >
+          {/* Mart location */}
           <Marker
             coordinate={{
               latitude: location.coordinates.latitude,
@@ -215,6 +261,18 @@ export default function MartDetailScreen({ navigation, route }) {
             title={location.name}
             description={location.address.street}
           />
+          {/* User location */}
+          {userLocation && (
+            <Marker
+              coordinate={userLocation}
+              title="You are here"
+              pinColor="#007AFF"
+            >
+              <View style={styles.userLocationMarker}>
+                <View style={styles.userLocationDot} />
+              </View>
+            </Marker>
+          )}
         </MapView>
 
         <PressableButton
@@ -322,6 +380,22 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+  },
+  userLocationMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 122, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userLocationDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#007AFF",
+    borderWidth: 2,
+    borderColor: "white",
   },
   navigateButton: {
     position: "absolute",
