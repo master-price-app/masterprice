@@ -11,9 +11,9 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
+import { handleLocationTracking } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
 // TODO: will be updated with notification
@@ -54,87 +54,21 @@ export default function MartDetailScreen({ navigation, route }) {
     };
   }, [locationSubscription]);
 
-  const calculateRegion = useCallback((userCoords, martCoords) => {
-    const PADDING = 2;  // Padding multiplier for better zoom
-
-    // Calculate padding
-    const latitudeDelta = Math.abs(userCoords.latitude - martCoords.latitude) * PADDING;
-    const longitudeDelta = Math.abs(userCoords.longitude - martCoords.longitude) * PADDING;
-
-    // Ensure minimum zoom level
-    const MIN_DELTA = 0.01;
-    const finalLatDelta = Math.max(latitudeDelta, MIN_DELTA);
-    const finalLongDelta = Math.max(longitudeDelta, MIN_DELTA);
-
-    // Calculate center coordinates
-    const centerLatitude = (userCoords.latitude + martCoords.latitude) / 2;
-    const centerLongitude = (userCoords.longitude + martCoords.longitude) / 2;
-
-    return {
-      latitude: centerLatitude,
-      longitude: centerLongitude,
-      latitudeDelta: finalLatDelta,
-      longitudeDelta: finalLongDelta,
-    };
-  }, []);
-
   // Handle locating user
   const handleLocateUser = useCallback(async () => {
-    try {
-      // Check if subscription exists
-      if (locationSubscription) {
-        locationSubscription.remove();
-        setLocationSubscription(null);
-        setUserLocation(null);
-        return;
-      }
+    const martCoords = [{
+      latitude: martData.location.coordinates.latitude,
+      longitude: martData.location.coordinates.longitude,
+    }];
 
-      // Request permission
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Denied", "Please allow location access to see your position on the map.");
-        return;
-      }
-
-      // Get initial user location
-      const userLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const userCoords = {
-        latitude: userLocation.coords.latitude,
-        longitude: userLocation.coords.longitude,
-      };
-      setUserLocation(userCoords);
-
-      // Calculate region that shows both user and mart
-      const martCoords = {
-        latitude: martData.location.coordinates.latitude,
-        longitude: martData.location.coordinates.longitude,
-      };
-      const newRegion = calculateRegion(userCoords, martCoords);
-
-      // Animate map to user location
-      mapRef.current?.animateToRegion(newRegion, 1000); // Animate duration in ms (1 second)
-
-      // Watch for location updates
-      const subscription = await Location.watchPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-        timeInterval: 1000,   // Update every second
-        distanceInterval: 1,  // Update every meter
-      }, (newLocation) => {
-        setUserLocation({
-          latitude: newLocation.coords.latitude,
-          longitude: newLocation.coords.longitude,
-        });
-      });
-
-      setLocationSubscription(subscription);
-    } catch (err) {
-      console.error("Error getting location: ", err);
-      Alert.alert("Error", "Failed to get your location. Please try again.");
-    }
-  }, [locationSubscription, martData, calculateRegion]);
+    await handleLocationTracking({
+      setUserLocation,
+      setLocationSubscription,
+      locationSubscription,
+      mapRef,
+      points: martCoords,
+    });
+  }, [locationSubscription, martData]);
 
   // Handle navigation
   const handleNavigation = useCallback(() => {
@@ -334,9 +268,9 @@ export default function MartDetailScreen({ navigation, route }) {
             userLocation && styles.locationButtonActive
           ]}
         >
-          <MaterialIcons 
-            name="my-location" 
-            size={24} 
+          <MaterialIcons
+            name="my-location"
+            size={24}
             color={userLocation ? "#007AFF" : "#666"}
           />
         </PressableButton>

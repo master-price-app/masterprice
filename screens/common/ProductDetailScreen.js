@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
-  Switch,
 } from "react-native";
-import { subscribeToPricesByProduct } from "../../services/priceService";
-import { subscribeToMartCycles } from "../../services/martService";
-import { useAuth } from "../../contexts/AuthContext";
+import MapView, { Marker } from "react-native-maps";
+import { MaterialIcons } from "@expo/vector-icons";
 import { isWithinCurrentCycle, isMasterPrice } from "../../utils/priceUtils";
+import { calculateRegion, handleLocationTracking } from "../../utils/mapUtils";
+import { subscribeToPricesByProduct } from "../../services/priceService";
+import { getLocationById, subscribeToMartCycles } from "../../services/martService";
+import { useAuth } from "../../contexts/AuthContext";
 import PressableButton from "../../components/PressableButton";
 import PriceListItem from "../../components/PriceListItem";
-
 
 // Import dummy data for backup
 const dummyProduct = require("../../assets/dummyData/dummyProduct.json");
@@ -26,8 +28,13 @@ export default function ProductDetailScreen({ navigation, route }) {
   const [product, setProduct] = useState(null);
   const [prices, setPrices] = useState([]);
   const [martCycles, setMartCycles] = useState({});
-  const [error, setError] = useState(null);
   const [sortByLowest, setSortByLowest] = useState(false);
+  const [martLocations, setMartLocations] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationSubscription, setLocationSubscription] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const mapRef = useRef(null);
 
   // Fetch product details from API
   useEffect(() => {
@@ -53,6 +60,33 @@ export default function ProductDetailScreen({ navigation, route }) {
 
     fetchProductDetail();
   }, [code]);
+
+  // Fetch mart locations for Firebase
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const locationPromises = prices.map((price) => {
+          return getLocationById(price.locationId);
+        });
+        const locations = await Promise.all(locationPromises);
+
+        // Filter invalid locations and remove duplicates using Map
+        const uniqueLocations = [...new Map(
+          locations
+            .filter(loc => loc?.location?.coordinates)
+            .map(loc => [loc.location.id, loc.location])
+        ).values()];
+
+        setMartLocations(uniqueLocations);
+      } catch (err) {
+        console.error("Error fetching mart locations: ", err);
+      }
+    };
+
+    if (prices.length > 0) {
+      fetchLocations();
+    }
+  }, [prices]);
 
   // Subscribe to mart cycles
   useEffect(() => {
@@ -93,6 +127,23 @@ export default function ProductDetailScreen({ navigation, route }) {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
+  // Handle locating user
+  const handleLocateUser = useCallback(async () => {
+    // Get all the mart points
+    const martPoints = martLocations.map((location) => ({
+      latitude: location.coordinates.latitude,
+      longitude: location.coordinates.longitude,
+    }));
+
+    await handleLocationTracking({
+      setUserLocation,
+      setLocationSubscription,
+      locationSubscription,
+      mapRef,
+      points: martPoints,
+    });
+  }, [locationSubscription, martLocations]);
+
   // Handle add price button press
   const handleAddPrice = () => {
     if (!user) {
@@ -129,6 +180,7 @@ export default function ProductDetailScreen({ navigation, route }) {
     />
   );
 
+  // Error state
   if (error) {
     return (
       <View style={styles.centerContainer}>
@@ -137,6 +189,7 @@ export default function ProductDetailScreen({ navigation, route }) {
     );
   }
 
+  // No product state
   if (!product) {
     return (
       <View style={styles.centerContainer}>
@@ -147,32 +200,76 @@ export default function ProductDetailScreen({ navigation, route }) {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.productCard}>
-        {/* Product Image */}
-        {product.image_url && (
-          <Image
-            source={{ uri: product.image_url }}
-            onError={(error) =>
-              console.log("Error loading product image: ", error)
-            }
-            style={styles.productImage}
-          />
-        )}
-        {/* Product Info */}
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{product.product_name}</Text>
-          {product.brands && (
-            <Text style={styles.brandText}>{product.brands}</Text>
+      {/* Product Header */}
+      <View style={styles.productHeader}>
+        <View style={styles.productBasicInfo}>
+          {product.image_url && (
+            <Image
+              source={{ uri: product.image_url }}
+              onError={(error) =>
+                console.log("Error loading product image: ", error)
+              }
+              style={styles.productThumbnail}
+            />
           )}
-          <Text style={styles.quantityText}>
-            {product.product_quantity}
-            {product.product_quantity_unit}
-          </Text>
-          <Text style={styles.codeText}>Barcode: {code}</Text>
+          <View style={styles.productTextInfo}>
+            <Text style={styles.productName} numberOfLines={1}>
+              {product.product_name}
+            </Text>
+            <Text style={styles.productSubInfo} numberOfLines={1}>
+              {product.brands} · {product.product_quantity}{product.product_quantity_unit}
+            </Text>
+          </View>
         </View>
       </View>
 
-      {/* Price Section */}
+      {/* Map Section */}
+      <View style={styles.mapSection}>
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          initialRegion={calculateRegion(martLocations.map(location => ({
+            latitude: location.coordinates.latitude,
+            longitude: location.coordinates.longitude,
+          })))}
+        >
+          {martLocations.map((location) => (
+            <Marker
+              key={location.id}
+              coordinate={{
+                latitude: location.coordinates.latitude,
+                longitude: location.coordinates.longitude,
+              }}
+              title={location.name}
+              pinColor="#E31837"
+            />
+          ))}
+          {userLocation && (
+            <Marker coordinate={userLocation}>
+              <View style={styles.userLocationMarker}>
+                <View style={styles.userLocationDot} />
+              </View>
+            </Marker>
+          )}
+        </MapView>
+
+        {/* Location Button */}
+        <PressableButton
+          onPress={handleLocateUser}
+          componentStyle={[
+            styles.locationButton,
+            userLocation && styles.locationButtonActive
+          ]}
+        >
+          <MaterialIcons
+            name="my-location"
+            size={24}
+            color={userLocation ? "#007AFF" : "#666"}
+          />
+        </PressableButton>
+      </View>
+
+      {/* Prices Section */}
       <View style={styles.priceSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Price History</Text>
@@ -225,10 +322,44 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  productCard: {
+  errorText: {
+    color: "#ff3b30",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  // Product Header
+  productHeader: {
     backgroundColor: "white",
-    borderRadius: 12,
+    padding: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#e0e0e0",
+  },
+  productBasicInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  productThumbnail: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  productTextInfo: {
+    flex: 1,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  productSubInfo: {
+    fontSize: 14,
+    color: "#666",
+  },
+  // Map Section
+  mapSection: {
+    height: 300,
     margin: 16,
+    borderRadius: 12,
     overflow: "hidden",
     elevation: 2,
     shadowColor: "#000",
@@ -236,34 +367,50 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  productImage: {
-    width: "100%",
-    aspectRatio: 1,
-    backgroundColor: "#f5f5f5",
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
-  productInfo: {
-    padding: 16,
+  markerLogo: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
   },
-  productName: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+  userLocationMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 122, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  brandText: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 4,
+  userLocationDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#007AFF",
+    borderWidth: 2,
+    borderColor: "white",
   },
-  quantityText: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 4,
+  locationButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    backgroundColor: "white",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
-  codeText: {
-    fontSize: 12,
-    color: "#999",
+  locationButtonActive: {
+    backgroundColor: "#f0f9ff",
   },
+  // Prices Section
   priceSection: {
     backgroundColor: "white",
     borderRadius: 12,
@@ -311,10 +458,5 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 14,
     marginTop: 16,
-  },
-  errorText: {
-    color: "#ff3b30",
-    fontSize: 16,
-    textAlign: "center",
   },
 });
