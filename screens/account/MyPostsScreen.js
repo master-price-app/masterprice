@@ -10,69 +10,82 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { database } from "../../services/firebaseSetup";
 import { useAuth } from "../../contexts/AuthContext";
+import { subscribeToMartCycles } from "../../services/martService";
+import { isWithinCurrentCycle, isMasterPrice } from "../../utils/priceUtils";
 import PricePostListItem from "../../components/PricePostListItem";
 
 export default function MyPostsScreen({ navigation }) {
-  const { user } = useAuth(); // Get authenticated user
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
+  const [martCycles, setMartCycles] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Subscribe to mart cycles
+  useEffect(() => {
+    const unsubscribe = subscribeToMartCycles((cyclesData) => {
+      setMartCycles(cyclesData);
+    });
+    return () => unsubscribe?.();
+  }, []);
+
+  // Load user's posts
   useEffect(() => {
     if (!user) {
       navigation.replace("Login");
       return;
     }
-    loadPosts();
-  }, [user]);
 
-  // TODO: Move to a custom hook
-  // Load posts
-  const loadPosts = () => {
-    try {
-      const pricesQuery = query(
-        collection(database, "prices"),
-        where("userId", "==", user.uid) // Use actual user ID
-      );
+    const pricesQuery = query(
+      collection(database, "prices"),
+      where("userId", "==", user.uid)
+    );
 
-      const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
-        const userPosts = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            productId: data.code,
-            productName: data.productName,
-            productImageUrl: null,
-            price: data.price,
-            locationId: data.locationId,
-            createdAt: data.createdAt,
-            expiryDate:
-              new Date(data.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000,
-            status: "active",
-            isMasterPrice: false,
-          };
-        });
-        setPosts(userPosts);
-        setLoading(false);
-        setRefreshing(false);
+    const unsubscribe = onSnapshot(pricesQuery, (querySnapshot) => {
+      const allPosts = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Process posts with validity and master price status
+      const processedPosts = allPosts.map((post) => {
+        const locationCycle = martCycles[post.locationId];
+        const isValid = locationCycle?.chain
+          ? isWithinCurrentCycle(post.createdAt, locationCycle.chain)
+          : false;
+
+        return {
+          id: post.id,
+          productId: post.code,
+          productName: post.productName,
+          productImageUrl: null,
+          price: post.price,
+          locationId: post.locationId,
+          createdAt: post.createdAt,
+          isValid,
+          isMasterPrice: isMasterPrice(post, allPosts, martCycles),
+        };
       });
 
-      return unsubscribe;
-    } catch (error) {
-      console.error("Failed to load posts:", error);
+      // Sort by date, most recent first
+      const sortedPosts = processedPosts.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setPosts(sortedPosts);
       setLoading(false);
       setRefreshing(false);
-    }
-  };
+    });
 
-  // TODO: Move to a custom hook
-  // Refresh posts
+    return () => unsubscribe();
+  }, [user, martCycles]);
+
+  // Refresh handler
   const handleRefresh = () => {
     setRefreshing(true);
-    loadPosts();
+    // The effect will reload the data
   };
 
-  // Loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -81,12 +94,14 @@ export default function MyPostsScreen({ navigation }) {
     );
   }
 
-  // If no posts show empty message
   if (posts.length === 0) {
     return (
       <View style={styles.centerContainer}>
         <MaterialIcons name="post-add" size={48} color="#999" />
         <Text style={styles.emptyText}>You haven't posted any prices yet</Text>
+        <Text style={styles.subText}>
+          Share prices to help others find the best deals
+        </Text>
       </View>
     );
   }
@@ -94,6 +109,7 @@ export default function MyPostsScreen({ navigation }) {
   return (
     <FlatList
       style={styles.container}
+      contentContainerStyle={styles.listContent}
       data={posts}
       renderItem={({ item }) => (
         <PricePostListItem
@@ -122,11 +138,14 @@ export default function MyPostsScreen({ navigation }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 32,
   },
   centerContainer: {
     flex: 1,
@@ -138,6 +157,13 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 16,
     fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+  },
+  subText: {
+    marginTop: 8,
+    fontSize: 14,
     color: "#666",
     textAlign: "center",
   },

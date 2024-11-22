@@ -22,6 +22,7 @@ export default function ShoppingListScreen({ navigation }) {
   const [isManaging, setIsManaging] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [loading, setLoading] = useState(true);
+  const [totalPrice, setTotalPrice] = useState(0);
 
   // Subscribe to shopping list
   useEffect(() => {
@@ -33,10 +34,22 @@ export default function ShoppingListScreen({ navigation }) {
     setLoading(true);
     const unsubscribe = subscribeToShoppingList(user.uid, (transformedData) => {
       setShoppingList(transformedData);
+
+      // Calculate total price of valid items
+      const total = transformedData.reduce(
+        (sum, section) =>
+          sum +
+          section.data.reduce(
+            (sectionSum, item) => sectionSum + (item.isValid ? item.price : 0),
+            0
+          ),
+        0
+      );
+      setTotalPrice(total);
+
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [user]);
 
@@ -60,7 +73,6 @@ export default function ShoppingListScreen({ navigation }) {
   // Handle item press
   const handleItemPress = (price) => {
     if (isManaging) {
-      // Multiple selection mode
       setSelectedItems((prev) => {
         const newSelected = new Set(prev);
         if (newSelected.has(price.id)) {
@@ -71,7 +83,6 @@ export default function ShoppingListScreen({ navigation }) {
         return newSelected;
       });
     } else {
-      // Normal mode - navigate to price detail
       navigation.navigate("PriceDetail", {
         priceData: price,
         productName: price.productName,
@@ -106,7 +117,6 @@ export default function ShoppingListScreen({ navigation }) {
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -115,12 +125,14 @@ export default function ShoppingListScreen({ navigation }) {
     );
   }
 
-  // Empty state
   if (shoppingList.length === 0) {
     return (
       <View style={styles.centerContainer}>
         <MaterialIcons name="shopping-cart" size={48} color="#999" />
         <Text style={styles.emptyText}>Your shopping list is empty</Text>
+        <Text style={styles.subText}>
+          Add items from product pages to start your list
+        </Text>
       </View>
     );
   }
@@ -130,7 +142,7 @@ export default function ShoppingListScreen({ navigation }) {
       <SectionList
         sections={shoppingList}
         keyExtractor={(item) => item.id}
-        renderItem={({ item, section }) => (
+        renderItem={({ item }) => (
           <ShoppingListItem
             price={item}
             onPress={() => handleItemPress(item)}
@@ -139,21 +151,37 @@ export default function ShoppingListScreen({ navigation }) {
           />
         )}
         stickySectionHeadersEnabled={false}
-        // List content style
         contentContainerStyle={styles.listContent}
-        // Render section header
         renderSectionHeader={({ section: { title, data } }) => (
           <View style={styles.sectionHeader}>
             <MaterialIcons name="store" size={20} color="#666" />
             <Text style={styles.sectionTitle}>{title}</Text>
-            <Text style={styles.itemCount}>{data.length} items</Text>
+            <Text style={styles.itemCount}>
+              {data.length} item{data.length !== 1 ? "s" : ""}
+            </Text>
           </View>
         )}
-        // Render section footer
-        renderSectionFooter={() => <View style={styles.sectionFooter} />}
+        renderSectionFooter={({ section }) => {
+          const sectionTotal = section.data.reduce(
+            (sum, item) => sum + (item.isValid ? item.price : 0),
+            0
+          );
+          return (
+            <View style={styles.sectionFooter}>
+              <Text style={styles.sectionTotal}>
+                Section Total: ${sectionTotal.toFixed(2)}
+              </Text>
+            </View>
+          );
+        }}
+        ListFooterComponent={() => (
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Total (Valid Items):</Text>
+            <Text style={styles.totalAmount}>${totalPrice.toFixed(2)}</Text>
+          </View>
+        )}
       />
 
-      {/* Delete button - only show when managing and selected items */}
       {isManaging && selectedItems.size > 0 && (
         <View style={styles.deleteButtonContainer}>
           <PressableButton
@@ -172,7 +200,6 @@ export default function ShoppingListScreen({ navigation }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -187,6 +214,13 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 12,
     fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+  },
+  subText: {
+    marginTop: 8,
+    fontSize: 14,
     color: "#666",
     textAlign: "center",
   },
@@ -204,17 +238,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-  },
-  section: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: "hidden",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    paddingBottom: 90, // Extra padding for delete button
   },
   sectionHeader: {
     flexDirection: "row",
@@ -230,6 +254,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    marginBottom: 1,
   },
   sectionTitle: {
     flex: 1,
@@ -238,23 +263,42 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
   },
-  sectionFooter: {
-    height: 16,
-    marginBottom: 16,
-    backgroundColor: "white",
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
   itemCount: {
     fontSize: 14,
     color: "#666",
+  },
+  sectionFooter: {
+    padding: 12,
+    backgroundColor: "white",
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    marginBottom: 16,
+  },
+  sectionTotal: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#666",
+    textAlign: "right",
+  },
+  totalContainer: {
+    backgroundColor: "white",
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 24,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  totalAmount: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#007AFF",
   },
   deleteButtonContainer: {
     position: "absolute",
