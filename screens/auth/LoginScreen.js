@@ -1,25 +1,30 @@
 import { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  Button,
-  Alert,
-  ActivityIndicator,
 } from "react-native";
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
 } from "firebase/auth";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { auth } from "../../services/firebaseSetup";
 import { useAuth } from "../../contexts/AuthContext";
+import PressableButton from "../../components/PressableButton";
 
 export default function LoginScreen({ navigation, route }) {
   const returnScreen = route.params?.returnScreen;
   const returnParams = route.params?.returnParams;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const { loading } = useAuth();
 
@@ -79,67 +84,188 @@ export default function LoginScreen({ navigation, route }) {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
+        </View>
 
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        secureTextEntry={true}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-      />
+        {/* Form Section */}
+        <View style={styles.form}>
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="email" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+            />
+          </View>
 
-      <Button title="Login" onPress={handleLogin} />
-      <Button title="Forgot Password?" onPress={handleForgotPassword} />
-      <Button
-        title="New User? Create An Account"
-        onPress={() => {
-          // Preserve return navigation when going to register
-          navigation.replace("Register", {
-            returnScreen,
-            returnParams,
-          });
-        }}
-      />
-    </View>
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="lock" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              secureTextEntry={!showPassword}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+            />
+            <PressableButton
+              onPress={() => setShowPassword(!showPassword)}
+              componentStyle={styles.eyeIcon}
+            >
+              <MaterialIcons
+                name={showPassword ? "visibility" : "visibility-off"}
+                size={20}
+                color="#666"
+              />
+            </PressableButton>
+          </View>
+
+          {/* Forgot Password */}
+          <PressableButton
+            onPress={handleForgotPassword}
+            componentStyle={styles.forgotPassword}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </PressableButton>
+
+          {/* Login Button */}
+          <PressableButton
+            onPress={handleLogin}
+            componentStyle={styles.loginButton}
+            pressedStyle={styles.loginButtonPressed}
+          >
+            <Text style={styles.loginButtonText}>Sign In</Text>
+          </PressableButton>
+        </View>
+
+        {/* Sign Up Section */}
+        <View style={styles.signupContainer}>
+          <Text style={styles.signupText}>Don't have an account? </Text>
+          <PressableButton
+            onPress={() => navigation.replace("Register", {
+              returnScreen,
+              returnParams,
+            })}
+          >
+            <Text style={styles.signupLink}>Sign Up</Text>
+          </PressableButton>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
-  label: {
+  content: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    padding: 24,
+    paddingTop: Platform.OS === 'ios' ? 120 : 80,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  subtitle: {
     fontSize: 16,
-    marginBottom: 5,
-    color: "#333",
+    color: '#666',
+  },
+  form: {
+    width: '100%',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    height: 56,
   },
   input: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 5,
-    marginBottom: 15,
-    paddingHorizontal: 10,
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: '#333',
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    color: '#007AFF',
+    fontSize: 14,
+  },
+  loginButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  loginButtonPressed: {
+    backgroundColor: '#0056b3',
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 32,
+  },
+  signupText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  signupLink: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

@@ -1,12 +1,25 @@
 import { useState } from "react";
-import { StyleSheet, Text, TextInput, View, Button, Alert } from "react-native";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebaseSetup";
 import { writeUserToDB } from "../../services/userService";
+import PressableButton from "../../components/PressableButton";
 
 export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [nickname, setNickname] = useState("");
 
@@ -64,70 +77,199 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Sign up to get started</Text>
+        </View>
 
-      <Text style={styles.label}>Nickname (Optional)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nickname"
-        value={nickname}
-        onChangeText={setNickname}
-      />
+        {/* Form Section */}
+        <View style={styles.form}>
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="email" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+            />
+          </View>
 
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        secureTextEntry={true}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-      />
+          {/* Nickname Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="person" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your nickname (Optional)"
+              value={nickname}
+              onChangeText={setNickname}
+              autoCapitalize={false}
+              autoComplete="name"
+            />
+          </View>
 
-      <Text style={styles.label}>Confirm Password</Text>
-      <TextInput
-        style={styles.input}
-        secureTextEntry={true}
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="lock" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              secureTextEntry={!showPassword}
+              placeholder="Create password"
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+            />
+            <PressableButton
+              onPress={() => setShowPassword(!showPassword)}
+              componentStyle={styles.eyeIcon}
+            >
+              <MaterialIcons
+                name={showPassword ? "visibility" : "visibility-off"}
+                size={20}
+                color="#666"
+              />
+            </PressableButton>
+          </View>
 
-      <Button title="Register" onPress={handleRegister} />
-      <Button
-        title="Already Registered? Login"
-        onPress={() => navigation.replace("Login")}
-      />
-    </View>
+          {/* Confirm Password Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="lock" size={20} color="#666" />
+            <TextInput
+              style={styles.input}
+              secureTextEntry={!showConfirmPassword}
+              placeholder="Confirm password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              autoCapitalize="none"
+            />
+            <PressableButton
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              componentStyle={styles.eyeIcon}
+            >
+              <MaterialIcons
+                name={showConfirmPassword ? "visibility" : "visibility-off"}
+                size={20}
+                color="#666"
+              />
+            </PressableButton>
+          </View>
+
+          {/* Register Button */}
+          <PressableButton
+            onPress={handleRegister}
+            componentStyle={styles.registerButton}
+            pressedStyle={styles.registerButtonPressed}
+          >
+            <Text style={styles.registerButtonText}>Sign Up</Text>
+          </PressableButton>
+        </View>
+
+        {/* Sign In Section */}
+        <View style={styles.signinContainer}>
+          <Text style={styles.signinText}>Already have an account? </Text>
+          <PressableButton
+            onPress={() => navigation.replace("Login")}
+          >
+            <Text style={styles.signinLink}>Sign In</Text>
+          </PressableButton>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
-  label: {
+  content: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    padding: 24,
+    paddingTop: Platform.OS === 'ios' ? 120 : 80,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  subtitle: {
     fontSize: 16,
-    marginBottom: 5,
-    color: "#333",
+    color: '#666',
+  },
+  form: {
+    width: '100%',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    height: 56,
   },
   input: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 5,
-    marginBottom: 15,
-    paddingHorizontal: 10,
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: '#333',
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+  registerButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  registerButtonPressed: {
+    backgroundColor: '#0056b3',
+  },
+  registerButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  signinContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  signinText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  signinLink: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
