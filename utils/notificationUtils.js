@@ -58,10 +58,11 @@ export const cancelNotification = async (notificationId) => {
 export const formatScheduleTime = (schedule) => {
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+  const isIOS = "dateComponents" in schedule;
   // iOS uses dateComponents, Android uses weekday, hour, minute
-  const weekday = schedule.dateComponents?.weekday || schedule.weekday;
-  const hour = schedule.dateComponents?.hour || schedule.hour;
-  const minute = schedule.dateComponents?.minute || schedule.minute;
+  const weekday = isIOS ? schedule.dateComponents.weekday : schedule.weekday;
+  const hour = isIOS ? schedule.dateComponents.hour : schedule.hour;
+  const minute = isIOS ? schedule.dateComponents.minute : schedule.minute;
 
   const dayName = days[weekday - 1];
   const formattedHour = hour % 12 || 12;
