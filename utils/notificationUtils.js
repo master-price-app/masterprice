@@ -1,19 +1,57 @@
 import * as Notifications from "expo-notifications";
 
-export const scheduleNotification = async (content, trigger) => {
-  await Notifications.scheduleNotificationAsync({ content, trigger });
+// Schedule a weekly notification
+export const scheduleWeeklyNotification = async (content, schedule) => {
+  try {
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content,
+      trigger: {
+        weekday: schedule.weekday,  // 1-7, representing Sunday to Saturday
+        hour: schedule.hour,        // 0-23
+        minute: schedule.minute,    // 0-59
+        repeats: true,
+      },
+    });
+    return notificationId;
+  } catch (error) {
+    console.error("Error scheduling notification: ", error);
+    throw error;
+  }
 };
 
-export const getNotification = async (notificationId) => {
-  return await Notifications.getAllScheduledNotificationsAsync();
+// Get a scheduled notification by chainId
+export const getNotificationByChainId = async (chainId) => {
+  try {
+    const scheduledNotifications = await Notifications.getScheduledNotificationsAsync();
+    return scheduledNotifications.find(
+      notification => notification.content.data?.chainId === chainId
+    );
+  } catch (error) {
+    console.error("Error getting notification: ", error);
+    return null;
+  }
 };
 
+// Get all scheduled notifications
 export const getAllNotifications = async () => {
-  return await Notifications.getAllScheduledNotificationsAsync();
+  try {
+    const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+    return scheduledNotifications;
+  } catch (error) {
+    console.error("Error getting all notifications: ", error);
+    return null;
+  }
 };
 
+// Cancel a scheduled notification
 export const cancelNotification = async (notificationId) => {
-  await Notifications.cancelScheduledNotificationAsync(notificationId);
+  try {
+    await Notifications.cancelScheduledNotificationAsync(notificationId);
+    return true;
+  } catch (error) {
+    console.error("Error canceling notification: ", error);
+    return false;
+  }
 };
 
 export const formatScheduleTime = (schedule) => {
