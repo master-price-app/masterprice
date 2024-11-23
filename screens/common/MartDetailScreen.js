@@ -11,10 +11,10 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import * as Notifications from "expo-notifications";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import { requestNotificationsPermission } from "../../utils/permissionUtils";
+import { scheduleWeeklyNotification } from "../../utils/notificationUtils";
 import { handleLocationTracking } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
@@ -48,48 +48,53 @@ export default function MartDetailScreen({ navigation, route }) {
     fetchMartData();
   }, [locationId]);
 
-  // Get user location
   useEffect(() => {
-    // Cleanup subscription when component unmounts
-    return () => {
-      if (locationSubscription) {
-        locationSubscription.remove();
-      }
-    };
-  }, [locationSubscription]);
+
+  }, [martData]);
 
   const handleNotification = useCallback(async () => {
     try {
+      // 1. Check notification permission
       const hasPermission = await requestNotificationsPermission();
-
       if (!hasPermission) {
         return;
       }
 
-      if (notification) {
-        await Notifications.cancelScheduledNotificationAsync(notification);
-      }
-
-      // Schedule notification
-      const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Mart Notification",
-          body: "Notification.",
+      // 2. Create notification content
+      const content = {
+        title: `Deal Reminder: ${martData.chain.chainName}`,
+        body: "Time to check this week's deals",
+        data: {
+          chainId: martData.chain.chainId,
+          type: "deal_reminder",
         },
-        trigger: {
-          seconds: 3,
-        },
-      });
+      };
 
-      setHasNotification(true);
-      setNotification(notificationId);
+      // 3. Set notification schedule (temporary fixed time)
+      const schedule = {
+        weekday: 3, // Tuesday
+        hour: 10,   // 10 AM
+        minute: 0,
+      };
 
+      // 4. Schedule the notification
+      const notificationId = await scheduleWeeklyNotification(content, schedule);
       console.log(`Notification scheduled with ID: ${notificationId}`);
+
+      // 5. Update notification state
+      setHasNotification(true);
+      setNotification({ id: notificationId });
+
+      // 6. Alert success message
+      Alert.alert(
+        "Notification Set",
+        `You will receive weekly deal alerts for ${martData.chain.chainName}`
+      );
     } catch (error) {
       console.error("Error scheduling notification: ", error);
       Alert.alert("Error", "Failed to set notification. Please try again.");
     }
-  }, []);
+  }, [martData]);
 
   // Handle locating user
   const handleLocateUser = useCallback(async () => {
