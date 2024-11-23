@@ -18,7 +18,6 @@ import { getNotificationByChainId, scheduleWeeklyNotification } from "../../util
 import { handleLocationTracking } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
-// TODO: will be updated with notification
 export default function MartDetailScreen({ navigation, route }) {
   const { locationId } = route.params;
   const [martData, setMartData] = useState(null);
@@ -229,6 +228,11 @@ export default function MartDetailScreen({ navigation, route }) {
     );
   };
 
+  // Get notification button text
+  const getNotificationButtonText = () => {
+    return hasNotification ? "Cancel Notification" : "Schedule Weekly Deal Notification";
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -280,16 +284,19 @@ export default function MartDetailScreen({ navigation, route }) {
 
         <PressableButton
           onPress={handleNotification}
-          componentStyle={styles.notificationButton}
+          componentStyle={[
+            styles.unsubscribedNotificationButton,
+            hasNotification && styles.subscribedNotificationButton
+          ]}
           pressableStyle={styles.notificationButtonPressable}
         >
-          <MaterialIcons 
-            name={hasNotification ? "notifications-active" : "notifications-none"} 
-            size={24} 
-            color="white" 
+          <MaterialIcons
+            name={hasNotification ? "notifications-active" : "notifications-none"}
+            size={24}
+            color="white"
           />
           <Text style={styles.notificationButtonText}>
-            {hasNotification ? "Modify Alert" : "Set Alert"}
+            {getNotificationButtonText()}
           </Text>
         </PressableButton>
       </View>
@@ -435,26 +442,22 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   // Notification Button
-  notificationButton: {
-    position: "absolute",
-    bottom: 16,
-    left: 16,
-    backgroundColor: "#E31837",
+  unsubscribedNotificationButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    backgroundColor: "#007AFF",
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  subscribedNotificationButton: {
+    backgroundColor: "#34C759",
   },
   notificationButtonText: {
     color: "white",
-    marginLeft: 8,
+    fontSize: 16,
     fontWeight: "600",
+    marginLeft: 8,
   },
   // Map Section
   mapContainer: {
