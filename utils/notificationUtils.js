@@ -22,7 +22,7 @@ export const scheduleWeeklyNotification = async (content, schedule) => {
 // Get a scheduled notification by chainId
 export const getNotificationByChainId = async (chainId) => {
   try {
-    const scheduledNotifications = await Notifications.getScheduledNotificationsAsync();
+    const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
     return scheduledNotifications.find(
       notification => notification.content.data?.chainId === chainId
     );
