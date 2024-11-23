@@ -17,6 +17,7 @@ import {
   getUserData,
   deleteUserData,
   writeUserToDB,
+  subscribeToUser,
 } from "../../services/userService";
 
 export default function AccountScreen({ navigation }) {
@@ -24,43 +25,24 @@ export default function AccountScreen({ navigation }) {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Set up real-time user data listener
   useEffect(() => {
-    loadUserData();
-  }, [user]);
-
-const loadUserData = async () => {
-  try {
     if (!user) return;
 
-    let data;
-    try {
-      data = await getUserData(user.uid);
-    } catch (error) {
-      if (error.message === "User not found") {
-        // If user document doesn't exist, create it
-        data = await writeUserToDB(user.uid, {
-          email: user.email,
-          nickname: user.email.split("@")[0],
-        });
-      } else {
-        throw error;
-      }
-    }
-
-    setUserData({
-      nickname: data.nickname,
-      email: user.email,
-      createdAt: data.createdAt
-        ? new Date(data.createdAt.toDate()).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
+    const unsubscribe = subscribeToUser(user.uid, (data) => {
+      setUserData({
+        nickname: data.nickname,
+        email: user.email,
+        imageUrl: data.imageUrl,
+        createdAt: data.createdAt
+          ? new Date(data.createdAt.toDate()).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0],
+      });
+      setLoading(false);
     });
-  } catch (error) {
-    console.error("Error loading user data:", error);
-    Alert.alert("Error", "Failed to load user data");
-  } finally {
-    setLoading(false);
-  }
-};
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -176,7 +158,7 @@ const loadUserData = async () => {
     </TouchableOpacity>
   );
 
-  if (loading || !userData) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -188,15 +170,25 @@ const loadUserData = async () => {
     <ScrollView style={styles.container}>
       {/* User information section */}
       <View style={styles.userSection}>
-        <Image
-          source={{ uri: "https://via.placeholder.com/150" }}
-          onError={(error) => console.log("Error loading avatar: ", error)}
-          style={styles.avatar}
-        />
+        <View style={styles.avatarContainer}>
+          {userData?.imageUrl ? (
+            <Image
+              source={{ uri: userData.imageUrl }}
+              style={styles.avatar}
+              onError={(error) => {
+                console.log("Error loading avatar: ", error);
+              }}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <MaterialIcons name="account-circle" size={80} color="#999" />
+            </View>
+          )}
+        </View>
         <View style={styles.userInfo}>
-          <Text style={styles.nickname}>{userData.nickname}</Text>
-          <Text style={styles.email}>{userData.email}</Text>
-          <Text style={styles.joinDate}>Joined: {userData.createdAt}</Text>
+          <Text style={styles.nickname}>{userData?.nickname}</Text>
+          <Text style={styles.email}>{userData?.email}</Text>
+          <Text style={styles.joinDate}>Joined: {userData?.createdAt}</Text>
         </View>
       </View>
 
@@ -231,30 +223,37 @@ const styles = StyleSheet.create({
   userSection: {
     backgroundColor: "#fff",
     padding: 20,
-    flexDirection: "row",
     alignItems: "center",
   },
+  avatarContainer: {
+    marginBottom: 16,
+  },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  avatarPlaceholder: {
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
   },
   userInfo: {
-    marginLeft: 20,
+    alignItems: "center",
   },
   nickname: {
     fontSize: 20,
     fontWeight: "bold",
+    marginBottom: 4,
   },
   email: {
     fontSize: 14,
     color: "#666",
-    marginTop: 4,
+    marginBottom: 4,
   },
   joinDate: {
     fontSize: 12,
     color: "#999",
-    marginTop: 4,
   },
   menuSection: {
     marginTop: 20,

@@ -18,7 +18,8 @@ import PressableButton from "../../components/PressableButton";
 export default function EditProfileScreen({ navigation }) {
   const { user } = useAuth();
   const [profile, setProfile] = useState({
-    avatar: "https://via.placeholder.com/150",
+    avatar: null,
+    imageUri: null,
     nickname: "",
   });
   const [menuVisible, setMenuVisible] = useState(false);
@@ -37,7 +38,7 @@ export default function EditProfileScreen({ navigation }) {
     try {
       const userData = await getUserData(user.uid);
       setProfile({
-        avatar: "https://via.placeholder.com/150", // Keeping default avatar for now
+        avatar: userData.imageUrl,
         nickname: userData.nickname || "",
       });
     } catch (error) {
@@ -84,6 +85,7 @@ export default function EditProfileScreen({ navigation }) {
         setProfile((prev) => ({
           ...prev,
           avatar: result.assets[0].uri,
+          imageUri: result.assets[0].uri,
         }));
       }
     } catch (error) {
@@ -101,6 +103,7 @@ export default function EditProfileScreen({ navigation }) {
     try {
       await updateUser(user.uid, {
         nickname: profile.nickname,
+        imageUri: profile.imageUri, // Include imageUri if changed
       });
 
       Alert.alert("Success", "Profile updated");
@@ -131,11 +134,20 @@ export default function EditProfileScreen({ navigation }) {
             componentStyle={styles.avatarContainer}
             pressedStyle={styles.avatarContainerPressed}
           >
-            <Image
-              source={{ uri: profile.avatar }}
-              onError={(error) => console.log("Error loading avatar: ", error)}
-              style={styles.avatar}
-            />
+            {profile.avatar ? (
+              <Image
+                source={{ uri: profile.avatar }}
+                style={styles.avatar}
+                onError={(error) => {
+                  console.log("Error loading avatar:", error);
+                  setProfile((prev) => ({ ...prev, avatar: null }));
+                }}
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <MaterialIcons name="person" size={50} color="#999" />
+              </View>
+            )}
             <View style={styles.avatarOverlay}>
               <MaterialIcons name="camera-alt" size={24} color="#fff" />
               <Text style={styles.avatarText}>Change Avatar</Text>

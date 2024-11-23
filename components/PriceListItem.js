@@ -30,18 +30,24 @@ export default function PriceListItem({
   };
 
   return (
-    <PressableButton onPress={onPress}>
-      <View
-        style={[
-          styles.priceItem,
+    <View style={styles.wrapper}>
+      <PressableButton
+        onPress={onPress}
+        componentStyle={[
+          styles.container,
           isMasterPrice && styles.masterPriceItem,
           !isValid && styles.expiredItem,
         ]}
+        pressedStyle={[
+          styles.containerPressed,
+          isMasterPrice && styles.masterPricePressed,
+        ]}
       >
-        <View style={styles.priceHeader}>
-          <View style={styles.storeInfo}>
-            {locationData?.chain?.chainId ? (
-              <View style={styles.chainLogoContainer}>
+        <View style={styles.priceItem}>
+          {/* Main Row with Logo and Price */}
+          <View style={styles.mainRow}>
+            <View style={styles.chainLogoContainer}>
+              {locationData?.chain?.chainId ? (
                 <Image
                   source={getChainLogo(locationData.chain.chainId)}
                   onError={(error) =>
@@ -49,88 +55,110 @@ export default function PriceListItem({
                   }
                   style={[styles.chainLogo, !isValid && styles.expiredImage]}
                 />
-              </View>
-            ) : (
-              <>
+              ) : (
                 <MaterialIcons
                   name="store"
-                  size={16}
+                  size={24}
                   color={!isValid ? "#999" : "#666"}
                 />
-                <Text
-                  style={[styles.storeText, !isValid && styles.expiredText]}
-                >
-                  {locationData?.location?.name || "Loading..."}
-                </Text>
-              </>
-            )}
+              )}
+            </View>
+
+            <View style={styles.priceContainer}>
+              <Text
+                style={[
+                  styles.priceText,
+                  isMasterPrice && styles.masterPriceText,
+                  !isValid && styles.expiredText,
+                ]}
+              >
+                ${price.price.toFixed(2)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.priceInfo}>
+
+          {/* Info Row with Store Name and Badge */}
+          <View style={styles.infoRow}>
             <Text
-              style={[
-                styles.priceText,
-                isMasterPrice && styles.masterPriceText,
-                !isValid && styles.expiredText,
-              ]}
+              style={[styles.storeText, !isValid && styles.expiredText]}
+              numberOfLines={2}
             >
-              ${price.price.toFixed(2)}
+              {locationData?.location?.name || "Loading..."}
             </Text>
-            {isMasterPrice && isValid && (
+            {isMasterPrice && isValid ? (
               <View style={styles.masterBadge}>
                 <MaterialIcons name="verified" size={14} color="#007AFF" />
                 <Text style={styles.masterText}>Master Price</Text>
               </View>
-            )}
-            {!isValid && (
+            ) : !isValid ? (
               <View style={styles.expiredBadge}>
+                <MaterialIcons name="timer-off" size={14} color="#6B7280" />
                 <Text style={styles.expiredBadgeText}>Expired</Text>
               </View>
-            )}
+            ) : null}
+          </View>
+
+          {/* Date Row */}
+          <View style={styles.dateRow}>
+            <MaterialIcons
+              name="schedule"
+              size={14}
+              color={!isValid ? "#9CA3AF" : "#6B7280"}
+            />
+            <Text style={[styles.dateText, !isValid && styles.expiredText]}>
+              Found on {new Date(price.createdAt).toLocaleDateString()}
+            </Text>
           </View>
         </View>
-        <View style={styles.priceFooter}>
-          <Text style={[styles.dateText, !isValid && styles.expiredText]}>
-            Found on {new Date(price.createdAt).toLocaleDateString()}
-          </Text>
-        </View>
-      </View>
-    </PressableButton>
+      </PressableButton>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  priceItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+  wrapper: {
+    paddingVertical: 4,
+    width: "100%",
+    flexGrow: 1, 
+  },
+  container: {
     backgroundColor: "white",
+    borderRadius: 12,
+    overflow: "hidden",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  containerPressed: {
+    backgroundColor: "#F3F4F6",
   },
   masterPriceItem: {
-    backgroundColor: "#f0f9ff",
-    borderRadius: 8,
+    backgroundColor: "#F0F9FF",
     borderWidth: 1,
     borderColor: "#007AFF20",
-    marginVertical: 4,
+  },
+  masterPricePressed: {
+    backgroundColor: "#E1F0FF",
   },
   expiredItem: {
-    backgroundColor: "#f5f5f5",
-    opacity: 0.8,
+    backgroundColor: "#F9FAFB",
+    opacity: 0.9,
   },
-  priceHeader: {
+  priceItem: {
+    padding: 16,
+    gap: 8,
+  },
+  mainRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
-  },
-  storeInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
   },
   chainLogoContainer: {
     width: 80,
     height: 30,
-    marginRight: 8,
+    justifyContent: "center",
   },
   chainLogo: {
     width: "100%",
@@ -138,35 +166,45 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   expiredImage: {
-    opacity: 0.5,
+    opacity: 0.6,
   },
-  storeText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: "#333",
-  },
-  expiredText: {
-    color: "#999",
-  },
-  priceInfo: {
+  priceContainer: {
     alignItems: "flex-end",
   },
   priceText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
+    color: "#374151",
+    marginLeft: 12,
   },
   masterPriceText: {
     color: "#007AFF",
   },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+  },
+  storeText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#6B7280",
+    lineHeight: 20,
+  },
+  expiredText: {
+    color: "#9CA3AF",
+  },
   masterBadge: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 2,
+    backgroundColor: "#EBF5FF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
   },
   masterText: {
-    marginLeft: 4,
     fontSize: 12,
     color: "#007AFF",
     fontWeight: "500",
@@ -174,21 +212,24 @@ const styles = StyleSheet.create({
   expiredBadge: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 2,
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
   },
   expiredBadgeText: {
-    marginLeft: 4,
     fontSize: 12,
-    color: "#ba1100",
+    color: "#6B7280",
     fontWeight: "500",
   },
-  priceFooter: {
+  dateRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
   },
   dateText: {
-    marginLeft: 8,
     fontSize: 14,
-    color: "#666",
+    color: "#6B7280",
   },
 });
