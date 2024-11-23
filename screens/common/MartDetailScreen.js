@@ -14,15 +14,18 @@ import MapView, { Marker } from "react-native-maps";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import { requestNotificationsPermission } from "../../utils/permissionUtils";
-import { getNotificationByChainId, scheduleWeeklyNotification } from "../../utils/notificationUtils";
+import {
+  cancelNotification,
+  getNotificationByChainId,
+  scheduleWeeklyNotification
+} from "../../utils/notificationUtils";
 import { handleLocationTracking } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
 export default function MartDetailScreen({ navigation, route }) {
   const { locationId } = route.params;
   const [martData, setMartData] = useState(null);
-  const [hasNotification, setHasNotification] = useState(false);
-  const [notification, setNotification] = useState(null);
+  const [notificationId, setNotificationId] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationSubscription, setLocationSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,10 +57,10 @@ export default function MartDetailScreen({ navigation, route }) {
 
       try {
         const existingNotification = await getNotificationByChainId(martData.chain.chainId);
-        setHasNotification(!!existingNotification);
-        setNotification(existingNotification);
+        setNotificationId(existingNotification?.identifier);
       } catch (error) {
         console.error("Error checking notification status:", error);
+        setNotificationId(null);
       }
     };
 
@@ -66,6 +69,43 @@ export default function MartDetailScreen({ navigation, route }) {
 
   const handleNotification = useCallback(async () => {
     try {
+      // If already subscribed, handle unsubscribe
+      if (notificationId) {
+        Alert.alert(
+          "Cancel Notification",
+          "Are you sure you want to cancel this weekly deal reminder?",
+          [
+            {
+              text: "No",
+              style: "cancel",
+            },
+            {
+              text: "Yes",
+              style: "destructive",
+              onPress: async () => {
+                // Cancel notification
+                try {
+                  console.log("Cancelling notification with ID: ", notificationId);
+                  await cancelNotification(notificationId);
+                  setNotificationId(null);
+                  Alert.alert(
+                    "Notification Cancelled",
+                    "Weekly deal reminder has been cancelled"
+                  );
+                } catch (error) {
+                  console.error("Error canceling notification:", error);
+                  Alert.alert(
+                    "Error",
+                    "Failed to cancel notification. Please try again."
+                  );
+                }
+              }
+            },
+          ]
+        );
+        return;
+      }
+
       // 1. Check notification permission
       const hasPermission = await requestNotificationsPermission();
       if (!hasPermission) {
@@ -90,12 +130,11 @@ export default function MartDetailScreen({ navigation, route }) {
       };
 
       // 4. Schedule the notification
-      const notificationId = await scheduleWeeklyNotification(content, schedule);
-      console.log(`Notification scheduled with ID: ${notificationId}`);
+      const newNotificationId = await scheduleWeeklyNotification(content, schedule);
+      console.log(`Notification scheduled with ID: ${newNotificationId}`);
 
       // 5. Update notification state
-      setHasNotification(true);
-      setNotification({ id: notificationId });
+      setNotificationId(newNotificationId);
 
       // 6. Alert success message
       Alert.alert(
@@ -103,10 +142,11 @@ export default function MartDetailScreen({ navigation, route }) {
         `You will receive weekly deal alerts for ${martData.chain.chainName}`
       );
     } catch (error) {
-      console.error("Error scheduling notification: ", error);
-      Alert.alert("Error", "Failed to set notification. Please try again.");
+      console.error("Error handling notification: ", error);
+      setNotificationId(null);
+      Alert.alert("Error", "Failed to process notification request. Please try again.");
     }
-  }, [martData]);
+  }, [notificationId, martData]);
 
   // Handle locating user
   const handleLocateUser = useCallback(async () => {
@@ -230,7 +270,7 @@ export default function MartDetailScreen({ navigation, route }) {
 
   // Get notification button text
   const getNotificationButtonText = () => {
-    return hasNotification ? "Cancel Notification" : "Schedule Weekly Deal Notification";
+    return notificationId ? "Cancel Notification" : "Schedule Weekly Deal Notification";
   };
 
   // Loading state
@@ -286,12 +326,12 @@ export default function MartDetailScreen({ navigation, route }) {
           onPress={handleNotification}
           componentStyle={[
             styles.unsubscribedNotificationButton,
-            hasNotification && styles.subscribedNotificationButton
+            notificationId && styles.subscribedNotificationButton
           ]}
           pressableStyle={styles.notificationButtonPressable}
         >
           <MaterialIcons
-            name={hasNotification ? "notifications-active" : "notifications-none"}
+            name={notificationId ? "notifications-active" : "notifications-none"}
             size={24}
             color="white"
           />
@@ -451,7 +491,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   subscribedNotificationButton: {
-    backgroundColor: "#34C759",
+    backgroundColor: "#E31837",
   },
   notificationButtonText: {
     color: "white",
