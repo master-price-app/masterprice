@@ -1,13 +1,30 @@
 import { StyleSheet, Text, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
 import PressableButton from "../components/PressableButton";
+
+import ProductDetailScreen from "../screens/common/ProductDetailScreen";
+import PriceDetailScreen from "../screens/common/PriceDetailScreen";
+import PriceFormScreen from "../screens/common/PriceFormScreen";
+import MartDetailScreen from "../screens/common/MartDetailScreen";
+
 import SearchScreen from "../screens/search/SearchScreen";
+import SearchResultScreen from "../screens/search/SearchResultScreen";
+import BarcodeScannerScreen from "../screens/search/BarcodeScannerScreen";
+
 import ShoppingListScreen from "../screens/list/ShoppingListScreen";
+
 import AccountScreen from "../screens/account/AccountScreen";
+import EditProfileScreen from "../screens/account/EditProfileScreen";
+import AccountSecurityScreen from "../screens/account/AccountSecurityScreen";
+import MyPostsScreen from "../screens/account/MyPostsScreen";
+import NotificationsScreen from "../screens/account/NotificationsScreen";
+import TermsAndConditionsScreen from "../screens/account/TermsAndConditionsScreen";
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 // Authentication placeholder screens
 function AuthPlaceholder({ navigation }) {
@@ -19,7 +36,7 @@ function AuthPlaceholder({ navigation }) {
       <Text style={styles.subtitle}>
         Please sign in to access this feature
       </Text>
-      
+
       <PressableButton
         onPress={() => navigation.navigate("Login")}
         componentStyle={styles.signInButton}
@@ -41,6 +58,90 @@ function AuthPlaceholder({ navigation }) {
   );
 }
 
+const CommonScreens = () => (
+  <>
+    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    <Stack.Screen name="PriceDetail" component={PriceDetailScreen} />
+    <Stack.Screen
+      name="PriceForm"
+      component={PriceFormScreen}
+      options={{ tabBarStyle: { display: "none" } }}
+    />
+    <Stack.Screen name="MartDetail" component={MartDetailScreen} />
+  </>
+);
+
+const SearchStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen name="Search" component={SearchScreen} />
+    <Stack.Screen name="SearchResult" component={SearchResultScreen} />
+    <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} />
+    {CommonScreens()}
+  </Stack.Navigator>
+);
+
+const ListStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen name="ShoppingList" component={ShoppingListScreen} />
+    {CommonScreens()}
+  </Stack.Navigator>
+);
+
+const AccountStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen name="Account" component={AccountScreen} />
+    <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+    <Stack.Screen name="AccountSecurity" component={AccountSecurityScreen} />
+    <Stack.Screen name="MyPosts" component={MyPostsScreen} />
+    <Stack.Screen name="Notifications" component={NotificationsScreen} />
+    <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+    {CommonScreens()}
+  </Stack.Navigator>
+);
+
+// const CommonScreens = [
+//   { name: "ProductDetail", component: ProductDetailScreen },
+//   { name: "PriceDetail", component: PriceDetailScreen },
+//   { name: "PriceForm", component: PriceFormScreen },
+//   { name: "MartDetail", component: MartDetailScreen },
+// ];
+
+// const SearchStack = [
+//   { name: "Search", component: SearchScreen },
+//   { name: "SearchResult", component: SearchResultScreen },
+//   { name: "BarcodeScanner", component: BarcodeScannerScreen },
+//   ...CommonScreens,
+// ];
+
+// const ListStack = [
+//   { name: "ShoppingList", component: ShoppingListScreen },
+//   ...CommonScreens,
+// ];
+
+// const AccountStack = [
+//   { name: "Account", component: AccountScreen },
+//   { name: "EditProfile", component: EditProfileScreen },
+//   { name: "AccountSecurity", component: AccountSecurityScreen },
+//   { name: "MyPosts", component: MyPostsScreen },
+//   { name: "Notifications", component: NotificationsScreen },
+//   { name: "TermsAndConditions", component: TermsAndConditionsScreen },
+//   ...CommonScreens,
+// ];
+
+// function StackNavigator({ screens }) {
+//   return (
+//     <Stack.Navigator>
+//       {screens.map(screen => (
+//         <Stack.Screen
+//           name={screen.name}
+//           component={screen.component}
+//           options={screen.options}
+//         />
+//       ))}
+//     </Stack.Navigator>
+//   );
+// }
+
 export default function TabNavigator() {
   const { user } = useAuth();
 
@@ -49,12 +150,13 @@ export default function TabNavigator() {
       screenOptions={{
         tabBarActiveTintColor: "#007AFF",
         tabBarInactiveTintColor: "#666",
+        headerShown: false,
       }}
     >
       {/* Public Tab */}
       <Tab.Screen
         name="SearchTab"
-        component={SearchScreen}
+        component={SearchStack}
         options={{
           title: "Search",
           tabBarIcon: ({ color, size }) => (
@@ -66,7 +168,7 @@ export default function TabNavigator() {
       {/* Protected Tabs */}
       <Tab.Screen
         name="ListTab"
-        component={user ? ShoppingListScreen : AuthPlaceholder}
+        component={user ? ListStack : AuthPlaceholder}
         options={{
           title: "List",
           tabBarIcon: ({ color, size }) => (
@@ -77,7 +179,7 @@ export default function TabNavigator() {
 
       <Tab.Screen
         name="AccountTab"
-        component={user ? AccountScreen : AuthPlaceholder}
+        component={user ? AccountStack : AuthPlaceholder}
         options={{
           title: "Account",
           tabBarIcon: ({ color, size }) => (
