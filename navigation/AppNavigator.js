@@ -14,6 +14,7 @@ import AccountScreen from "../screens/account/AccountScreen";
 import AccountSecurityScreen from "../screens/account/AccountSecurityScreen";
 import EditProfileScreen from "../screens/account/EditProfileScreen";
 import MyPostsScreen from "../screens/account/MyPostsScreen";
+import NotificationsScreen from "../screens/account/NotificationsScreen";
 import TermsAndConditionsScreen from "../screens/account/TermsAndConditionsScreen";
 import ShoppingListScreen from "../screens/list/ShoppingListScreen";
 import PriceFormScreen from "../screens/common/PriceFormScreen";
@@ -43,10 +44,8 @@ const ProtectedStack = () => (
     <Stack.Screen name="AccountSecurity" component={AccountSecurityScreen} />
     <Stack.Screen name="EditProfile" component={EditProfileScreen} />
     <Stack.Screen name="MyPosts" component={MyPostsScreen} />
-    <Stack.Screen
-      name="TermsAndConditions"
-      component={TermsAndConditionsScreen}
-    />
+    <Stack.Screen name="Notifications" component={NotificationsScreen} />
+    <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
     <Stack.Screen name="ShoppingList" component={ShoppingListScreen} />
     <Stack.Screen name="PriceForm" component={PriceFormScreen} />
   </>

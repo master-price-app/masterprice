@@ -111,26 +111,22 @@ const loadUserData = async () => {
       onPress: () => navigation.navigate("EditProfile"),
     },
     {
-      id: "posts",
-      icon: "list-alt",
-      title: "My Posts",
-      onPress: () => navigation.navigate("MyPosts"),
-    },
-    {
       id: "security",
       icon: "security",
       title: "Account Security",
       onPress: () => navigation.navigate("AccountSecurity"),
     },
     {
+      id: "posts",
+      icon: "list-alt",
+      title: "My Posts",
+      onPress: () => navigation.navigate("MyPosts"),
+    },
+    {
       id: "notifications",
       icon: "notifications",
-      title: "Notification Settings",
-      onPress: () =>
-        Alert.alert(
-          "Notification Settings",
-          "This feature is not available yet."
-        ),
+      title: "Notifications",
+      onPress: () => navigation.navigate("Notifications"),
     },
     {
       id: "terms",
