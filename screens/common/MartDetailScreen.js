@@ -14,7 +14,7 @@ import MapView, { Marker } from "react-native-maps";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import { requestNotificationsPermission } from "../../utils/permissionUtils";
-import { scheduleWeeklyNotification } from "../../utils/notificationUtils";
+import { getNotificationByChainId, scheduleWeeklyNotification } from "../../utils/notificationUtils";
 import { handleLocationTracking } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
@@ -48,8 +48,21 @@ export default function MartDetailScreen({ navigation, route }) {
     fetchMartData();
   }, [locationId]);
 
+  // Check notification status
   useEffect(() => {
+    const checkNotification = async () => {
+      if (!martData?.chain?.chainId) return;
 
+      try {
+        const existingNotification = await getNotificationByChainId(martData.chain.chainId);
+        setHasNotification(!!existingNotification);
+        setNotification(existingNotification);
+      } catch (error) {
+        console.error("Error checking notification status:", error);
+      }
+    };
+
+    checkNotification();
   }, [martData]);
 
   const handleNotification = useCallback(async () => {
