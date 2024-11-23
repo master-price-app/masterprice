@@ -4,24 +4,20 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
 import PressableButton from "../components/PressableButton";
-
+// Common Screens
 import ProductDetailScreen from "../screens/common/ProductDetailScreen";
 import PriceDetailScreen from "../screens/common/PriceDetailScreen";
-import PriceFormScreen from "../screens/common/PriceFormScreen";
 import MartDetailScreen from "../screens/common/MartDetailScreen";
-
+// Search Screens
 import SearchScreen from "../screens/search/SearchScreen";
 import SearchResultScreen from "../screens/search/SearchResultScreen";
 import BarcodeScannerScreen from "../screens/search/BarcodeScannerScreen";
-
+// List Screens
 import ShoppingListScreen from "../screens/list/ShoppingListScreen";
-
+// Account Screens
 import AccountScreen from "../screens/account/AccountScreen";
-import EditProfileScreen from "../screens/account/EditProfileScreen";
-import AccountSecurityScreen from "../screens/account/AccountSecurityScreen";
 import MyPostsScreen from "../screens/account/MyPostsScreen";
 import NotificationsScreen from "../screens/account/NotificationsScreen";
-import TermsAndConditionsScreen from "../screens/account/TermsAndConditionsScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -62,11 +58,6 @@ const CommonScreens = () => (
   <>
     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     <Stack.Screen name="PriceDetail" component={PriceDetailScreen} />
-    <Stack.Screen
-      name="PriceForm"
-      component={PriceFormScreen}
-      options={{ tabBarStyle: { display: "none" } }}
-    />
     <Stack.Screen name="MartDetail" component={MartDetailScreen} />
   </>
 );
@@ -90,11 +81,8 @@ const ListStack = () => (
 const AccountStack = () => (
   <Stack.Navigator>
     <Stack.Screen name="Account" component={AccountScreen} />
-    <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-    <Stack.Screen name="AccountSecurity" component={AccountSecurityScreen} />
     <Stack.Screen name="MyPosts" component={MyPostsScreen} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} />
-    <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
     {CommonScreens()}
   </Stack.Navigator>
 );
@@ -153,7 +141,7 @@ export default function TabNavigator() {
         headerShown: false,
       }}
     >
-      {/* Public Tab */}
+      {/* Search Tab */}
       <Tab.Screen
         name="SearchTab"
         component={SearchStack}
@@ -165,7 +153,7 @@ export default function TabNavigator() {
         }}
       />
 
-      {/* Protected Tabs */}
+      {/* Shopping List Tab */}
       <Tab.Screen
         name="ListTab"
         component={user ? ListStack : AuthPlaceholder}
@@ -177,6 +165,7 @@ export default function TabNavigator() {
         }}
       />
 
+      {/* Account Tab */}
       <Tab.Screen
         name="AccountTab"
         component={user ? AccountStack : AuthPlaceholder}
