@@ -11,8 +11,10 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import * as Notifications from "expo-notifications";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
+import { requestNotificationsPermission } from "../../utils/permissionUtils";
 import { handleLocationTracking } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
@@ -20,6 +22,8 @@ import PressableButton from "../../components/PressableButton";
 export default function MartDetailScreen({ navigation, route }) {
   const { locationId } = route.params;
   const [martData, setMartData] = useState(null);
+  const [hasNotification, setHasNotification] = useState(false);
+  const [notification, setNotification] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationSubscription, setLocationSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -53,6 +57,39 @@ export default function MartDetailScreen({ navigation, route }) {
       }
     };
   }, [locationSubscription]);
+
+  const handleNotification = useCallback(async () => {
+    try {
+      const hasPermission = await requestNotificationsPermission();
+
+      if (!hasPermission) {
+        return;
+      }
+
+      if (notification) {
+        await Notifications.cancelScheduledNotificationAsync(notification);
+      }
+
+      // Schedule notification
+      const notificationId = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Mart Notification",
+          body: "Notification.",
+        },
+        trigger: {
+          seconds: 3,
+        },
+      });
+
+      setHasNotification(true);
+      setNotification(notificationId);
+
+      console.log(`Notification scheduled with ID: ${notificationId}`);
+    } catch (error) {
+      console.error("Error scheduling notification: ", error);
+      Alert.alert("Error", "Failed to set notification. Please try again.");
+    }
+  }, []);
 
   // Handle locating user
   const handleLocateUser = useCallback(async () => {
@@ -222,6 +259,21 @@ export default function MartDetailScreen({ navigation, route }) {
         />
         {/* Chain Name */}
         <Text style={styles.chainName}>{chain.chainName}</Text>
+
+        <PressableButton
+          onPress={handleNotification}
+          componentStyle={styles.notificationButton}
+          pressableStyle={styles.notificationButtonPressable}
+        >
+          <MaterialIcons 
+            name={hasNotification ? "notifications-active" : "notifications-none"} 
+            size={24} 
+            color="white" 
+          />
+          <Text style={styles.notificationButtonText}>
+            {hasNotification ? "Modify Alert" : "Set Alert"}
+          </Text>
+        </PressableButton>
       </View>
 
       {/* Map */}
@@ -244,14 +296,11 @@ export default function MartDetailScreen({ navigation, route }) {
             }}
             title={location.name}
             description={location.address.street}
-            pinColor="#E31837"
           />
           {/* User location */}
           {userLocation && (
             <Marker
               coordinate={userLocation}
-              title="You are here"
-              pinColor="#007AFF"
             >
               <View style={styles.userLocationMarker}>
                 <View style={styles.userLocationDot} />
@@ -366,6 +415,28 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: "#333",
+  },
+  // Notification Button
+  notificationButton: {
+    position: "absolute",
+    bottom: 16,
+    left: 16,
+    backgroundColor: "#E31837",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  notificationButtonText: {
+    color: "white",
+    marginLeft: 8,
+    fontWeight: "600",
   },
   // Map Section
   mapContainer: {

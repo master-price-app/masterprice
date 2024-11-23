@@ -24,6 +24,14 @@ const PERMISSION_SETTINGS = {
   },
 };
 
+// Configure how notifications should be handled
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+  }),
+});
+
 // Open specific settings for each permission type
 const openSettings = async (permissionType) => {
   try {
