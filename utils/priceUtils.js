@@ -1,4 +1,3 @@
-// Calculate if a price is within the current deal cycle for a mart
 export const isWithinCurrentCycle = (priceDate, dealCycle) => {
   if (!priceDate || !dealCycle?.startDay) return false;
 
@@ -43,9 +42,20 @@ export const isMasterPrice = (price, allPrices, martCycles) => {
     return false;
   }
 
-  // Find the lowest price among all prices for this product
-  const lowestPrice = Math.min(...allPrices.map((p) => p.price));
+  // Filter for valid prices only based on their cycles
+  const validPrices = allPrices.filter((p) => {
+    const priceCycle = martCycles[p.locationId]?.chain;
+    return isWithinCurrentCycle(p.createdAt, priceCycle);
+  });
 
-  // It's a master price if it's the lowest
+  // If no valid prices, this can't be a master price
+  if (validPrices.length === 0) {
+    return false;
+  }
+
+  // Find the lowest price among valid prices only
+  const lowestPrice = Math.min(...validPrices.map((p) => p.price));
+
+  // It's a master price if it's the lowest among valid prices
   return price.price === lowestPrice;
 };
