@@ -87,49 +87,7 @@ const AccountStack = () => (
   </Stack.Navigator>
 );
 
-// const CommonScreens = [
-//   { name: "ProductDetail", component: ProductDetailScreen },
-//   { name: "PriceDetail", component: PriceDetailScreen },
-//   { name: "PriceForm", component: PriceFormScreen },
-//   { name: "MartDetail", component: MartDetailScreen },
-// ];
-
-// const SearchStack = [
-//   { name: "Search", component: SearchScreen },
-//   { name: "SearchResult", component: SearchResultScreen },
-//   { name: "BarcodeScanner", component: BarcodeScannerScreen },
-//   ...CommonScreens,
-// ];
-
-// const ListStack = [
-//   { name: "ShoppingList", component: ShoppingListScreen },
-//   ...CommonScreens,
-// ];
-
-// const AccountStack = [
-//   { name: "Account", component: AccountScreen },
-//   { name: "EditProfile", component: EditProfileScreen },
-//   { name: "AccountSecurity", component: AccountSecurityScreen },
-//   { name: "MyPosts", component: MyPostsScreen },
-//   { name: "Notifications", component: NotificationsScreen },
-//   { name: "TermsAndConditions", component: TermsAndConditionsScreen },
-//   ...CommonScreens,
-// ];
-
-// function StackNavigator({ screens }) {
-//   return (
-//     <Stack.Navigator>
-//       {screens.map(screen => (
-//         <Stack.Screen
-//           name={screen.name}
-//           component={screen.component}
-//           options={screen.options}
-//         />
-//       ))}
-//     </Stack.Navigator>
-//   );
-// }
-
+// TODO: https://reactnavigation.org/docs/hiding-tabbar-in-screens
 export default function TabNavigator() {
   const { user } = useAuth();
 
