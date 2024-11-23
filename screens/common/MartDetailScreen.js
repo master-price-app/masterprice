@@ -4,7 +4,9 @@ import {
   Alert,
   Image,
   Linking,
+  Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +18,7 @@ import { getLocationById, chainLogoMapping } from "../../services/martService";
 import { requestNotificationsPermission } from "../../utils/permissionUtils";
 import {
   cancelNotification,
+  formatScheduleTime,
   getNotificationByChainId,
   scheduleWeeklyNotification
 } from "../../utils/notificationUtils";
@@ -28,6 +31,13 @@ export default function MartDetailScreen({ navigation, route }) {
   const [notificationId, setNotificationId] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationSubscription, setLocationSubscription] = useState(null);
+  const [selectedTime, setSelectedTime] = useState({
+    weekday: 1,
+    hour: 1,
+    minute: 0,
+    period: 'AM'
+  });
+  const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
@@ -85,7 +95,6 @@ export default function MartDetailScreen({ navigation, route }) {
               onPress: async () => {
                 // Cancel notification
                 try {
-                  console.log("Cancelling notification with ID: ", notificationId);
                   await cancelNotification(notificationId);
                   setNotificationId(null);
                   Alert.alert(
@@ -106,13 +115,24 @@ export default function MartDetailScreen({ navigation, route }) {
         return;
       }
 
-      // 1. Check notification permission
+      // Check notification permission before showing time picker
       const hasPermission = await requestNotificationsPermission();
       if (!hasPermission) {
         return;
       }
 
-      // 2. Create notification content
+      // Show time picker modal
+      setIsTimePickerVisible(true);
+    } catch (error) {
+      console.error("Error handling notification: ", error);
+      setNotificationId(null);
+      Alert.alert("Error", "Failed to process notification request. Please try again.");
+    }
+  }, [notificationId]);
+
+  const handleScheduleNotification = useCallback(async (weekday, hour, minute) => {
+    try {
+      // Create notification content
       const content = {
         title: `Deal Reminder: ${martData.chain.chainName}`,
         body: "Time to check this week's deals",
@@ -122,29 +142,29 @@ export default function MartDetailScreen({ navigation, route }) {
         },
       };
 
-      // 3. Set notification schedule (temporary fixed time)
-      const schedule = {
-        weekday: 3, // Tuesday
-        hour: 10,   // 10 AM
-        minute: 0,
-      };
+      // Set notification schedule
+      const schedule = { weekday, hour, minute };
 
-      // 4. Schedule the notification
+      // Schedule the notification
       const newNotificationId = await scheduleWeeklyNotification(content, schedule);
-      console.log(`Notification scheduled with ID: ${newNotificationId}`);
 
-      // 5. Update notification state
+      // Update notification state
       setNotificationId(newNotificationId);
 
-      // 6. Alert success message
+      // Close modal
+      setIsTimePickerVisible(false);
+
+      // Show success message
       Alert.alert(
-        "Notification Set",
-        `You will receive weekly deal alerts for ${martData.chain.chainName}`
+        "Reminder Set",
+        `You will receive weekly deal alerts for ${martData.chain.chainName} every ${formatScheduleTime(schedule)}`
       );
     } catch (error) {
-      console.error("Error handling notification: ", error);
-      setNotificationId(null);
-      Alert.alert("Error", "Failed to process notification request. Please try again.");
+      console.error("Error scheduling notification:", error);
+      Alert.alert(
+        "Error",
+        "Failed to set reminder. Please try again."
+      );
     }
   }, [notificationId, martData]);
 
@@ -273,6 +293,119 @@ export default function MartDetailScreen({ navigation, route }) {
     return notificationId ? "Cancel Notification" : "Schedule Weekly Deal Notification";
   };
 
+  const TimePickerModal = () => (
+    <Modal
+      visible={isTimePickerVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setIsTimePickerVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Set Reminder Time</Text>
+
+          {/* Weekday Picker */}
+          <View style={styles.pickerSection}>
+            <Text style={styles.pickerLabel}>Day of Week</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                <Pressable
+                  key={day}
+                  style={[
+                    styles.dayButton,
+                    selectedTime?.weekday === index + 1 && styles.dayButtonSelected
+                  ]}
+                  onPress={() => setSelectedTime(prev => ({ ...prev, weekday: index + 1 }))}
+                >
+                  <Text style={[
+                    styles.dayButtonText,
+                    selectedTime?.weekday === index + 1 && styles.dayButtonTextSelected
+                  ]}>{day}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Time Picker */}
+          <View style={styles.pickerSection}>
+            <Text style={styles.pickerLabel}>Time</Text>
+            <View style={styles.timePickerContainer}>
+              {/* Hour */}
+              <ScrollView style={styles.timePickerColumn}>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
+                  <Pressable
+                    key={hour}
+                    style={[
+                      styles.timeButton,
+                      selectedTime?.hour === hour && styles.timeButtonSelected
+                    ]}
+                    onPress={() => setSelectedTime(prev => ({ ...prev, hour }))}
+                  >
+                    <Text style={styles.timeButtonText}>{hour}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              {/* Minute */}
+              <ScrollView style={styles.timePickerColumn}>
+                {[0, 15, 30, 45].map(minute => (
+                  <Pressable
+                    key={minute}
+                    style={[
+                      styles.timeButton,
+                      selectedTime?.minute === minute && styles.timeButtonSelected
+                    ]}
+                    onPress={() => setSelectedTime(prev => ({ ...prev, minute }))}
+                  >
+                    <Text style={styles.timeButtonText}>{minute.toString().padStart(2, '0')}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              {/* AM/PM */}
+              <View style={styles.periodContainer}>
+                {['AM', 'PM'].map(period => (
+                  <Pressable
+                    key={period}
+                    style={[
+                      styles.periodButton,
+                      selectedTime?.period === period && styles.periodButtonSelected
+                    ]}
+                    onPress={() => setSelectedTime(prev => ({ ...prev, period }))}
+                  >
+                    <Text style={styles.periodButtonText}>{period}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* Buttons */}
+          <View style={styles.modalButtons}>
+            <Pressable
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => setIsTimePickerVisible(false)}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.modalButton, styles.confirmButton]}
+              onPress={() => {
+                const hour = selectedTime?.period === 'PM' ?
+                  (selectedTime?.hour % 12) + 12 :
+                  selectedTime?.hour % 12;
+                handleScheduleNotification(selectedTime?.weekday, hour, selectedTime?.minute);
+                setIsTimePickerVisible(false);
+              }}
+            >
+              <Text style={styles.buttonText}>Confirm</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   // Loading state
   if (loading) {
     return (
@@ -322,6 +455,7 @@ export default function MartDetailScreen({ navigation, route }) {
         {/* Chain Name */}
         <Text style={styles.chainName}>{chain.chainName}</Text>
 
+        {/* Notification Button */}
         <PressableButton
           onPress={handleNotification}
           componentStyle={[
@@ -426,6 +560,9 @@ export default function MartDetailScreen({ navigation, route }) {
           <BusinessHours hours={location.hours} />
         </View>
       )}
+
+      {/* Time Picker Modal */}
+      <TimePickerModal />
     </ScrollView>
   );
 }
@@ -498,6 +635,101 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
+  },
+  // Time Picker Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  pickerSection: {
+    marginBottom: 20,
+  },
+  pickerLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 10,
+  },
+  dayButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginRight: 10,
+    borderRadius: 8,
+    backgroundColor: "#f0f0f0",
+  },
+  dayButtonSelected: {
+    backgroundColor: "#007AFF",
+  },
+  dayButtonText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  dayButtonTextSelected: {
+    color: "white",
+  },
+  timePickerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  timePickerColumn: {
+    height: 200,
+  },
+  timeButton: {
+    padding: 10,
+    alignItems: "center",
+  },
+  timeButtonSelected: {
+    backgroundColor: "#e6f2ff",
+  },
+  timeButtonText: {
+    fontSize: 16,
+  },
+  periodContainer: {
+    justifyContent: "center",
+  },
+  periodButton: {
+    padding: 10,
+    marginVertical: 5,
+    borderRadius: 8,
+    backgroundColor: "#f0f0f0",
+  },
+  periodButtonSelected: {
+    backgroundColor: "#007AFF",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 8,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: "#f0f0f0",
+  },
+  confirmButton: {
+    backgroundColor: "#007AFF",
+  },
+  buttonText: {
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "600",
+    color: "white",
   },
   // Map Section
   mapContainer: {
