@@ -28,7 +28,9 @@ export default function ShoppingListScreen({ navigation }) {
   // Subscribe to shopping list
   useEffect(() => {
     if (!user) {
-      navigation.replace("Login");
+      navigation.replace("Login", {
+        isGoBack: true,
+      });
       return;
     }
 

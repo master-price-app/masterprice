@@ -27,7 +27,9 @@ export default function EditProfileScreen({ navigation }) {
 
   useEffect(() => {
     if (!user) {
-      navigation.replace("Login");
+      navigation.replace("Login", {
+        isGoBack: true,
+      });
       return;
     }
 
@@ -96,7 +98,9 @@ export default function EditProfileScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!user) {
-      navigation.replace("Login");
+      navigation.replace("Login", {
+        isGoBack: true,
+      });
       return;
     }
 

@@ -34,7 +34,9 @@ export default function PriceFormScreen({ navigation, route }) {
 
   useEffect(() => {
     if (!user) {
-      navigation.replace("Login");
+      navigation.replace("Login", {
+        isGoBack: true,
+      });
       return;
     }
   }, [user]);
@@ -128,50 +130,52 @@ export default function PriceFormScreen({ navigation, route }) {
   };
 
   // Handle form submission
-const handleSubmit = async () => {
-  if (!user) {
-    navigation.replace("Login");
-    return;
-  }
-
-  if (!validateForm()) return;
-
-  try {
-    const priceData = {
-      code,
-      productName,
-      price: parseFloat(price),
-      locationId: selectedLocationId,
-      // Don't include createdAt here, let the service handle it
-    };
-
-    // Add image URI if image was selected
-    if (imageUri) {
-      priceData.imagePath = imageUri;
+  const handleSubmit = async () => {
+    if (!user) {
+      navigation.replace("Login", {
+        isGoBack: true,
+      });
+      return;
     }
 
-    if (editMode) {
-      await updateData(
-        user.uid,
-        priceData,
-        "prices",
-        route.params.priceData.id
+    if (!validateForm()) return;
+
+    try {
+      const priceData = {
+        code,
+        productName,
+        price: parseFloat(price),
+        locationId: selectedLocationId,
+        // Don't include createdAt here, let the service handle it
+      };
+
+      // Add image URI if image was selected
+      if (imageUri) {
+        priceData.imagePath = imageUri;
+      }
+
+      if (editMode) {
+        await updateData(
+          user.uid,
+          priceData,
+          "prices",
+          route.params.priceData.id
+        );
+        Alert.alert("Success", "Price updated successfully!");
+      } else {
+        await writeToDB(user.uid, priceData, "prices");
+        Alert.alert("Success", "New price shared successfully!");
+      }
+
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error submitting price:", error);
+      Alert.alert(
+        "Error",
+        editMode ? "Failed to update price" : "Failed to submit price"
       );
-      Alert.alert("Success", "Price updated successfully!");
-    } else {
-      await writeToDB(user.uid, priceData, "prices");
-      Alert.alert("Success", "New price shared successfully!");
     }
-
-    navigation.goBack();
-  } catch (error) {
-    console.error("Error submitting price:", error);
-    Alert.alert(
-      "Error",
-      editMode ? "Failed to update price" : "Failed to submit price"
-    );
-  }
-};
+  };
 
   if (loading) {
     return (
