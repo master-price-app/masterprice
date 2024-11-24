@@ -66,6 +66,7 @@ export default function RegisterScreen({ navigation }) {
       });
 
       console.log("Registered user:", userCredential.user.uid);
+      navigation.replace("Login");
     } catch (error) {
       console.log("Register error:", error);
       if (error.code === "auth/invalid-email") {
