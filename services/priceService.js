@@ -90,8 +90,8 @@ export async function writeToDB(userId, data, collectionName) {
     let imagePath = null;
 
     // Handle image upload if present
-    if (data.imageUri) {
-      imagePath = await uploadPriceImage(data.imageUri, userId);
+    if (data.imagePath) {
+      imagePath = await uploadPriceImage(data.imagePath, userId);
     }
 
     // Remove the local imageUri and add Firebase storage path
