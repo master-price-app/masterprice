@@ -280,7 +280,10 @@ export default function PriceDetailScreen({ navigation, route }) {
   // Toggle shopping list
   const handleShoppingListToggle = async () => {
     if (!user) {
-      navigation.navigate("Login");
+      navigation.navigate("Login", {
+        returnScreen: "PriceDetail",
+        returnParams: route.params,
+      });
       return;
     }
 
@@ -306,7 +309,10 @@ export default function PriceDetailScreen({ navigation, route }) {
     if (!newComment.trim() || !priceData?.id) return;
 
     if (!user) {
-      navigation.navigate("Login");
+      navigation.navigate("Login", {
+        returnScreen: "PriceDetail",
+        returnParams: route.params,
+      });
       return;
     }
 

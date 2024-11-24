@@ -34,7 +34,10 @@ export default function PriceFormScreen({ navigation, route }) {
 
   useEffect(() => {
     if (!user) {
-      navigation.replace("Login");
+      navigation.replace("Login", {
+        returnScreen: "PriceForm",
+        returnParams: route.params,
+      });
       return;
     }
   }, [user]);
@@ -128,11 +131,14 @@ export default function PriceFormScreen({ navigation, route }) {
   };
 
   // Handle form submission
-const handleSubmit = async () => {
-  if (!user) {
-    navigation.replace("Login");
-    return;
-  }
+  const handleSubmit = async () => {
+    if (!user) {
+      navigation.replace("Login", {
+        returnScreen: "PriceForm",
+        returnParams: route.params,
+      });
+      return;
+    }
 
   if (!validateForm()) return;
 

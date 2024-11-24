@@ -32,7 +32,9 @@ export default function MyPostsScreen({ navigation }) {
   // Load user's posts
 useEffect(() => {
   if (!user) {
-    navigation.replace("Login");
+    navigation.replace("Login", {
+      returnScreen: "MyPosts",
+    });
     return;
   }
 
