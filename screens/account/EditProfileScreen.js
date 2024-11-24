@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   StyleSheet,
   Text,
   TextInput,
   View,
-  ActivityIndicator,
 } from "react-native";
 import { Menu } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
@@ -103,7 +103,7 @@ export default function EditProfileScreen({ navigation }) {
     try {
       await updateUser(user.uid, {
         nickname: profile.nickname,
-        imageUri: profile.imageUri, // Include imageUri if changed
+        imageUri: profile.imageUri || null, // Include imageUri if changed
       });
 
       Alert.alert("Success", "Profile updated");
