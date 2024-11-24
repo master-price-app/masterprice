@@ -258,6 +258,7 @@ export default function PriceDetailScreen({ navigation, route }) {
         price: priceData.price,
         locationId: priceData.locationId,
         code: priceData.code,
+        imagePath: imageUrl,
       },
     });
   };
