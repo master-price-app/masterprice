@@ -48,7 +48,7 @@ Group 22:
 
 ## Features
 
-- **Barcode Scanner**: Instantly check prices by scanning product barcodes(To be updated in the next iteration with location and map) 
+- **Barcode Scanner**: Instantly check prices by scanning product barcodes
 <img src="https://github.com/user-attachments/assets/1bf5c7c1-8009-444a-8758-cbdd8002792e" width="200" alt="Search Screen"/>
 <img src="https://github.com/user-attachments/assets/bd99985d-c56f-4888-900a-6d8eb625e8f3" width="200" alt="Barcode Scanner Screen"/>
 
@@ -59,46 +59,68 @@ Try scanning this barcode:
 
 <br><br>
 
-- **Price Comparison**: Search and compare prices of products across multiple marts in your area(To be updated in the next iteration with authentication)
+- **Price Comparison with interative map**:
+
+Search and compare prices of products across multiple marts marked in an interative map (users can click locate to show location)
+
 <img src="https://github.com/user-attachments/assets/59848bd2-2bbb-4917-9a9c-56404b43a75c" width="200" alt="Search Screen"/>
 <img src="https://github.com/user-attachments/assets/7f536aac-d1f3-4750-aeb2-ecf5fa162d45" width="200" alt="Search Result Screen"/>
-<img src="https://github.com/user-attachments/assets/1b9d81ae-3116-41a1-91aa-a684bfcc2c2d" width="200" alt="Product Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/9ac10e5e-15a1-48f9-b8d6-8009cb769053" width="200"/>
+
+<br><br>
+Sort the price by post date or price with 'Master Price' marked for users
+
+<img src="https://github.com/user-attachments/assets/c27986db-c4c5-4557-b269-16b22ab2a56b" width="200"/>
+<img src="https://github.com/user-attachments/assets/e95aada8-5871-442c-a735-81c6be757136" width="200"/>
+
 <br><br>
 <br><br>
   
-- **Community-Driven Updates**: Share and comment on price information
+- **Community-Driven Updates with camera use**: Share and comment on price information with image taking/uploading
 <img src="https://github.com/user-attachments/assets/06a0da7a-be4d-45e7-abdf-c8e9b3ccaa24" width="200" alt="Price Detail Screen"/>
-<img src="https://github.com/user-attachments/assets/4e342019-8489-48f1-8233-e37d92a37772" width="200" alt="Price Form Screen"/>
-<img src="https://github.com/user-attachments/assets/02cf2247-8d3b-4393-a152-1a78c37c5085" width="200" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/b68260be-c65f-414e-962d-e2b8f2164902" width="200"/>
+<img src="https://github.com/user-attachments/assets/3c0f4646-3005-458c-8927-e8813cddd062" width="200"/>
+
 <br><br>
 <br><br>
 
   
-- **Mart Browse**: View and schedule notifications for the chosen marts’ deal releases based on deal cycles(To be updated in the next iteration with location, map and notification) 
-<img src="https://github.com/user-attachments/assets/16cff329-4e1c-4773-8bb7-e3838981d313" width="200" alt="Mart Detail Screen"/>
-<br><br>
-<br><br>
+- **Mart Browse and notification scheduling**: View mart location and schedule notifications for the chosen marts’ weekly deal reminder based on deal cycles
+<img src="https://github.com/user-attachments/assets/33ee346f-5410-4d7f-8b75-6eb43bb5a95d" width="200"/>
+<img src="https://github.com/user-attachments/assets/1a6d94cf-5399-4964-880f-3ab5f911022d" width="200"/>
+<img src="https://github.com/user-attachments/assets/9556ffca-5453-4d20-928e-e2d9f6d74ae4" width="200"/>
 
-- **Interactive Map**: View nearby marts with current deals(To be developed in the next iteration with location and map) 
-<br><br>  
+
+<br><br>
+<br><br> 
 
 - **Shopping List Management**: Build and manage mart-specific grocery lists by adding/removing items on price detail screen
 <img src="https://github.com/user-attachments/assets/547c48d0-3b25-4768-87c1-69678af6d66f" width="200" alt="Price Detail Screen"/>
 <img src="https://github.com/user-attachments/assets/c22d4c71-24f0-4acf-bd6e-ffb67e87780f" width="200" alt="Price Detail Screen"/>
-<img src="https://github.com/user-attachments/assets/1448417b-fdeb-4647-ab0f-d19e5293f9a6" width="200" alt="Shopping List Screen"/>
+<img src="https://github.com/user-attachments/assets/dcda78ef-d085-4b3b-8137-7332eb847ed9" width="200" alt="Shopping List Screen"/>
 <br><br>
 <br><br>
 
 - **My Post Management**: Manage user's posts of price sharing efficiently
-<img src="https://github.com/user-attachments/assets/4a2e0871-1dd2-4b7a-bf83-2fab0bc1c44c" width="200" alt="My Post Screen"/>
-<img src="https://github.com/user-attachments/assets/285e83b8-30c6-49d3-afa2-e8f5d43ac604" width="200" alt="Price Detail Screen"/>
+<img src="https://github.com/user-attachments/assets/54dd9baa-807b-4d46-87ec-efd4171bddb9" width="200" alt="My Post Screen"/>
+<img src="https://github.com/user-attachments/assets/e4845a51-582e-414f-a829-a859f5973362" width="200" alt="Price Detail Screen"/>
+
 <br><br>
 <br><br>
 
-- **Account Management**: Allow user to manage user CRUD information(To be updated in the next iteration with authentication)
-<img src="https://github.com/user-attachments/assets/deed7fbb-6ed6-481b-ab71-17db00870495" width="200" alt="Account Screen"/>
-<img src="https://github.com/user-attachments/assets/fdfa6e5c-e4df-4cfd-bc8c-113cbbce186e" width="200" alt="Edit Profile Screen"/>
-<img src="https://github.com/user-attachments/assets/ea3e65e9-6fcf-41af-a05f-7a3e02c07f92" width="200" alt="Account Security Screen"/>
+- **Authentication**: Login and Register functionalities to distinguish public and protected access to different features
+<img src="https://github.com/user-attachments/assets/9a0d7f4d-6697-4636-8102-df96dd221cb8" width="200"/>
+<img src="https://github.com/user-attachments/assets/8576cb76-cdea-4c64-969e-38c9e30cfbcf" width="200"/>
+<img src="https://github.com/user-attachments/assets/4727d2f0-fe2d-40f2-bc50-38f0fb9f6e4f" width="200"/>
+
+<br><br>
+<br><br>
+
+- **Account Management**: Allow user to manage user CRUD information like change avatar
+<img src="https://github.com/user-attachments/assets/fb52cb4a-5639-457b-80e2-d8108bba1e96" width="200"/>
+<img src="https://github.com/user-attachments/assets/475fcda3-6b53-41b6-bd10-7b7e6b6218e7" width="200"/>
+<img src="https://github.com/user-attachments/assets/6ae02de2-1149-4e39-8c8c-ba6a42e01a67" width="200"/>
+
 <br><br>
 
 ## Data Model
@@ -215,7 +237,6 @@ userId: {                 // Document ID is the userId
 - **Delete**: Delete user account and associated data
 
 **Note**: 
-- The users collection CRUD operations will be implemented in Iteration 2 along with Firebase Authentication and Notification. 
 - The search result of product list is fetched from external APIs; when product is selected, the price records are read from database.
 
 ## Setup and Installation
@@ -252,14 +273,17 @@ npx expo start
 .
 ├── App.js        # Main application entry
 ├── assets/       # Static assets
+├── contexts/     # Context management to share state
 ├── components/   # Reusable UI components
 ├── navigation/   # Navigation configuration
 ├── screens/      # Application screens
 │   ├── account/  # Account-related screens
 │   ├── common/   # Shared screens mart/product/price
 │   ├── list/     # Shopping list screens
+│   ├── auth/     # Register and login screens
 │   └── search/   # Search-related screens
-└── services/     # Firebase and API services
+├── services/     # Firebase and API services
+└── utils/        # Shared functions and helpers
 ```
   
 ## External APIs and Endpoints
@@ -296,14 +320,6 @@ Query Parameters:
 ```
 GET https://world.openfoodfacts.net/api/v2/product/{barcode}
 ```
-
-## Dependencies
-- react-native
-- react-navigation
-- react-native-paper
-- expo-camera
-- expo-image-picker
-- firebase
 
 ## Acknowledgments
 - OpenFoodFacts API for product data
