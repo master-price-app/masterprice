@@ -202,7 +202,7 @@ export function subscribeToUser(userId, onUpdate) {
   const unsubscribe = onSnapshot(userRef, async (doc) => {
     try {
       if (!doc.exists()) return;
-      
+
       const userData = doc.data();
       // Get image URL if there's an imagePath
       const imageUrl = userData.imagePath ? 
