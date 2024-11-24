@@ -9,7 +9,7 @@ import {
   onSnapshot,
   query,
   collection,
-  where,  
+  where,
   getDocs,
 } from "firebase/firestore";
 import { getLocationById } from "./martService";
@@ -17,17 +17,13 @@ import { isWithinCurrentCycle, isMasterPrice } from "../utils/priceUtils";
 
 // CREATE - Add item to shopping list
 export async function addToShoppingList(userId, priceId, locationId) {
-  // Reference to the user's shopping list
   const listRef = doc(database, "shoppingLists", userId);
 
   try {
-    // Run transaction to add item to shopping list
-    // runTransaction is used to ensure data consistency
     await runTransaction(database, async (transaction) => {
       const listDoc = await transaction.get(listRef);
 
       if (!listDoc.exists()) {
-        // Create new document with nested structure
         transaction.set(listRef, {
           userId,
           items: {
@@ -38,7 +34,6 @@ export async function addToShoppingList(userId, priceId, locationId) {
           lastUpdated: serverTimestamp(),
         });
       } else {
-        // Update existing document
         transaction.update(listRef, {
           [`items.${locationId}.${priceId}`]: true,
           lastUpdated: serverTimestamp(),
@@ -64,7 +59,6 @@ export async function isInShoppingList(userId, priceId) {
     const data = listDoc.data();
     const items = data.items || {};
 
-    // Check each location's prices for the priceId
     return Object.values(items).some((locationItems) =>
       Object.keys(locationItems).includes(priceId)
     );
@@ -77,15 +71,20 @@ export async function isInShoppingList(userId, priceId) {
 // Subscribe to shopping list changes
 export function subscribeToShoppingList(userId, onUpdate) {
   const listRef = doc(database, "shoppingLists", userId);
+  const priceListeners = new Map();
 
   try {
-    const unsubscribe = onSnapshot(listRef, async (snapshot) => {
+    // Main shopping list listener
+    const listUnsubscribe = onSnapshot(listRef, async (snapshot) => {
+      // Handle empty or non-existent list
       if (!snapshot.exists() || !snapshot.data()?.items) {
         onUpdate([]);
+        priceListeners.forEach((listener) => listener());
+        priceListeners.clear();
         return;
       }
 
-      // Get all priceIds from the shopping list
+      // Get price IDs from shopping list
       const priceIds = [];
       Object.values(snapshot.data().items).forEach((locationPrices) => {
         priceIds.push(...Object.keys(locationPrices));
@@ -93,87 +92,162 @@ export function subscribeToShoppingList(userId, onUpdate) {
 
       if (priceIds.length === 0) {
         onUpdate([]);
+        priceListeners.forEach((listener) => listener());
+        priceListeners.clear();
         return;
       }
 
-      // Get all prices
-      const pricesQuery = query(
-        collection(database, "prices"),
-        where("__name__", "in", priceIds)
-      );
-
-      const pricesSnapshot = await getDocs(pricesQuery);
-      const allPrices = pricesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      // Get all prices with location data
-      const pricesPromises = allPrices.map(async (priceData) => {
-        const locationData = await getLocationById(priceData.locationId);
-
-        if (!locationData) return null;
-
-        // Check validity using mart cycle
-        const isValid = locationData.chain?.dealCycle
-          ? isWithinCurrentCycle(
-              priceData.createdAt,
-              locationData.chain.dealCycle
-            )
-          : false;
-
-        // Group prices by product code for master price check
-        const productPrices = allPrices.filter(
-          (p) => p.code === priceData.code
-        );
-
-        return {
-          id: priceData.id,
-          locationId: priceData.locationId,
-          locationName: locationData.location.name,
-          chainName: locationData.chain?.chainName || "Other",
-          ...priceData,
-          isValid,
-          isMasterPrice:
-            isValid &&
-            productPrices.length > 0 &&
-            Math.min(...productPrices.map((p) => p.price)) === priceData.price,
-        };
+      // Cleanup old listeners
+      priceListeners.forEach((listener, priceId) => {
+        if (!priceIds.includes(priceId)) {
+          listener();
+          priceListeners.delete(priceId);
+        }
       });
 
-      const validPrices = (await Promise.all(pricesPromises)).filter(Boolean);
-
-      // Group by chain for UI
-      const chainGroups = validPrices.reduce((groups, price) => {
-        if (!groups[price.chainName]) {
-          groups[price.chainName] = {
-            title: price.chainName,
-            data: [],
-          };
+      // Setup price document listeners
+      for (const priceId of priceIds) {
+        if (!priceListeners.has(priceId)) {
+          const priceRef = doc(database, "prices", priceId);
+          const unsubscribe = onSnapshot(
+            priceRef,
+            async (priceDoc) => {
+              if (!priceDoc.exists()) {
+                // Automatically remove deleted prices
+                try {
+                  await removeFromShoppingList(userId, priceId);
+                  // Update UI right away
+                  const updatedSnapshot = await getDoc(listRef);
+                  handleUpdate(updatedSnapshot, onUpdate);
+                } catch (error) {
+                  console.error("Error handling deleted price:", error);
+                }
+                return;
+              }
+              // Update UI for any price changes
+              handleUpdate(snapshot, onUpdate);
+            },
+            (error) => {
+              console.error("Error in price listener:", error);
+            }
+          );
+          priceListeners.set(priceId, unsubscribe);
         }
-        groups[price.chainName].data.push(price);
-        return groups;
-      }, {});
+      }
 
-      // Convert to array and calculate section totals
-      const sectionsWithTotals = Object.entries(chainGroups).map(
-        ([title, section]) => ({
-          title,
-          data: section.data,
-          total: section.data.reduce(
-            (sum, price) => sum + (price.isValid ? price.price : 0),
-            0
-          ),
-        })
-      );
-
-      onUpdate(sectionsWithTotals);
+      // Initial update
+      handleUpdate(snapshot, onUpdate);
     });
 
-    return unsubscribe;
+    // Return cleanup function
+    return () => {
+      listUnsubscribe();
+      priceListeners.forEach((listener) => listener());
+      priceListeners.clear();
+    };
   } catch (error) {
-    console.error("Error subscribing to shopping list:", error);
+    console.error("Error in shopping list subscription:", error);
     throw error;
+  }
+}
+
+// Helper function to handle updates
+async function handleUpdate(snapshot, onUpdate) {
+  try {
+    if (!snapshot.exists() || !snapshot.data()?.items) {
+      onUpdate([]);
+      return;
+    }
+
+    // Get all price IDs
+    const priceIds = [];
+    Object.values(snapshot.data().items).forEach((locationPrices) => {
+      priceIds.push(...Object.keys(locationPrices));
+    });
+
+    if (priceIds.length === 0) {
+      onUpdate([]);
+      return;
+    }
+
+    // Fetch prices in batches of 10
+    const batchSize = 10;
+    const batches = [];
+    for (let i = 0; i < priceIds.length; i += batchSize) {
+      const batch = priceIds.slice(i, i + batchSize);
+      const pricesQuery = query(
+        collection(database, "prices"),
+        where("__name__", "in", batch)
+      );
+      batches.push(getDocs(pricesQuery));
+    }
+
+    const batchResults = await Promise.all(batches);
+    const allPrices = batchResults.flatMap((querySnapshot) =>
+      querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+    );
+
+    // Process each price with location data
+    const pricesPromises = allPrices.map(async (priceData) => {
+      const locationData = await getLocationById(priceData.locationId);
+      if (!locationData) return null;
+
+      const isValid = locationData.chain?.dealCycle
+        ? isWithinCurrentCycle(
+            priceData.createdAt,
+            locationData.chain.dealCycle
+          )
+        : false;
+
+      return {
+        id: priceData.id,
+        locationId: priceData.locationId,
+        locationName: locationData.location.name,
+        chainName: locationData.chain?.chainName || "Other",
+        ...priceData,
+        isValid,
+        isMasterPrice:
+          isValid &&
+          Math.min(
+            ...allPrices
+              .filter((p) => p.code === priceData.code)
+              .map((p) => p.price)
+          ) === priceData.price,
+      };
+    });
+
+    const validPrices = (await Promise.all(pricesPromises)).filter(Boolean);
+
+    // Group by chain
+    const chainGroups = validPrices.reduce((groups, price) => {
+      if (!groups[price.chainName]) {
+        groups[price.chainName] = {
+          title: price.chainName,
+          data: [],
+        };
+      }
+      groups[price.chainName].data.push(price);
+      return groups;
+    }, {});
+
+    // Convert to array with totals
+    const sectionsWithTotals = Object.entries(chainGroups).map(
+      ([title, section]) => ({
+        title,
+        data: section.data,
+        total: section.data.reduce(
+          (sum, price) => sum + (price.isValid ? price.price : 0),
+          0
+        ),
+      })
+    );
+
+    onUpdate(sectionsWithTotals);
+  } catch (error) {
+    console.error("Error handling update:", error);
   }
 }
 
@@ -184,17 +258,13 @@ export async function removeFromShoppingList(userId, priceId, locationId) {
   try {
     await runTransaction(database, async (transaction) => {
       const listDoc = await transaction.get(listRef);
-
-      if (!listDoc.exists()) {
-        return; // Just exit if no list exists
-      }
+      if (!listDoc.exists()) return;
 
       const data = listDoc.data();
       const items = data.items || {};
 
-      // If location exists and has this price
-      if (items[locationId]?.[priceId]) {
-        // If this is the last price in the location
+      // If we know the location
+      if (locationId && items[locationId]?.[priceId]) {
         if (Object.keys(items[locationId]).length === 1) {
           transaction.update(listRef, {
             [`items.${locationId}`]: deleteField(),
@@ -206,22 +276,16 @@ export async function removeFromShoppingList(userId, priceId, locationId) {
             lastUpdated: serverTimestamp(),
           });
         }
-      }
-      // If locationId not found but priceId exists somewhere else
-      else {
-        // Check each location for the priceId
+      } else {
+        // Search all locations for the price
         for (const [loc, prices] of Object.entries(items)) {
-          // If priceId exists in this location
           if (prices[priceId]) {
-            // If this is the last price in the location
             if (Object.keys(prices).length === 1) {
-              // Remove the location and all its prices
               transaction.update(listRef, {
                 [`items.${loc}`]: deleteField(),
                 lastUpdated: serverTimestamp(),
               });
             } else {
-              // Remove the price from the location
               transaction.update(listRef, {
                 [`items.${loc}.${priceId}`]: deleteField(),
                 lastUpdated: serverTimestamp(),
@@ -247,7 +311,6 @@ export async function removeMultipleFromShoppingList(userId, items) {
   try {
     await runTransaction(database, async (transaction) => {
       const listDoc = await transaction.get(listRef);
-
       if (!listDoc.exists()) {
         throw new Error("Shopping list not found");
       }
@@ -255,28 +318,23 @@ export async function removeMultipleFromShoppingList(userId, items) {
       const updates = {};
       const locationItemCounts = {};
 
-      // Count items per location and prepare updates
       items.forEach(({ priceId, locationId }) => {
-        // Increment count for this location
         if (!locationItemCounts[locationId]) {
           locationItemCounts[locationId] = 1;
         } else {
           locationItemCounts[locationId]++;
         }
-        // remove the item from the location
         updates[`items.${locationId}.${priceId}`] = deleteField();
       });
 
-      // Check if any locations should be completely removed
       const data = listDoc.data();
-      // Remove locations with all items removed
       Object.entries(locationItemCounts).forEach(([locationId, count]) => {
         const locationItems = data.items[locationId];
         if (locationItems && Object.keys(locationItems).length === count) {
           updates[`items.${locationId}`] = deleteField();
         }
       });
-      // Update the shopping list with all changes
+
       transaction.update(listRef, {
         ...updates,
         lastUpdated: serverTimestamp(),
