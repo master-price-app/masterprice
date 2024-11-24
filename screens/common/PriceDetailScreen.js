@@ -281,8 +281,7 @@ export default function PriceDetailScreen({ navigation, route }) {
   const handleShoppingListToggle = async () => {
     if (!user) {
       navigation.navigate("Login", {
-        returnScreen: "PriceDetail",
-        returnParams: route.params,
+        isGoBack: true,
       });
       return;
     }
@@ -310,8 +309,7 @@ export default function PriceDetailScreen({ navigation, route }) {
 
     if (!user) {
       navigation.navigate("Login", {
-        returnScreen: "PriceDetail",
-        returnParams: route.params,
+        isGoBack: true,
       });
       return;
     }

@@ -33,7 +33,7 @@ export default function MyPostsScreen({ navigation }) {
 useEffect(() => {
   if (!user) {
     navigation.replace("Login", {
-      returnScreen: "MyPosts",
+      isGoBack: true,
     });
     return;
   }

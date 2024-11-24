@@ -29,7 +29,7 @@ export default function ShoppingListScreen({ navigation }) {
   useEffect(() => {
     if (!user) {
       navigation.replace("Login", {
-        returnScreen: "ShoppingList",
+        isGoBack: true,
       });
       return;
     }

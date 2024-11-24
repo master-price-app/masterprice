@@ -35,8 +35,7 @@ export default function PriceFormScreen({ navigation, route }) {
   useEffect(() => {
     if (!user) {
       navigation.replace("Login", {
-        returnScreen: "PriceForm",
-        returnParams: route.params,
+        isGoBack: true,
       });
       return;
     }
@@ -134,8 +133,7 @@ export default function PriceFormScreen({ navigation, route }) {
   const handleSubmit = async () => {
     if (!user) {
       navigation.replace("Login", {
-        returnScreen: "PriceForm",
-        returnParams: route.params,
+        isGoBack: true,
       });
       return;
     }

@@ -22,6 +22,7 @@ import PressableButton from "../../components/PressableButton";
 export default function LoginScreen({ navigation, route }) {
   const returnScreen = route.params?.returnScreen;
   const returnParams = route.params?.returnParams;
+  const isGoBack = route.params?.isGoBack;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,6 +48,8 @@ export default function LoginScreen({ navigation, route }) {
       if (returnScreen) {
         // Navigate back to the intended screen
         navigation.replace(returnScreen, returnParams);
+      } else if (isGoBack) {
+        navigation.goBack();
       } else {
         // Default navigation
         navigation.replace("Home");
