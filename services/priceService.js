@@ -137,13 +137,13 @@ export async function updateData(userId, data, collectionName, id) {
     let imagePath = currentData.imagePath;
 
     // Handle image update
-    if (data.imageUri) {
+    if (data.imagePath) {
       // Delete old image if exists
       if (currentData.imagePath) {
         await deletePriceImage(currentData.imagePath);
       }
       // Upload new image
-      imagePath = await uploadPriceImage(data.imageUri, userId);
+      imagePath = await uploadPriceImage(data.imagePath, userId);
     }
 
     // Remove the local imageUri and update storage path
