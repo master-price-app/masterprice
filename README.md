@@ -11,7 +11,8 @@ list.
 ## Team Members and Contributions
 Group 22:
 
-**Annan Fu**
+### Annan Fu
+**Iteration 1**
 - firebase setup and configuration
 - Collection design and CRUD operation services
 - third-party web API integration
@@ -20,7 +21,14 @@ Group 22:
 - Account screens development: MyPosts
 - Assets: martLogos and dummyProduct data storage
 
-**Jiani Guo**
+**Iteration 2**
+- External API use (Finished in Iteration 1)
+- Sort: Price list sort by post time or price
+- Authentication: Register and login functionalities with firebase rules and public/private access to different screens
+- Image storage: upload and read from firebase storage
+
+### Jiani Guo
+**Iteration 1**
 - Project structure design
 - Collection design
 - Navigation and stack setup
@@ -30,6 +38,13 @@ Group 22:
 - List screens development: ShoppingList
 - Search screens development: BarcodeScanner, Search
 
+**Iteration 2**
+- Search (Finished in Iteration 1)
+- Camera use: Take picture and choose from album functionality with permission validation
+- Location and map: Use user's location and show an interactive map with multiplemarkers of marts with permission validation
+- Notification: Schedule local notification to pop alert for checking mart deals
+- Tab navigation iteration: Improve navigation through different screens
+- UI and styling
 
 ## Features
 
@@ -96,7 +111,8 @@ documentId: {             // Firebase Auth UID as document ID
   email: string, 
   nickname: string,
   createdAt: timestamp, 
-  updatedAt: timestamp,   
+  updatedAt: timestamp,
+  imagePath: string,      // Profile avatar image uploaded/taken by users, reference to image stored in storage
   notificationOn: boolean // Mart weekly deal release notification  
   }
 ```
@@ -111,6 +127,7 @@ documentId: {               // Auto-generated Firebase ID
   userId: string,           // User who posted the price
   createdAt: timestamp,     // Creation date
   updatedAt: timestamp,     // Last update date
+  imagePath: string,        // Item image uploaded/taken by users, reference to image stored in storage
   comments: {               // Nested comments
     [commentId]: {
       userId: string,
