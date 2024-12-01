@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,10 +14,14 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { isWithinCurrentCycle, isMasterPrice } from "../../utils/priceUtils";
 import { calculateRegion, handleLocationTracking } from "../../utils/mapUtils";
 import { subscribeToPricesByProduct } from "../../services/priceService";
-import { getLocationById, subscribeToMartCycles } from "../../services/martService";
+import {
+  getLocationById,
+  subscribeToMartCycles,
+} from "../../services/martService";
 import { useAuth } from "../../contexts/AuthContext";
 import PressableButton from "../../components/PressableButton";
 import PriceListItem from "../../components/PriceListItem";
+import CustomMarker from "../../components/CustomMarker";
 
 // Import dummy data for backup
 const dummyProduct = require("../../assets/dummyData/dummyProduct.json");
@@ -71,11 +75,13 @@ export default function ProductDetailScreen({ navigation, route }) {
         const locations = await Promise.all(locationPromises);
 
         // Filter invalid locations and remove duplicates using Map
-        const uniqueLocations = [...new Map(
-          locations
-            .filter(loc => loc?.location?.coordinates)
-            .map(loc => [loc.location.id, loc.location])
-        ).values()];
+        const uniqueLocations = [
+          ...new Map(
+            locations
+              .filter((loc) => loc?.location?.coordinates)
+              .map((loc) => [loc.location.id, loc.location])
+          ).values(),
+        ];
 
         setMartLocations(uniqueLocations);
       } catch (err) {
@@ -217,7 +223,8 @@ export default function ProductDetailScreen({ navigation, route }) {
               {product.product_name}
             </Text>
             <Text style={styles.productSubInfo} numberOfLines={1}>
-              {product.brands} · {product.product_quantity}{product.product_quantity_unit}
+              {product.brands} · {product.product_quantity}
+              {product.product_quantity_unit}
             </Text>
           </View>
         </View>
@@ -228,22 +235,30 @@ export default function ProductDetailScreen({ navigation, route }) {
         <MapView
           ref={mapRef}
           style={styles.map}
-          initialRegion={calculateRegion(martLocations.map(location => ({
-            latitude: location.coordinates.latitude,
-            longitude: location.coordinates.longitude,
-          })))}
+          initialRegion={calculateRegion(
+            martLocations.map((location) => ({
+              latitude: location.coordinates.latitude,
+              longitude: location.coordinates.longitude,
+            }))
+          )}
         >
-          {martLocations.map((location) => (
-            <Marker
-              key={location.id}
-              coordinate={{
-                latitude: location.coordinates.latitude,
-                longitude: location.coordinates.longitude,
-              }}
-              title={location.name}
-              pinColor="#E31837"
-            />
-          ))}
+          {martLocations.map((location) => {
+            const locationPrice = sortedPrices.find(
+              (price) => price.locationId === location.id
+            );
+            const isMasterPrice = locationPrice?.isMasterPrice;
+
+            return (
+              <CustomMarker
+                key={location.id}
+                location={location}
+                locationPrice={locationPrice}
+                product={product}
+                navigation={navigation}
+                isMasterPrice={isMasterPrice}
+              />
+            );
+          })}
           {userLocation && (
             <Marker coordinate={userLocation}>
               <View style={styles.userLocationMarker}>
@@ -253,12 +268,11 @@ export default function ProductDetailScreen({ navigation, route }) {
           )}
         </MapView>
 
-        {/* Location Button */}
         <PressableButton
           onPress={handleLocateUser}
           componentStyle={[
             styles.locationButton,
-            userLocation && styles.locationButtonActive
+            userLocation && styles.locationButtonActive,
           ]}
         >
           <MaterialIcons
