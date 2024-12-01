@@ -161,6 +161,23 @@ export default function ShoppingListScreen({ navigation }) {
     }
   };
 
+  // Handle delete single item
+  const handleDeleteSingleItem = async (item) => {
+    if (!user) return;
+
+    try {
+      await removeMultipleFromShoppingList(user.uid, [
+        {
+          priceId: item.id,
+          locationId: item.locationId,
+        },
+      ]);
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      Alert.alert("Error", "Failed to delete item", [{ text: "OK" }]);
+    }
+  };
+
   // Handle delete
   const handleDelete = async () => {
     if (!user) return;
@@ -208,81 +225,93 @@ export default function ShoppingListScreen({ navigation }) {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <SectionList
-        sections={shoppingList}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ShoppingListItem
-            price={item}
-            onPress={() => handleItemPress(item)}
-            isSelected={selectedItems.has(item.id)}
-            showCheckbox={isManaging}
-          />
-        )}
-        stickySectionHeadersEnabled={false}
-        contentContainerStyle={[
-          styles.listContent,
-          isManaging && styles.listContentWithActions,
-        ]}
-        renderSectionHeader={({ section: { title, data } }) => (
-          <View style={styles.sectionHeader}>
-            <MaterialIcons name="store" size={20} color="#666" />
-            <Text style={styles.sectionTitle}>{title}</Text>
-            <Text style={styles.itemCount}>
-              {data.length} item{data.length !== 1 ? "s" : ""}
+return (
+  <View style={styles.container}>
+    <SectionList
+      sections={shoppingList}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <ShoppingListItem
+          price={item}
+          onPress={() =>
+            navigation.navigate("PriceDetail", {
+              priceData: item,
+              productName: item.productName,
+              productImage: item.productImageUrl,
+            })
+          }
+          onCheckboxPress={(price) => {
+            setSelectedItems((prev) => {
+              const newSelected = new Set(prev);
+              if (newSelected.has(price.id)) {
+                newSelected.delete(price.id);
+              } else {
+                newSelected.add(price.id);
+              }
+              return newSelected;
+            });
+          }}
+          onDelete={handleDeleteSingleItem}
+          isSelected={selectedItems.has(item.id)}
+          isManaging={isManaging}
+        />
+      )}
+      stickySectionHeadersEnabled={false}
+      contentContainerStyle={[
+        styles.listContent,
+        styles.listContentWithActions,
+      ]}
+      renderSectionHeader={({ section: { title, data } }) => (
+        <View style={styles.sectionHeader}>
+          <MaterialIcons name="store" size={20} color="#666" />
+          <Text style={styles.sectionTitle}>{title}</Text>
+          <Text style={styles.itemCount}>
+            {data.length} item{data.length !== 1 ? "s" : ""}
+          </Text>
+        </View>
+      )}
+      renderSectionFooter={({ section }) => {
+        const sectionTotal = section.data.reduce(
+          (sum, item) => sum + (item.isValid ? item.price : 0),
+          0
+        );
+        return (
+          <View style={styles.sectionFooter}>
+            <Text style={styles.sectionTotal}>
+              Section Total: ${sectionTotal.toFixed(2)}
             </Text>
           </View>
-        )}
-        renderSectionFooter={({ section }) => {
-          const sectionTotal = section.data.reduce(
-            (sum, item) => sum + (item.isValid ? item.price : 0),
-            0
-          );
-          return (
-            <View style={styles.sectionFooter}>
-              <Text style={styles.sectionTotal}>
-                Section Total: ${sectionTotal.toFixed(2)}
-              </Text>
-            </View>
-          );
-        }}
-        ListFooterComponent={
-          !isManaging && (
-            <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalAmount}>${totalPrice.toFixed(2)}</Text>
-            </View>
-          )
-        }
-      />
+        );
+      }}
+    />
 
-      {isManaging && (
-        <View style={styles.bottomActionsContainer}>
+    {/* bottom actions container */}
+    <View style={styles.bottomActionsContainer}>
+      {isManaging ? (
+        <View style={styles.deleteContainer}>
           <PressableButton
             onPress={handleDelete}
             componentStyle={[
-              styles.actionButton,
-              styles.deleteButton,
+              styles.deleteSelectedButton,
               !selectedItems.size && styles.disabledButton,
             ]}
-            pressedStyle={styles.deleteButtonPressed}
+            pressedStyle={styles.deleteSelectedButtonPressed}
             disabled={!selectedItems.size}
           >
-            <Text style={styles.actionButtonText}>Delete</Text>
+            <Text style={styles.deleteSelectedText}>Delete Selected</Text>
           </PressableButton>
-
-          <View style={styles.selectedTotalContainer}>
-            <Text style={styles.selectedTotalLabel}>Selected:</Text>
-            <Text style={styles.selectedTotalAmount}>
-              ${selectedTotal.toFixed(2)}
-            </Text>
-          </View>
+        </View>
+      ) : (
+        <View style={styles.totalContainer}>
+          <Text style={styles.selectedTotalLabel}>Selected Total:</Text>
+          <Text style={styles.selectedTotalAmount}>
+            ${selectedTotal.toFixed(2)}
+          </Text>
         </View>
       )}
     </View>
-  );
+  </View>
+);
 }
 
 const styles = StyleSheet.create({
@@ -326,7 +355,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   listContentWithActions: {
-    paddingBottom: 90, // Extra padding when actions are shown
+    paddingBottom: 90,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -439,5 +468,67 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#007AFF",
+  },
+  listContentWithActions: {
+    paddingBottom: 90,
+  },
+  bottomActionsContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  deleteContainer: {
+    alignItems: "flex-end",
+  },
+  deleteSelectedButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minWidth: 120,
+  },
+  deleteSelectedButtonPressed: {
+    backgroundColor: "#dd3228",
+  },
+  deleteSelectedText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  disabledButton: {
+    backgroundColor: "#ccc",
+  },
+  totalContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  selectedTotalLabel: {
+    fontSize: 16,
+    color: "#666",
+  },
+  selectedTotalAmount: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#007AFF",
+  },
+  mainContent: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  disabledCheckbox: {
+    opacity: 0.5,
   },
 });

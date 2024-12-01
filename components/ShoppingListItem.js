@@ -5,117 +5,115 @@ import PressableButton from "./PressableButton";
 export default function ShoppingListItem({
   price,
   onPress,
+  onCheckboxPress,
   isSelected,
-  showCheckbox,
+  isManaging,
 }) {
+  const handleItemPress = () => {
+    if (price.isValid) {
+      onPress(price);
+    }
+  };
+
   return (
-    <PressableButton onPress={onPress}>
-      <View
-        style={[
-          styles.container,
-          price.isMasterPrice && styles.masterPriceContainer,
-          !price.isValid && styles.expiredContainer,
-        ]}
-      >
-        <View style={styles.content}>
-          {/* Image Section */}
-          <View style={styles.imageContainer}>
-            {price.productImageUrl ? (
-              <Image
-                source={{ uri: price.productImageUrl }}
-                style={styles.productImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.placeholderImage}>
-                <MaterialIcons name="image" size={24} color="#ccc" />
-              </View>
-            )}
-          </View>
-          {/* Details Section */}
-          <View style={styles.detailsContainer}>
-            {/* Header - Name, Location, Price */}
-            <View style={styles.header}>
-              {showCheckbox && (
-                <MaterialIcons
-                  name={isSelected ? "check-box" : "check-box-outline-blank"}
-                  size={24}
-                  color={isSelected ? "#007AFF" : "#666"}
-                  style={styles.checkbox}
-                />
-              )}
-              <View style={styles.nameContainer}>
-                <Text
-                  style={[
-                    styles.productName,
-                    !price.isValid && styles.expiredText,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {price.productName}
-                </Text>
-                <Text
-                  style={[
-                    styles.locationName,
-                    !price.isValid && styles.expiredText,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {price.locationName}
-                </Text>
-              </View>
-              <Text
-                style={[
-                  styles.price,
-                  price.isMasterPrice && styles.masterPrice,
-                  !price.isValid && styles.expiredText,
-                ]}
-              >
-                ${price.price.toFixed(2)}
-              </Text>
+    <View style={styles.container}>
+      <View style={styles.content}>
+        {/* Image */}
+        <View style={styles.imageContainer}>
+          {price.productImageUrl ? (
+            <Image
+              source={{ uri: price.productImageUrl }}
+              style={styles.productImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.placeholderImage}>
+              <MaterialIcons name="image" size={24} color="#ccc" />
             </View>
-
-            {/* Status Badges */}
-            <View style={styles.badgeContainer}>
-              {price.isMasterPrice && (
-                <View style={styles.masterBadge}>
-                  <MaterialIcons name="verified" size={14} color="#007AFF" />
-                  <Text style={styles.masterText}>Master Price</Text>
-                </View>
-              )}
-              <View
-                style={[
-                  styles.statusBadge,
-                  price.isValid ? styles.validBadge : styles.expiredBadge,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.statusText,
-                    price.isValid ? styles.validText : styles.expiredText,
-                  ]}
-                >
-                  {price.isValid ? "Valid" : "Expired"}
-                </Text>
-              </View>
-            </View>
-
-            {/* Date */}
-            <View style={styles.footer}>
-              <MaterialIcons name="schedule" size={16} color="#666" />
-              <Text
-                style={[styles.dateText, !price.isValid && styles.expiredText]}
-              >
-                {new Date(price.createdAt).toLocaleDateString()}
-              </Text>
-            </View>
-          </View>
+          )}
         </View>
 
-        {/* Expired overlay */}
-        {!price.isValid && <View style={styles.expiredOverlay} />}
+        {/* Details */}
+        <View style={styles.detailsContainer}>
+          {/* Product name and price */}
+          <View style={styles.topRow}>
+            <Text
+              style={[styles.productName, !price.isValid && styles.expiredText]}
+              numberOfLines={1}
+            >
+              {price.productName}
+            </Text>
+            <Text
+              style={[
+                styles.price,
+                price.isMasterPrice && styles.masterPrice,
+                !price.isValid && styles.expiredText,
+              ]}
+            >
+              ${price.price.toFixed(2)}
+            </Text>
+          </View>
+
+          {/* Location */}
+          <Text
+            style={[styles.locationName, !price.isValid && styles.expiredText]}
+            numberOfLines={1}
+          >
+            {price.locationName}
+          </Text>
+
+          {/* Badges */}
+          <View style={styles.badgeRow}>
+            {price.isMasterPrice && (
+              <View style={styles.masterBadge}>
+                <MaterialIcons name="verified" size={12} color="#007AFF" />
+                <Text style={styles.masterText}>Master Price</Text>
+              </View>
+            )}
+            <View
+              style={[
+                styles.statusBadge,
+                price.isValid ? styles.validBadge : styles.expiredBadge,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  price.isValid ? styles.validText : styles.expiredText,
+                ]}
+              >
+                {price.isValid ? "Valid" : "Expired"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Date */}
+          <View style={styles.dateRow}>
+            <MaterialIcons name="schedule" size={12} color="#666" />
+            <Text
+              style={[styles.dateText, !price.isValid && styles.expiredText]}
+            >
+              {new Date(price.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
       </View>
-    </PressableButton>
+
+      {/* Expired overlay */}
+      {!price.isValid && <View style={styles.expiredOverlay} />}
+
+      {/* Checkbox on top */}
+      <PressableButton
+        onPress={() => onCheckboxPress(price)}
+        componentStyle={styles.checkboxContainer}
+      >
+        <MaterialIcons
+          name={isSelected ? "check-box" : "check-box-outline-blank"}
+          size={24}
+          color={isSelected ? "#007AFF" : "#666"}
+        />
+      </PressableButton>
+    </View>
   );
 }
 
@@ -125,28 +123,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
     position: "relative",
-    overflow: "hidden",
-  },
-  masterPriceContainer: {
-    backgroundColor: "#f0f9ff",
-  },
-  expiredContainer: {
-    backgroundColor: "#f8f8f8",
-  },
-  expiredOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.6)",
-    zIndex: 1,
   },
   content: {
-    padding: 16,
+    padding: 12,
+    paddingLeft: 44, 
     flexDirection: "row",
+    alignItems: "flex-start",
   },
   imageContainer: {
-    width: 80,
-    height: 80,
+    width: 60,
+    height: 60,
     marginRight: 12,
-    borderRadius: 8,
+    borderRadius: 6,
     overflow: "hidden",
     backgroundColor: "#f5f5f5",
   },
@@ -159,60 +147,52 @@ const styles = StyleSheet.create({
     height: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f5f5f5",
   },
   detailsContainer: {
     flex: 1,
+    gap: 4,
   },
-  header: {
+  topRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
-  },
-  checkbox: {
-    marginRight: 8,
-  },
-  nameContainer: {
-    flex: 1,
-    marginRight: 8,
   },
   productName: {
-    fontSize: 16,
+    flex: 1,
+    fontSize: 15,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 2,
+    marginRight: 8,
   },
   locationName: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#666",
   },
-  price: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  masterPrice: {
-    color: "#007AFF",
-  },
-  badgeContainer: {
+  badgeRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
+    gap: 6,
+    marginTop: 2,
   },
   masterBadge: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#f0f9ff",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#007AFF20",
   },
   masterText: {
-    marginLeft: 4,
-    fontSize: 12,
+    marginLeft: 2,
+    fontSize: 11,
     color: "#007AFF",
-    fontWeight: "500",
+    fontWeight: "600",
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 4,
   },
   validBadge: {
@@ -222,42 +202,45 @@ const styles = StyleSheet.create({
     backgroundColor: "#dedede",
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
   },
   validText: {
     color: "#2E7D32",
   },
-  expiredText: {
-    color: "#666",
-  },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  dateText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: "#666",
+  price: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
   },
   masterPrice: {
     color: "#007AFF",
-    fontWeight: "700", // Make it bolder
+    fontWeight: "700",
   },
-  masterBadge: {
+  dateRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0f9ff", // Light blue background
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#007AFF20", // Very light blue border
+    gap: 4,
+    marginTop: 2,
   },
-  masterText: {
-    marginLeft: 4,
+  dateText: {
     fontSize: 12,
-    color: "#007AFF",
-    fontWeight: "600", // Make it slightly bolder
+    color: "#666",
+  },
+  expiredText: {
+    color: "#666",
+  },
+  expiredOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    zIndex: 1,
+  },
+  checkboxContainer: {
+    position: "absolute",
+    left: 12,
+    top: "50%",
+    transform: [{ translateY: -12 }],
+    padding: 4,
+    zIndex: 2, 
   },
 });
