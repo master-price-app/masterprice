@@ -320,6 +320,72 @@ Query Parameters:
 ```
 GET https://world.openfoodfacts.net/api/v2/product/{barcode}
 ```
+## Firebase Rules
+```
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // This rule allows anyone with your Firestore database reference to view, edit,
+    // and delete all data in your Firestore database. It is useful for getting
+    // started, but it is configured to expire after 30 days because it
+    // leaves your app open to attackers. At that time, all client
+    // requests to your Firestore database will be denied.
+    //
+    // Make sure to write security rules for your app before that time, or else
+    // all client requests to your Firestore database will be denied until you Update
+    // your rules
+
+    // Base rule - no public access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Prices collection
+      match /prices/{priceId} {
+        // Anyone can read prices
+        allow read: if true;
+        allow create: if request.auth != null;
+        allow update: if request.auth != null;
+        allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      }
+    
+    // Shopping Lists collection
+    match /shoppingLists/{userId} {
+      // Only the owner can access their shopping list
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User profiles collection
+    match /users/{userId} {
+      match /nickname {
+      // Users can read other users' nicknames
+        allow read: if true;
+      }
+    }
+    
+    match /users/{userId}{
+      // Users can only modify their own profile
+      allow read: if true;
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Mart collections (locations, chains)
+    match /martLocations/{location} {
+      allow read: if true;  // Anyone can read mart locations
+      allow write: if false; // Only admins can modify 
+    }
+    
+    match /martChains/{chain} {
+      allow read: if true;  // Anyone can read mart chains
+      allow write: if false; // Only admins can modify 
+    }
+  
+  }
+}
+```
+
 
 ## Acknowledgments
 - OpenFoodFacts API for product data
