@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,12 +9,13 @@ import {
   TextInput,
   View,
 } from "react-native";
+import MapView, { Marker, Callout } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker";
 import { useAuth } from "../../contexts/AuthContext";
 import { writeToDB, updateData } from "../../services/priceService";
-import { getLocations } from "../../services/martService";
+import { getLocations, chainLogoMapping } from "../../services/martService";
+import { calculateRegion } from "../../utils/mapUtils";
 import PressableButton from "../../components/PressableButton";
 
 export default function PriceFormScreen({ navigation, route }) {
@@ -26,17 +27,17 @@ export default function PriceFormScreen({ navigation, route }) {
   const [selectedLocationId, setSelectedLocationId] = useState(
     editMode ? priceData.locationId : ""
   );
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [imageUri, setImageUri] = useState(
     editMode && priceData.imagePath ? priceData.imagePath : null
   );
+  const mapRef = useRef(null);
 
   useEffect(() => {
     if (!user) {
-      navigation.replace("Login", {
-        isGoBack: true,
-      });
+      navigation.replace("Login", { isGoBack: true });
       return;
     }
   }, [user]);
@@ -47,6 +48,14 @@ export default function PriceFormScreen({ navigation, route }) {
       try {
         const locationData = await getLocations();
         setLocations(locationData);
+
+        // If editing, find and set the selected location
+        if (editMode && priceData.locationId) {
+          const selectedLoc = locationData.find(
+            (loc) => loc.id === priceData.locationId
+          );
+          setSelectedLocation(selectedLoc);
+        }
       } catch (error) {
         console.error("Error loading locations:", error);
         Alert.alert("Error", "Failed to load store locations");
@@ -57,6 +66,25 @@ export default function PriceFormScreen({ navigation, route }) {
 
     loadLocations();
   }, []);
+
+  // Handle marker press
+  const handleMarkerPress = (location) => {
+    setSelectedLocationId(location.id);
+    setSelectedLocation(location);
+
+    // Center map on selected location
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: location.coordinates.latitude,
+          longitude: location.coordinates.longitude,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        1000
+      );
+    }
+  };
 
   // Image selection handler
   const handleImageSelection = async (useCamera) => {
@@ -277,27 +305,65 @@ export default function PriceFormScreen({ navigation, route }) {
             </View>
           </View>
 
-          {/* Store Location Section */}
+          {/* Map Location Section */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Store Location</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={selectedLocationId}
-                onValueChange={(value) => setSelectedLocationId(value)}
+
+            {/* Selected Location Display */}
+            {selectedLocation && (
+              <View style={styles.selectedLocationContainer}>
+                <Image
+                  source={
+                    chainLogoMapping[selectedLocation.chainId.toLowerCase()]
+                  }
+                  style={styles.chainLogo}
+                  resizeMode="contain"
+                />
+                <Text style={styles.selectedLocationText}>
+                  {selectedLocation.name}
+                </Text>
+              </View>
+            )}
+
+            {/* Map View */}
+            <View style={styles.mapContainer}>
+              <MapView
+                ref={mapRef}
+                style={styles.map}
+                initialRegion={calculateRegion(
+                  locations.map((loc) => ({
+                    latitude: loc.coordinates.latitude,
+                    longitude: loc.coordinates.longitude,
+                  }))
+                )}
               >
-                <Picker.Item label="Select a location" value="" />
                 {locations.map((location) => (
-                  <Picker.Item
+                  <Marker
                     key={location.id}
-                    label={location.name}
-                    value={location.id}
-                  />
+                    coordinate={{
+                      latitude: location.coordinates.latitude,
+                      longitude: location.coordinates.longitude,
+                    }}
+                    onPress={() => handleMarkerPress(location)}
+                    pinColor={
+                      selectedLocationId === location.id ? "#007AFF" : "#FF3B30"
+                    }
+                  >
+                    <Callout>
+                      <View style={styles.calloutContainer}>
+                        <Text style={styles.calloutTitle}>{location.name}</Text>
+                        <Text style={styles.calloutAddress}>
+                          {location.address.street}
+                        </Text>
+                      </View>
+                    </Callout>
+                  </Marker>
                 ))}
-              </Picker>
+              </MapView>
             </View>
           </View>
 
-          {/* Submit Button */}
+          {/* Submit Button*/}
           <PressableButton
             onPress={handleSubmit}
             componentStyle={styles.submitButton}
@@ -437,5 +503,46 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  mapContainer: {
+    height: 300,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginTop: 8,
+  },
+  map: {
+    flex: 1,
+  },
+  selectedLocationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "#f0f9ff",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  chainLogo: {
+    width: 80,
+    height: 30,
+    marginRight: 12,
+  },
+  selectedLocationText: {
+    flex: 1,
+    fontSize: 16,
+    color: "#007AFF",
+    fontWeight: "500",
+  },
+  calloutContainer: {
+    padding: 8,
+    minWidth: 150,
+  },
+  calloutTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  calloutAddress: {
+    fontSize: 12,
+    color: "#666",
   },
 });
