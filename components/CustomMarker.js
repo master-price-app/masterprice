@@ -30,7 +30,11 @@ export default function CustomMarker({
         latitude: location.coordinates.latitude,
         longitude: location.coordinates.longitude,
       }}
-      pinColor={isMasterPrice ? "#007AFF" : "#E31837"}
+      pinColor={
+        isMasterPrice
+          ? styles.markerColor.isMasterPrice
+          : styles.markerColor.notMasterPrice
+      }
       tracksViewChanges={false}
     >
       <Callout tooltip={true} onPress={handleNavigate}>
@@ -53,6 +57,10 @@ export default function CustomMarker({
 }
 
 const styles = StyleSheet.create({
+  markerColor: {
+    isMasterPrice: "#007AFF",
+    notMasterPrice: "#FF0000",
+  },
   calloutContainer: {
     backgroundColor: "white",
     borderRadius: 8,

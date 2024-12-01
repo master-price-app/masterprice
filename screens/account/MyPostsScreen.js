@@ -10,6 +10,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { database } from "../../services/firebaseSetup";
 import { useAuth } from "../../contexts/AuthContext";
+import { getPriceImageUrl } from "../../services/priceService";
 import { subscribeToMartCycles } from "../../services/martService";
 import { isWithinCurrentCycle, isMasterPrice } from "../../utils/priceUtils";
 import PricePostListItem from "../../components/PricePostListItem";
@@ -30,81 +31,85 @@ export default function MyPostsScreen({ navigation }) {
   }, []);
 
   // Load user's posts
-useEffect(() => {
-  if (!user) {
-    navigation.replace("Login", {
-      isGoBack: true,
+  // Load user's posts
+  useEffect(() => {
+    if (!user) {
+      navigation.replace("Login", {
+        isGoBack: true,
+      });
+      return;
+    }
+
+    const pricesQuery = query(
+      collection(database, "prices"),
+      where("userId", "==", user.uid)
+    );
+
+    const unsubscribe = onSnapshot(pricesQuery, async (querySnapshot) => {
+      const allPosts = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Fetch product details and images for each post
+      const processedPosts = await Promise.all(
+        allPosts.map(async (post) => {
+          const locationCycle = martCycles[post.locationId];
+          const isValid = locationCycle?.chain
+            ? isWithinCurrentCycle(post.createdAt, locationCycle.chain)
+            : false;
+
+          let productImageUrl = null;
+
+          // First try to get user-uploaded image
+          if (post.imagePath) {
+            try {
+              productImageUrl = await getPriceImageUrl(post.imagePath);
+            } catch (error) {
+              console.error("Error getting uploaded image:", error);
+            }
+          }
+
+          // If no user image, try to get API image
+          if (!productImageUrl) {
+            try {
+              const response = await fetch(
+                `https://world.openfoodfacts.net/api/v2/product/${post.code}`
+              );
+              const data = await response.json();
+              productImageUrl = data.product?.image_url || null;
+            } catch (error) {
+              console.error("Error fetching product details:", error);
+            }
+          }
+
+          return {
+            id: post.id,
+            productId: post.code,
+            productName: post.productName,
+            productImageUrl,
+            price: post.price,
+            locationId: post.locationId,
+            createdAt: post.createdAt,
+            isValid,
+            isMasterPrice: isMasterPrice(post, allPosts, martCycles),
+            imagePath: post.imagePath, // Keep original imagePath
+          };
+        })
+      );
+
+      // Sort by date, most recent first
+      const sortedPosts = processedPosts.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setPosts(sortedPosts);
+      setLoading(false);
+      setRefreshing(false);
     });
-    return;
-  }
 
-  const pricesQuery = query(
-    collection(database, "prices"),
-    where("userId", "==", user.uid)
-  );
-
-  const unsubscribe = onSnapshot(pricesQuery, async (querySnapshot) => {
-    const allPosts = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    // Fetch product details for each post
-    const processedPosts = await Promise.all(
-      allPosts.map(async (post) => {
-        const locationCycle = martCycles[post.locationId];
-        const isValid = locationCycle?.chain
-          ? isWithinCurrentCycle(post.createdAt, locationCycle.chain)
-          : false;
-
-        // Fetch product details to get image_url
-        try {
-          const response = await fetch(
-            `https://world.openfoodfacts.net/api/v2/product/${post.code}`
-          );
-          const data = await response.json();
-          const productImageUrl = data.product?.image_url || null;
-
-          return {
-            id: post.id,
-            productId: post.code,
-            productName: post.productName,
-            productImageUrl, // Add the image URL from API
-            price: post.price,
-            locationId: post.locationId,
-            createdAt: post.createdAt,
-            isValid,
-            isMasterPrice: isMasterPrice(post, allPosts, martCycles),
-          };
-        } catch (error) {
-          console.error("Error fetching product details:", error);
-          return {
-            id: post.id,
-            productId: post.code,
-            productName: post.productName,
-            productImageUrl: null,
-            price: post.price,
-            locationId: post.locationId,
-            createdAt: post.createdAt,
-            isValid,
-            isMasterPrice: isMasterPrice(post, allPosts, martCycles),
-          };
-        }
-      })
-    );
-
-    // Sort by date, most recent first
-    const sortedPosts = processedPosts.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-
-    setPosts(sortedPosts);
-    setLoading(false);
-    setRefreshing(false);
-  });
-
-  return () => unsubscribe();
-}, [user, martCycles]);
+    return () => unsubscribe();
+  }, [user, martCycles]);
 
   // Refresh handler
   const handleRefresh = () => {
