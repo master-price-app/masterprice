@@ -13,6 +13,7 @@ import {
   removeMultipleFromShoppingList,
   subscribeToShoppingList,
 } from "../../services/shoppingListService";
+import { getPriceImageUrl } from "../../services/priceService";
 import PressableButton from "../../components/PressableButton";
 import ShoppingListItem from "../../components/ShoppingListItem";
 
@@ -35,22 +36,69 @@ export default function ShoppingListScreen({ navigation }) {
     }
 
     setLoading(true);
-    const unsubscribe = subscribeToShoppingList(user.uid, (transformedData) => {
-      setShoppingList(transformedData);
+    const unsubscribe = subscribeToShoppingList(
+      user.uid,
+      async (transformedData) => {
+        // Process each section's data to include image URLs
+        const processedSections = await Promise.all(
+          transformedData.map(async (section) => {
+            const processedItems = await Promise.all(
+              section.data.map(async (item) => {
+                let productImageUrl = null;
 
-      // Calculate total price of valid items
-      const total = transformedData.reduce(
-        (sum, section) =>
-          sum +
-          section.data.reduce(
-            (sectionSum, item) => sectionSum + (item.isValid ? item.price : 0),
-            0
-          ),
-        0
-      );
-      setTotalPrice(total);
-      setLoading(false);
-    });
+                // Try to get user-uploaded image first
+                if (item.imagePath) {
+                  try {
+                    productImageUrl = await getPriceImageUrl(item.imagePath);
+                  } catch (error) {
+                    console.error("Error getting uploaded image:", error);
+                  }
+                }
+
+                // If no user image, try to get API image
+                if (!productImageUrl && item.code) {
+                  try {
+                    const response = await fetch(
+                      `https://world.openfoodfacts.net/api/v2/product/${item.code}`
+                    );
+                    const data = await response.json();
+                    productImageUrl = data.product?.image_url || null;
+                  } catch (error) {
+                    console.error("Error fetching product API image:", error);
+                  }
+                }
+
+                return {
+                  ...item,
+                  productImageUrl,
+                };
+              })
+            );
+
+            return {
+              ...section,
+              data: processedItems,
+            };
+          })
+        );
+
+        setShoppingList(processedSections);
+
+        // Calculate total price of valid items
+        const total = processedSections.reduce(
+          (sum, section) =>
+            sum +
+            section.data.reduce(
+              (sectionSum, item) =>
+                sectionSum + (item.isValid ? item.price : 0),
+              0
+            ),
+          0
+        );
+        setTotalPrice(total);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [user]);
@@ -108,6 +156,7 @@ export default function ShoppingListScreen({ navigation }) {
       navigation.navigate("PriceDetail", {
         priceData: price,
         productName: price.productName,
+        productImage: price.productImageUrl,
       });
     }
   };

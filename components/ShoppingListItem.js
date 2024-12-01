@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Image } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import PressableButton from "./PressableButton";
 
@@ -18,80 +18,97 @@ export default function ShoppingListItem({
         ]}
       >
         <View style={styles.content}>
-          {/* Header - Name, Location, Price */}
-          <View style={styles.header}>
-            {showCheckbox && (
-              <MaterialIcons
-                name={isSelected ? "check-box" : "check-box-outline-blank"}
-                size={24}
-                color={isSelected ? "#007AFF" : "#666"}
-                style={styles.checkbox}
+          {/* Image Section */}
+          <View style={styles.imageContainer}>
+            {price.productImageUrl ? (
+              <Image
+                source={{ uri: price.productImageUrl }}
+                style={styles.productImage}
+                resizeMode="cover"
               />
-            )}
-            <View style={styles.nameContainer}>
-              <Text
-                style={[
-                  styles.productName,
-                  !price.isValid && styles.expiredText,
-                ]}
-                numberOfLines={1}
-              >
-                {price.productName}
-              </Text>
-              <Text
-                style={[
-                  styles.locationName,
-                  !price.isValid && styles.expiredText,
-                ]}
-                numberOfLines={1}
-              >
-                {price.locationName}
-              </Text>
-            </View>
-            <Text
-              style={[
-                styles.price,
-                price.isMasterPrice && styles.masterPrice,
-                !price.isValid && styles.expiredText,
-              ]}
-            >
-              ${price.price.toFixed(2)}
-            </Text>
-          </View>
-
-          {/* Status Badges */}
-          <View style={styles.badgeContainer}>
-            {price.isMasterPrice && (
-              <View style={styles.masterBadge}>
-                <MaterialIcons name="verified" size={14} color="#007AFF" />
-                <Text style={styles.masterText}>Master Price</Text>
+            ) : (
+              <View style={styles.placeholderImage}>
+                <MaterialIcons name="image" size={24} color="#ccc" />
               </View>
             )}
-            <View
-              style={[
-                styles.statusBadge,
-                price.isValid ? styles.validBadge : styles.expiredBadge,
-              ]}
-            >
+          </View>
+          {/* Details Section */}
+          <View style={styles.detailsContainer}>
+            {/* Header - Name, Location, Price */}
+            <View style={styles.header}>
+              {showCheckbox && (
+                <MaterialIcons
+                  name={isSelected ? "check-box" : "check-box-outline-blank"}
+                  size={24}
+                  color={isSelected ? "#007AFF" : "#666"}
+                  style={styles.checkbox}
+                />
+              )}
+              <View style={styles.nameContainer}>
+                <Text
+                  style={[
+                    styles.productName,
+                    !price.isValid && styles.expiredText,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {price.productName}
+                </Text>
+                <Text
+                  style={[
+                    styles.locationName,
+                    !price.isValid && styles.expiredText,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {price.locationName}
+                </Text>
+              </View>
               <Text
                 style={[
-                  styles.statusText,
-                  price.isValid ? styles.validText : styles.expiredText,
+                  styles.price,
+                  price.isMasterPrice && styles.masterPrice,
+                  !price.isValid && styles.expiredText,
                 ]}
               >
-                {price.isValid ? "Valid" : "Expired"}
+                ${price.price.toFixed(2)}
               </Text>
             </View>
-          </View>
 
-          {/* Date */}
-          <View style={styles.footer}>
-            <MaterialIcons name="schedule" size={16} color="#666" />
-            <Text
-              style={[styles.dateText, !price.isValid && styles.expiredText]}
-            >
-              {new Date(price.createdAt).toLocaleDateString()}
-            </Text>
+            {/* Status Badges */}
+            <View style={styles.badgeContainer}>
+              {price.isMasterPrice && (
+                <View style={styles.masterBadge}>
+                  <MaterialIcons name="verified" size={14} color="#007AFF" />
+                  <Text style={styles.masterText}>Master Price</Text>
+                </View>
+              )}
+              <View
+                style={[
+                  styles.statusBadge,
+                  price.isValid ? styles.validBadge : styles.expiredBadge,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusText,
+                    price.isValid ? styles.validText : styles.expiredText,
+                  ]}
+                >
+                  {price.isValid ? "Valid" : "Expired"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Date */}
+            <View style={styles.footer}>
+              <MaterialIcons name="schedule" size={16} color="#666" />
+              <Text
+                style={[styles.dateText, !price.isValid && styles.expiredText]}
+              >
+                {new Date(price.createdAt).toLocaleDateString()}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -123,6 +140,29 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    flexDirection: "row",
+  },
+  imageContainer: {
+    width: 80,
+    height: 80,
+    marginRight: 12,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#f5f5f5",
+  },
+  productImage: {
+    width: "100%",
+    height: "100%",
+  },
+  placeholderImage: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  detailsContainer: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
