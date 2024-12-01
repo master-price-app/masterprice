@@ -116,13 +116,6 @@ export default function AccountScreen({ navigation }) {
       title: "Terms & Conditions",
       onPress: () => navigation.navigate("TermsAndConditions"),
     },
-    {
-      id: "about",
-      icon: "info",
-      title: "About Us",
-      onPress: () =>
-        Alert.alert("About Us", "This feature is not available yet."),
-    },
   ];
 
   const dangerousActions = [
