@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -25,6 +24,7 @@ import {
 } from "../../services/shoppingListService";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import { getUserData } from "../../services/userService";
+import PriceDetailSkeleton from "../../components/skeleton/PriceDetailSkeleton";
 import PressableButton from "../../components/PressableButton";
 
 // Comments list component
@@ -342,11 +342,7 @@ export default function PriceDetailScreen({ navigation, route }) {
 
   // Loading state
   if (!priceData || !priceData.id || loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <PriceDetailSkeleton />;
   }
 
   const commentsArray = formatComments(priceData);

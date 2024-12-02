@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   ScrollView,
@@ -19,6 +18,7 @@ import {
   subscribeToMartCycles,
 } from "../../services/martService";
 import { useAuth } from "../../contexts/AuthContext";
+import ProductDetailSkeleton from "../../components/skeleton/ProductDetailSkeleton";
 import PressableButton from "../../components/PressableButton";
 import PriceListItem from "../../components/PriceListItem";
 import CustomMarker from "../../components/CustomMarker";
@@ -43,6 +43,7 @@ export default function ProductDetailScreen({ navigation, route }) {
   // Fetch product details from API
   useEffect(() => {
     const fetchProductDetail = async () => {
+      setLoading(true);
       try {
         const response = await fetch(
           `https://world.openfoodfacts.net/api/v2/product/${code}`
@@ -59,6 +60,8 @@ export default function ProductDetailScreen({ navigation, route }) {
         console.error("API Error:", err);
         console.log("Loading backup data");
         setProduct(dummyProduct.product);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -195,13 +198,9 @@ export default function ProductDetailScreen({ navigation, route }) {
     );
   }
 
-  // No product state
-  if (!product) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+  // Loading state
+  if (loading || !product) {
+    return <ProductDetailSkeleton />;
   }
 
   return (

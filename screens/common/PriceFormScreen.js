@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -16,6 +15,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { writeToDB, updateData } from "../../services/priceService";
 import { getLocations, chainLogoMapping } from "../../services/martService";
 import { calculateRegion } from "../../utils/mapUtils";
+import PriceFormSkeleton from "../../components/skeleton/PriceFormSkeleton";
 import PressableButton from "../../components/PressableButton";
 
 export default function PriceFormScreen({ navigation, route }) {
@@ -45,6 +45,7 @@ export default function PriceFormScreen({ navigation, route }) {
   // Load locations
   useEffect(() => {
     async function loadLocations() {
+      setLoading(true);
       try {
         const locationData = await getLocations();
         setLocations(locationData);
@@ -206,11 +207,7 @@ export default function PriceFormScreen({ navigation, route }) {
   };
 
   if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <PriceFormSkeleton />;
   }
 
   return (

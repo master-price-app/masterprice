@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { FlatList, Text, View, StyleSheet } from "react-native";
-import { collection, query, where } from "firebase/firestore";
-import { database } from "../../services/firebaseSetup";
 import { subscribeToPricesByProduct } from "../../services/priceService";
 import { subscribeToMartCycles } from "../../services/martService";
-import { isMasterPrice, isWithinCurrentCycle } from "../../utils/priceUtils";
+import { isWithinCurrentCycle } from "../../utils/priceUtils";
+import ProductListItemSkeleton from "../../components/skeleton/ProductListItemSkeleton";
 import ProductListItem from "../../components/ProductListItem";
 
 export default function SearchResultScreen({ navigation, route }) {
@@ -32,7 +31,7 @@ export default function SearchResultScreen({ navigation, route }) {
   // Subscribe to prices for each product
   useEffect(() => {
     const priceSubscriptions = {};
-    
+
     products.forEach(product => {
       const unsubscribe = subscribeToPricesByProduct(product.code, (prices) => {
         setProductPrices(prev => ({
@@ -113,7 +112,7 @@ export default function SearchResultScreen({ navigation, route }) {
   const getMasterPrice = (productCode) => {
     const prices = productPrices[productCode] || [];
     const validPrices = prices.filter(price => price.isValid);
-    
+
     if (validPrices.length === 0) return null;
 
     return Math.min(...validPrices.map(price => price.price));
@@ -134,8 +133,13 @@ export default function SearchResultScreen({ navigation, route }) {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <Text>Loading...</Text>
+      <View style={styles.container}>
+        <FlatList
+          data={[1, 2, 3, 4, 5]}
+          renderItem={() => <ProductListItemSkeleton />}
+          keyExtractor={(item) => item.toString()}
+          contentContainerStyle={styles.listContent}
+        />
       </View>
     );
   }
