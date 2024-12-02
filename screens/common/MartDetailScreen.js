@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import Toast from 'react-native-toast-message';
 import { MaterialIcons } from "@expo/vector-icons";
 import { getLocationById, chainLogoMapping } from "../../services/martService";
 import { requestNotificationsPermission } from "../../utils/permissionUtils";
@@ -52,6 +53,13 @@ export default function MartDetailScreen({ navigation, route }) {
       } catch (err) {
         setError("Failed to load mart details");
         console.error("Error loading mart details: ", err);
+        Toast.show({
+          type: 'error',
+          text1: 'Failed to load mart details',
+          text2: 'Please try again later',
+          position: 'top',
+          visibilityTime: 3000,
+        });
       } finally {
         setLoading(false);
       }
@@ -97,16 +105,22 @@ export default function MartDetailScreen({ navigation, route }) {
                 try {
                   await cancelNotification(notificationId);
                   setNotificationId(null);
-                  Alert.alert(
-                    "Notification Cancelled",
-                    "Weekly deal reminder has been cancelled"
-                  );
+                  Toast.show({
+                    type: 'success',
+                    text1: 'Reminder Cancelled',
+                    text2: 'Weekly deal reminder has been cancelled',
+                    position: 'bottom',
+                    visibilityTime: 2000,
+                  });
                 } catch (error) {
                   console.error("Error canceling notification:", error);
-                  Alert.alert(
-                    "Error",
-                    "Failed to cancel notification. Please try again."
-                  );
+                  Toast.show({
+                    type: 'error',
+                    text1: 'Failed to cancel notification',
+                    text2: 'Please try again later',
+                    position: 'bottom',
+                    visibilityTime: 3000,
+                  });
                 }
               }
             },
@@ -126,7 +140,13 @@ export default function MartDetailScreen({ navigation, route }) {
     } catch (error) {
       console.error("Error handling notification: ", error);
       setNotificationId(null);
-      Alert.alert("Error", "Failed to process notification request. Please try again.");
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to process notification request. Please try again',
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
     }
   }, [notificationId]);
 
@@ -155,16 +175,22 @@ export default function MartDetailScreen({ navigation, route }) {
       setIsTimePickerVisible(false);
 
       // Show success message
-      Alert.alert(
-        "Reminder Set",
-        `You will receive weekly deal alerts for ${martData.chain.chainName} every ${formatScheduleTime(schedule)}`
-      );
+      Toast.show({
+        type: 'success',
+        text1: 'Reminder Set',
+        text2: `You will receive weekly deal alerts for ${martData.chain.chainName} every ${formatScheduleTime(schedule)}`,
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
     } catch (error) {
       console.error("Error scheduling notification:", error);
-      Alert.alert(
-        "Error",
-        "Failed to set reminder. Please try again."
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to set reminder',
+        text2: 'Please try again',
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
     }
   }, [notificationId, martData]);
 
@@ -223,7 +249,13 @@ export default function MartDetailScreen({ navigation, route }) {
       }
     }).catch((err) => {
       console.error("Error opening navigation: ", err);
-      Alert.alert("Error", "Failed to open map. Please try again.");
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to open map',
+        text2: 'Please try again',
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
     });
   }, [martData]);
 
