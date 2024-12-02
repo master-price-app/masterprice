@@ -153,7 +153,6 @@ export async function updateData(userId, data, collectionName, id) {
       ...restData,
       imagePath,
       updatedAt: new Date().toISOString(),
-      // Do NOT update createdAt on updates
     });
 
     console.log("Price document updated");

@@ -40,7 +40,7 @@ export const martChainsData = {
       endDay: 4, // Thursday
     },
   },
-  /* TODO: Add more chains */
+
 };
 
 
@@ -181,6 +181,6 @@ export const martLocationsData = [
     isActive: true
   }
 
-  /* TODO: Add more martLocations */
+
 ];
 

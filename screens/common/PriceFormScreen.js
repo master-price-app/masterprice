@@ -175,7 +175,6 @@ export default function PriceFormScreen({ navigation, route }) {
         productName,
         price: parseFloat(price),
         locationId: selectedLocationId,
-        // Don't include createdAt here, let the service handle it
       };
 
       // Add image URI if image was selected
@@ -376,7 +375,6 @@ export default function PriceFormScreen({ navigation, route }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   scrollViewContainer: {
     flex: 1,

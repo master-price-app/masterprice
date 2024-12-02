@@ -472,7 +472,6 @@ export default function PriceDetailScreen({ navigation, route }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   // Layout
   container: {
