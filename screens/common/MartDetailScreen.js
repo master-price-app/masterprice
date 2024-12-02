@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Linking,
@@ -23,6 +22,7 @@ import {
   scheduleWeeklyNotification
 } from "../../utils/notificationUtils";
 import { handleLocationTracking } from "../../utils/mapUtils";
+import MartDetailSkeleton from "../../components/skeleton/MartDetailSkeleton";
 import PressableButton from "../../components/PressableButton";
 
 export default function MartDetailScreen({ navigation, route }) {
@@ -408,11 +408,7 @@ export default function MartDetailScreen({ navigation, route }) {
 
   // Loading state
   if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <MartDetailSkeleton />;
   }
 
   // Error state
