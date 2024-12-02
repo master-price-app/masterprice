@@ -1,17 +1,20 @@
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import { SafeAreaView } from "react-native";
 import { PaperProvider } from "react-native-paper";
-import AppNavigator from "./navigation/AppNavigator";
+import { NavigationContainer } from "@react-navigation/native";
 import { AuthProvider } from "./contexts/AuthContext";
+import AppNavigator from "./navigation/AppNavigator";
 
 export default function App() {
   return (
-    <AuthProvider>
-      <PaperProvider>
-        <NavigationContainer>
-          <AppNavigator />
-        </NavigationContainer>
-      </PaperProvider>
-    </AuthProvider>
+    <SafeAreaView style={{ flex: 1 }}>
+      <AuthProvider>
+        <PaperProvider>
+          <NavigationContainer>
+            <AppNavigator />
+          </NavigationContainer>
+        </PaperProvider>
+      </AuthProvider>
+    </SafeAreaView>
   );
 }
