@@ -6,7 +6,7 @@ export default function PressableButton({
   title,
   disabled = false,
   componentStyle,
-  pressedStyle,
+  pressedStyle = { opacity: 0.8 },
 }) {
   return (
     <Pressable
