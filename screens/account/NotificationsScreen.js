@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import Toast from 'react-native-toast-message';
 import { MaterialIcons } from "@expo/vector-icons";
 import {
   cancelNotification,
@@ -31,7 +32,13 @@ export default function NotificationsScreen({ navigation }) {
       setNotifications(allNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      Alert.alert('Error', 'Failed to load notifications');
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to load notifications',
+        text2: 'Please pull to refresh and try again',
+        position: 'top',
+        visibilityTime: 3000,
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -55,20 +62,39 @@ export default function NotificationsScreen({ navigation }) {
           text: "Yes",
           style: "destructive",
           onPress: async () => {
-            try {
-              await cancelNotification(notification.identifier);
-              // Refresh list
-              fetchNotifications();
-              Alert.alert("Success", "Reminder cancelled successfully");
-            } catch (error) {
-              console.error("Error canceling notification:", error);
-              Alert.alert("Error", "Failed to cancel reminder");
-            }
+            processCancelNotification(notification);
           },
         },
       ]
     );
-  }, [fetchNotifications]);
+  }, []);
+
+  // Process the actual cancellation
+  const processCancelNotification = async (notification) => {
+    try {
+      await cancelNotification(notification.identifier);
+      // Refresh list
+      fetchNotifications();
+      // Show success toast
+      Toast.show({
+        type: 'success',
+        text1: 'Reminder cancelled successfully',
+        text2: 'The reminder has been successfully removed',
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
+    } catch (error) {
+      console.error("Error canceling notification:", error);
+      // Show error toast
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to cancel reminder',
+        text2: 'Please try again later',
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
+    }
+  };
 
   // Render notification item
   const renderNotificationItem = useCallback(({ item }) => (
