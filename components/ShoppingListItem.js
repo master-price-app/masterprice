@@ -9,98 +9,106 @@ export default function ShoppingListItem({
   isSelected,
   isManaging,
 }) {
-  const handleItemPress = () => {
-    if (price.isValid) {
-      onPress(price);
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        {/* Image */}
-        <View style={styles.imageContainer}>
-          {price.productImageUrl ? (
-            <Image
-              source={{ uri: price.productImageUrl }}
-              style={styles.productImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <MaterialIcons name="image" size={24} color="#ccc" />
-            </View>
-          )}
-        </View>
-
-        {/* Details */}
-        <View style={styles.detailsContainer}>
-          {/* Product name and price */}
-          <View style={styles.topRow}>
-            <Text
-              style={[styles.productName, !price.isValid && styles.expiredText]}
-              numberOfLines={1}
-            >
-              {price.productName}
-            </Text>
-            <Text
-              style={[
-                styles.price,
-                price.isMasterPrice && styles.masterPrice,
-                !price.isValid && styles.expiredText,
-              ]}
-            >
-              ${price.price.toFixed(2)}
-            </Text>
-          </View>
-
-          {/* Location */}
-          <Text
-            style={[styles.locationName, !price.isValid && styles.expiredText]}
-            numberOfLines={1}
-          >
-            {price.locationName}
-          </Text>
-
-          {/* Badges */}
-          <View style={styles.badgeRow}>
-            {price.isMasterPrice && (
-              <View style={styles.masterBadge}>
-                <MaterialIcons name="verified" size={12} color="#007AFF" />
-                <Text style={styles.masterText}>Master Price</Text>
+      <PressableButton
+        onPress={() => onPress(price)}
+        componentStyle={styles.pressableContent}
+        pressedStyle={styles.pressedContent}
+      >
+        <View style={styles.content}>
+          {/* Image */}
+          <View style={styles.imageContainer}>
+            {price.productImageUrl ? (
+              <Image
+                source={{ uri: price.productImageUrl }}
+                style={styles.productImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.placeholderImage}>
+                <MaterialIcons name="image" size={24} color="#ccc" />
               </View>
             )}
-            <View
-              style={[
-                styles.statusBadge,
-                price.isValid ? styles.validBadge : styles.expiredBadge,
-              ]}
-            >
+          </View>
+
+          {/* Details */}
+          <View style={styles.detailsContainer}>
+            {/* Product name and price */}
+            <View style={styles.topRow}>
               <Text
                 style={[
-                  styles.statusText,
-                  price.isValid ? styles.validText : styles.expiredText,
+                  styles.productName,
+                  !price.isValid && styles.expiredText,
+                ]}
+                numberOfLines={1}
+              >
+                {price.productName}
+              </Text>
+              <Text
+                style={[
+                  styles.price,
+                  price.isMasterPrice && styles.masterPrice,
+                  !price.isValid && styles.expiredText,
                 ]}
               >
-                {price.isValid ? "Valid" : "Expired"}
+                ${price.price.toFixed(2)}
+              </Text>
+            </View>
+
+            {/* Location */}
+            <Text
+              style={[
+                styles.locationName,
+                !price.isValid && styles.expiredText,
+              ]}
+              numberOfLines={1}
+            >
+              {price.locationName}
+            </Text>
+
+            {/* Badges */}
+            <View style={styles.badgeRow}>
+              {price.isMasterPrice && (
+                <View style={styles.masterBadge}>
+                  <MaterialIcons name="verified" size={12} color="#007AFF" />
+                  <Text style={styles.masterText}>Master Price</Text>
+                </View>
+              )}
+              <View
+                style={[
+                  styles.statusBadge,
+                  price.isValid ? styles.validBadge : styles.expiredBadge,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusText,
+                    price.isValid ? styles.validText : styles.expiredText,
+                  ]}
+                >
+                  {price.isValid ? "Valid" : "Expired"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Date */}
+            <View style={styles.dateRow}>
+              <MaterialIcons name="schedule" size={12} color="#666" />
+              <Text
+                style={[styles.dateText, !price.isValid && styles.expiredText]}
+              >
+                {new Date(price.createdAt).toLocaleDateString()}
               </Text>
             </View>
           </View>
-
-          {/* Date */}
-          <View style={styles.dateRow}>
-            <MaterialIcons name="schedule" size={12} color="#666" />
-            <Text
-              style={[styles.dateText, !price.isValid && styles.expiredText]}
-            >
-              {new Date(price.createdAt).toLocaleDateString()}
-            </Text>
-          </View>
         </View>
-      </View>
+      </PressableButton>
 
       {/* Expired overlay */}
-      {!price.isValid && <View style={styles.expiredOverlay} />}
+      {!price.isValid && (
+        <View style={styles.expiredOverlay} pointerEvents="none" />
+      )}
 
       {/* Checkbox on top */}
       <PressableButton
@@ -124,9 +132,16 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f0f0f0",
     position: "relative",
   },
+  pressableContent: {
+    backgroundColor: "transparent",
+    zIndex: 1,
+  },
+  pressedContent: {
+    backgroundColor: "#f5f5f5",
+  },
   content: {
     padding: 12,
-    paddingLeft: 44, 
+    paddingLeft: 44,
     flexDirection: "row",
     alignItems: "flex-start",
   },
@@ -233,7 +248,8 @@ const styles = StyleSheet.create({
   expiredOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(255, 255, 255, 0.6)",
-    zIndex: 1,
+    zIndex: 2,
+    pointerEvents: "none", 
   },
   checkboxContainer: {
     position: "absolute",
@@ -241,6 +257,6 @@ const styles = StyleSheet.create({
     top: "50%",
     transform: [{ translateY: -12 }],
     padding: 4,
-    zIndex: 2, 
+    zIndex: 3, 
   },
 });
