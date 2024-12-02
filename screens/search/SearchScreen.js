@@ -75,11 +75,11 @@ export default function SearchScreen({ navigation }) {
 
       {/* Search Tips Section */}
       <View style={styles.tipsSection}>
-        <Text style={styles.tipsTitle}>Search Tips</Text>
+        <Text style={styles.tipsTitle}>Quick Tips</Text>
         <View style={styles.tipItem}>
           <MaterialIcons name="info" size={20} color="#666" />
           <Text style={styles.tipText}>
-            Enter product name or brand to search
+            Search by product name or brand
           </Text>
         </View>
         <View style={styles.tipItem}>

@@ -145,6 +145,7 @@ export default function MyPostsScreen({ navigation }) {
       renderItem={({ item }) => (
         <PricePostListItem
           post={item}
+          pressedStyle={styles.postItemPressed}
           onPress={() =>
             navigation.navigate("PriceDetail", {
               priceData: {
@@ -199,5 +200,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     textAlign: "center",
+  },
+  postItemPressed: {
+    transform: [{ scale: 0.98 }],
   },
 });

@@ -4,7 +4,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { getLocationById, chainLogoMapping } from "../services/martService";
 import PressableButton from "./PressableButton";
 
-export default function PricePostListItem({ post, onPress }) {
+export default function PricePostListItem({ post, onPress, pressedStyle }) {
   const [locationData, setLocationData] = useState(null);
   const [productImage, setProductImage] = useState(null);
 
@@ -53,104 +53,120 @@ export default function PricePostListItem({ post, onPress }) {
   const isExpired = new Date(post.expiryDate) < new Date();
 
   return (
-    <PressableButton onPress={onPress}>
-      <View style={styles.card}>
-        <View style={styles.cardContent}>
-          {/* Left: Product Image */}
-          <Image
-            source={
-              productImage
-                ? { uri: productImage }
-                : require("../assets/default-product.png")
-            }
-            style={styles.productImage}
-            onError={(error) =>
-              console.log("Error loading product image:", error)
-            }
-            defaultSource={require("../assets/default-product.png")}
-          />
+    <View style={styles.container}>
+      <PressableButton
+        onPress={onPress}
+        componentStyle={styles.container}
+        pressedStyle={pressedStyle}
+      >
+        <View style={styles.card}>
+          <View style={styles.cardContent}>
+            {/* Left: Product Image */}
+            <Image
+              source={
+                productImage
+                  ? { uri: productImage }
+                  : require("../assets/default-product.png")
+              }
+              style={styles.productImage}
+              onError={(error) =>
+                console.log("Error loading product image:", error)
+              }
+              defaultSource={require("../assets/default-product.png")}
+            />
 
-          {/* Right: Product Info */}
-          <View style={styles.infoContainer}>
-            {/* Header with product name and price */}
-            <View style={styles.header}>
-              <View style={styles.titleContainer}>
-                <Text style={styles.productName} numberOfLines={2}>
-                  {post.productName}
-                </Text>
-                {post.isMasterPrice && (
-                  <View style={styles.masterBadge}>
-                    <MaterialIcons name="verified" size={16} color="#007AFF" />
-                    <Text style={styles.masterText}>Master Price</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.price}>${post.price.toFixed(2)}</Text>
-            </View>
-
-            {/* Details */}
-            <View style={styles.details}>
-              <View style={styles.storeDetail}>
-                {locationData?.chain?.chainId ? (
-                  <View style={styles.chainLogoContainer}>
-                    <Image
-                      source={getChainLogo(locationData.chain.chainId)}
-                      onError={(error) =>
-                        console.log("Error loading chain logo:", error)
-                      }
-                      style={styles.chainLogo}
-                    />
-                  </View>
-                ) : (
-                  <View style={styles.detailRow}>
-                    <MaterialIcons name="store" size={16} color="#666" />
-                    <Text style={styles.detailText}>
-                      {locationData?.location?.name || "Loading..."}
-                    </Text>
-                  </View>
-                )}
+            {/* Right: Product Info */}
+            <View style={styles.infoContainer}>
+              {/* Header with product name and price */}
+              <View style={styles.header}>
+                <View style={styles.titleContainer}>
+                  <Text style={styles.productName} numberOfLines={2}>
+                    {post.productName}
+                  </Text>
+                  {post.isMasterPrice && (
+                    <View style={styles.masterBadge}>
+                      <MaterialIcons
+                        name="verified"
+                        size={16}
+                        color="#007AFF"
+                      />
+                      <Text style={styles.masterText}>Master Price</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.price}>${post.price.toFixed(2)}</Text>
               </View>
 
-              {/* Date */}
-              <View style={styles.detailRow}>
-                <MaterialIcons name="schedule" size={16} color="#666" />
-                <Text style={styles.detailText}>
-                  Posted: {formatDate(post.createdAt)}
-                </Text>
-              </View>
-            </View>
+              {/* Details */}
+              <View style={styles.details}>
+                <View style={styles.storeDetail}>
+                  {locationData?.chain?.chainId ? (
+                    <View style={styles.chainLogoContainer}>
+                      <Image
+                        source={getChainLogo(locationData.chain.chainId)}
+                        onError={(error) =>
+                          console.log("Error loading chain logo:", error)
+                        }
+                        style={styles.chainLogo}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.detailRow}>
+                      <MaterialIcons name="store" size={16} color="#666" />
+                      <Text style={styles.detailText}>
+                        {locationData?.location?.name || "Loading..."}
+                      </Text>
+                    </View>
+                  )}
+                </View>
 
-            {/* Status */}
-            <View style={styles.footer}>
-              <View
-                style={[
-                  styles.statusBadge,
-                  post.isValid ? styles.validBadge : styles.expiredBadge,
-                ]}
-              >
-                <Text
+                {/* Date */}
+                <View style={styles.detailRow}>
+                  <MaterialIcons name="schedule" size={16} color="#666" />
+                  <Text style={styles.detailText}>
+                    Posted: {formatDate(post.createdAt)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Status */}
+              <View style={styles.footer}>
+                <View
                   style={[
-                    styles.statusText,
-                    post.isValid ? styles.validText : styles.expiredText,
+                    styles.statusBadge,
+                    post.isValid ? styles.validBadge : styles.expiredBadge,
                   ]}
                 >
-                  {post.isValid ? "Valid" : "Expired"}
-                </Text>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      post.isValid ? styles.validText : styles.expiredText,
+                    ]}
+                  >
+                    {post.isValid ? "Valid" : "Expired"}
+                  </Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color="#999" />
               </View>
-              <MaterialIcons name="chevron-right" size={20} color="#999" />
             </View>
           </View>
         </View>
-      </View>
-    </PressableButton>
+      </PressableButton>
+      {/* Add expired overlay */}
+      {!post.isValid && (
+        <View style={styles.expiredOverlay} pointerEvents="none" />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    position: "relative",
+  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
-    marginHorizontal: 16,
     marginVertical: 8,
     padding: 12,
     elevation: 2,
@@ -256,5 +272,13 @@ const styles = StyleSheet.create({
   },
   expiredText: {
     color: "#C62828",
+  },
+  expiredOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    zIndex: 1,
+    borderRadius: 12,
+    marginVertical: 8,
+    padding: 12,
   },
 });

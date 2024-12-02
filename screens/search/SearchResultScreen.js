@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { FlatList, Text, View, StyleSheet } from "react-native";
+import { collection, query, where } from "firebase/firestore";
+import { database } from "../../services/firebaseSetup";
+import { subscribeToPricesByProduct } from "../../services/priceService";
+import { subscribeToMartCycles } from "../../services/martService";
+import { isMasterPrice, isWithinCurrentCycle } from "../../utils/priceUtils";
 import ProductListItem from "../../components/ProductListItem";
 
 export default function SearchResultScreen({ navigation, route }) {
@@ -7,22 +12,54 @@ export default function SearchResultScreen({ navigation, route }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [productPrices, setProductPrices] = useState({});
+  const [martCycles, setMartCycles] = useState({});
   const dummyProduct = require("../../assets/dummyData/dummyProduct.json");
 
+  // Subscribe to mart cycles
+  useEffect(() => {
+    const unsubscribe = subscribeToMartCycles((cyclesData) => {
+      setMartCycles(cyclesData);
+    });
+    return () => unsubscribe?.();
+  }, []);
+
+  // Fetch products from API
   useEffect(() => {
     fetchProducts();
   }, []);
 
+  // Subscribe to prices for each product
+  useEffect(() => {
+    const priceSubscriptions = {};
+    
+    products.forEach(product => {
+      const unsubscribe = subscribeToPricesByProduct(product.code, (prices) => {
+        setProductPrices(prev => ({
+          ...prev,
+          [product.code]: prices.map(price => ({
+            ...price,
+            isValid: martCycles[price.locationId]?.chain 
+              ? isWithinCurrentCycle(price.createdAt, martCycles[price.locationId].chain)
+              : false
+          }))
+        }));
+      });
+      priceSubscriptions[product.code] = unsubscribe;
+    });
+
+    return () => {
+      Object.values(priceSubscriptions).forEach(unsubscribe => unsubscribe?.());
+    };
+  }, [products, martCycles]);
+
   // For barcode scan - direct navigation
   useEffect(() => {
     if (barcode && products.length === 1) {
-      // Navigate to the CommonStack and then to ProductDetail
       navigation.navigate("ProductDetail", { code: barcode });
     }
   }, [products, barcode]);
 
-  // TODO: Move to services
-  // Fetch products from API
   const fetchProducts = async () => {
     try {
       const baseUrl = keyword
@@ -31,21 +68,17 @@ export default function SearchResultScreen({ navigation, route }) {
 
       let url;
       if (keyword) {
-        // Search by keyword
         const params = new URLSearchParams({
           search_terms: keyword,
           json: 1,
           page_size: 5,
-          fields:
-            "code,product_name,product_quantity,product_quantity_unit,brands,image_url",
+          fields: "code,product_name,product_quantity,product_quantity_unit,brands,image_url",
         });
         url = `${baseUrl}?${params.toString()}`;
       } else if (barcode) {
-        // Search by barcode
         const params = new URLSearchParams({
           code: barcode,
-          fields:
-            "code,product_name,product_quantity,product_quantity_unit,brands,image_url",
+          fields: "code,product_name,product_quantity,product_quantity_unit,brands,image_url",
           page_size: 5,
         });
         url = `${baseUrl}?${params.toString()}`;
@@ -58,31 +91,15 @@ export default function SearchResultScreen({ navigation, route }) {
         setProducts(products);
       } catch (apiError) {
         console.log("API no response, read from dummy data", apiError);
-        // Use dummy data as fallback
-        if (barcode) {
-          // If scanning barcode, use the dummy product directly
-          setProducts([
-            {
-              code: dummyProduct.code,
-              product_name: dummyProduct.product.product_name,
-              product_quantity: dummyProduct.product.product_quantity,
-              product_quantity_unit: dummyProduct.product.product_quantity_unit,
-              brands: dummyProduct.product.brands,
-              image_url: dummyProduct.product.image_url,
-            },
-          ]);
-        } else if (keyword) {
-          // If searching by keyword, create an array with the dummy product
-          setProducts([
-            {
-              code: dummyProduct.code,
-              product_name: dummyProduct.product.product_name,
-              product_quantity: dummyProduct.product.product_quantity,
-              product_quantity_unit: dummyProduct.product.product_quantity_unit,
-              brands: dummyProduct.product.brands,
-              image_url: dummyProduct.product.image_url,
-            },
-          ]);
+        if (barcode || keyword) {
+          setProducts([{
+            code: dummyProduct.code,
+            product_name: dummyProduct.product.product_name,
+            product_quantity: dummyProduct.product.product_quantity,
+            product_quantity_unit: dummyProduct.product.product_quantity_unit,
+            brands: dummyProduct.product.brands,
+            image_url: dummyProduct.product.image_url,
+          }]);
         }
       }
     } catch (err) {
@@ -93,18 +110,28 @@ export default function SearchResultScreen({ navigation, route }) {
     }
   };
 
-  // For search result item press
-  // Navigate to product detail
+  const getMasterPrice = (productCode) => {
+    const prices = productPrices[productCode] || [];
+    const validPrices = prices.filter(price => price.isValid);
+    
+    if (validPrices.length === 0) return null;
+
+    return Math.min(...validPrices.map(price => price.price));
+  };
+
   const handleProductPress = (code) => {
     navigation.navigate("ProductDetail", { code });
   };
 
-  // Render product item
   const renderProduct = ({ item }) => (
-    <ProductListItem product={item} onPress={handleProductPress} />
+    <ProductListItem
+      product={item}
+      masterPrice={getMasterPrice(item.code)}
+      onPress={handleProductPress}
+      pressedStyle={styles.productItemPressed}
+    />
   );
 
-  // Loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -112,7 +139,7 @@ export default function SearchResultScreen({ navigation, route }) {
       </View>
     );
   }
-  // Error state
+
   if (error) {
     return (
       <View style={styles.centerContainer}>
@@ -120,8 +147,8 @@ export default function SearchResultScreen({ navigation, route }) {
       </View>
     );
   }
-  // Empty state
-  if (!products.length)
+
+  if (!products.length) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.emptyText}>
@@ -130,6 +157,7 @@ export default function SearchResultScreen({ navigation, route }) {
         <Text style={styles.subText}>Try another keyword.</Text>
       </View>
     );
+  }
 
   return (
     <View style={styles.container}>
@@ -137,6 +165,7 @@ export default function SearchResultScreen({ navigation, route }) {
         data={products}
         renderItem={renderProduct}
         keyExtractor={(item) => item.code}
+        contentContainerStyle={styles.listContent}
         ListFooterComponent={() => (
           <View style={styles.footer}>
             <Text style={styles.footerText}>
@@ -150,7 +179,6 @@ export default function SearchResultScreen({ navigation, route }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -164,6 +192,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: 8,
+  },
+  productItemPressed: {
+    backgroundColor: "#f8f8f8",
+    transform: [{ scale: 0.98 }],
   },
   footer: {
     padding: 16,
@@ -192,3 +224,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+

@@ -1,11 +1,18 @@
 import { Image, Text, View, StyleSheet } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import PressableButton from "./PressableButton";
 
-export default function ProductListItem({ product, onPress }) {
+export default function ProductListItem({
+  product,
+  masterPrice,
+  onPress,
+  pressedStyle,
+}) {
   return (
     <PressableButton
       onPress={() => onPress(product.code)}
       componentStyle={styles.container}
+      pressedStyle={pressedStyle}
     >
       <View style={styles.content}>
         <Image
@@ -32,40 +39,41 @@ export default function ProductListItem({ product, onPress }) {
           <Text style={styles.code}>Barcode: {product.code}</Text>
         </View>
 
-        {/* TODO: Add price display area */}
         <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>
-            {/* TODO: Show price */}
-          </Text>
+          {masterPrice !== null && (
+            <>
+              <Text style={styles.fromText}>From</Text>
+              <Text style={styles.priceLabel}>${masterPrice.toFixed(2)}</Text>
+            </>
+          )}
         </View>
       </View>
     </PressableButton>
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 8,
     marginHorizontal: 16,
     marginVertical: 8,
     padding: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   content: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   image: {
     width: 80,
     height: 80,
     borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   info: {
     flex: 1,
@@ -73,32 +81,47 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 4,
   },
   brand: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 4,
   },
   quantity: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 4,
   },
   code: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
   priceContainer: {
-    marginLeft: 'auto',
+    marginLeft: "auto",
     paddingLeft: 12,
-    justifyContent: 'center',
+    alignItems: "flex-end",
+    minWidth: 80,
+  },
+  fromText: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 2,
   },
   priceLabel: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'right',
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007AFF",
+  },
+  noPriceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  noPriceText: {
+    fontSize: 12,
+    color: "#999",
   },
 });
