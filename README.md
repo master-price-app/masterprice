@@ -27,6 +27,12 @@ Group 22:
 - Authentication: Register and login functionalities with firebase rules and public/private access to different screens
 - Image storage: upload and read from firebase storage
 
+**Iteration 3**
+- Enhanced image loading logic in MyPosts and ShoppingList with user image priority
+- Developed interactive map markers with price display and integrated map-based location selection in PriceForm screen
+- Improved shopping list management with total calculation and deletion features
+- Enhanced overall UI design across main functionality screens
+
 ### Jiani Guo
 **Iteration 1**
 - Project structure design
@@ -45,6 +51,12 @@ Group 22:
 - Notification: Schedule local notification to pop alert for checking mart deals
 - Tab navigation iteration: Improve navigation through different screens
 - UI and styling
+  
+**Iteration 3**
+- Implemented skeleton screens to replace loading spinners on main pages for better user experience
+- Updated alert messages to toast notifications for less intrusive feedback
+- Redesigned notification time selection modal for improved usability
+
 
 ## Features
 
