@@ -173,7 +173,7 @@ export default function MartDetailScreen({ navigation, route }) {
       Toast.show({
         type: 'success',
         text1: 'Reminder Set',
-        text2: `You will receive weekly deal alerts for ${martData.chain.chainName} every ${formatScheduleTime(schedule)}`,
+        text2: `Weekly alerts: ${formatScheduleTime(schedule)}`,
         position: 'bottom',
         visibilityTime: 3000,
       });
