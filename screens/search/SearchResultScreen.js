@@ -101,10 +101,13 @@ export default function SearchResultScreen({ navigation, route }) {
 
   // Render product item
   const renderProduct = ({ item }) => (
-    <ProductListItem product={item} onPress={handleProductPress} />
+    <ProductListItem
+      product={item}
+      onPress={handleProductPress}
+      pressedStyle={styles.productItemPressed}
+    />
   );
 
-  // Loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -112,7 +115,7 @@ export default function SearchResultScreen({ navigation, route }) {
       </View>
     );
   }
-  // Error state
+
   if (error) {
     return (
       <View style={styles.centerContainer}>
@@ -120,8 +123,8 @@ export default function SearchResultScreen({ navigation, route }) {
       </View>
     );
   }
-  // Empty state
-  if (!products.length)
+
+  if (!products.length) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.emptyText}>
@@ -130,6 +133,7 @@ export default function SearchResultScreen({ navigation, route }) {
         <Text style={styles.subText}>Try another keyword.</Text>
       </View>
     );
+  }
 
   return (
     <View style={styles.container}>
@@ -137,6 +141,7 @@ export default function SearchResultScreen({ navigation, route }) {
         data={products}
         renderItem={renderProduct}
         keyExtractor={(item) => item.code}
+        contentContainerStyle={styles.listContent}
         ListFooterComponent={() => (
           <View style={styles.footer}>
             <Text style={styles.footerText}>
@@ -164,6 +169,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: 8,
+  },
+  productItemPressed: {
+    backgroundColor: "#f8f8f8",
+    transform: [{ scale: 0.98 }],
   },
   footer: {
     padding: 16,
