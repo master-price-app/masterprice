@@ -31,7 +31,6 @@ export default function MyPostsScreen({ navigation }) {
   }, []);
 
   // Load user's posts
-  // Load user's posts
   useEffect(() => {
     if (!user) {
       navigation.replace("Login", {
@@ -114,7 +113,6 @@ export default function MyPostsScreen({ navigation }) {
   // Refresh handler
   const handleRefresh = () => {
     setRefreshing(true);
-    // The effect will reload the data
   };
 
   if (loading) {

@@ -87,7 +87,6 @@ export default function TermsAndConditionsScreen() {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -93,7 +93,6 @@ export default function SearchScreen({ navigation }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

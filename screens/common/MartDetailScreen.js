@@ -595,7 +595,6 @@ export default function MartDetailScreen({ navigation, route }) {
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   // Container
   container: {

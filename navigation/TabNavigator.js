@@ -87,7 +87,7 @@ const AccountStack = () => (
   </Stack.Navigator>
 );
 
-// TODO: https://reactnavigation.org/docs/hiding-tabbar-in-screens
+// https://reactnavigation.org/docs/hiding-tabbar-in-screens
 export default function TabNavigator() {
   const { user } = useAuth();
 
@@ -138,7 +138,6 @@ export default function TabNavigator() {
   );
 }
 
-// Temporary styles for AuthPlaceholder
 const styles = StyleSheet.create({
   container: {
     flex: 1,
