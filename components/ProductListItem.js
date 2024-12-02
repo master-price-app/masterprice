@@ -1,12 +1,18 @@
 import { Image, Text, View, StyleSheet } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import PressableButton from "./PressableButton";
 
-export default function ProductListItem({ product, onPress, pressedStyle }) {
+export default function ProductListItem({
+  product,
+  masterPrice,
+  onPress,
+  pressedStyle,
+}) {
   return (
     <PressableButton
       onPress={() => onPress(product.code)}
       componentStyle={styles.container}
-      pressedStyle={pressedStyle} 
+      pressedStyle={pressedStyle}
     >
       <View style={styles.content}>
         <Image
@@ -34,14 +40,18 @@ export default function ProductListItem({ product, onPress, pressedStyle }) {
         </View>
 
         <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>{/* TODO: Show price */}</Text>
+          {masterPrice !== null && (
+            <>
+              <Text style={styles.fromText}>From</Text>
+              <Text style={styles.priceLabel}>${masterPrice.toFixed(2)}</Text>
+            </>
+          )}
         </View>
       </View>
     </PressableButton>
   );
 }
 
-// Temporary styles
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "white",
@@ -92,11 +102,26 @@ const styles = StyleSheet.create({
   priceContainer: {
     marginLeft: "auto",
     paddingLeft: 12,
-    justifyContent: "center",
+    alignItems: "flex-end",
+    minWidth: 80,
+  },
+  fromText: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 2,
   },
   priceLabel: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "right",
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007AFF",
+  },
+  noPriceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  noPriceText: {
+    fontSize: 12,
+    color: "#999",
   },
 });
