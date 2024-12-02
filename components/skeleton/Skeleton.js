@@ -1,29 +1,60 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 
+const globalAnimatedValue = new Animated.Value(0);
+let animationInstance = null;
+let activeSkeletons = 0;
+
+const startGlobalAnimation = () => {
+  if (animationInstance) {
+    return;
+  }
+
+  animationInstance = Animated.loop(
+    Animated.sequence([
+      Animated.timing(globalAnimatedValue, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(globalAnimatedValue, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+    ])
+  );
+
+  animationInstance.start();
+};
+
+const cleanupGlobalAnimation = () => {
+  activeSkeletons--;
+
+  if (activeSkeletons === 0 && animationInstance) {
+    animationInstance.stop();
+    animationInstance = null;
+    globalAnimatedValue.setValue(0);
+  }
+};
+
 export default function Skeleton({ width, height, style }) {
-  const animatedValue = new Animated.Value(0);
+  const isMounted = useRef(false);
 
   useEffect(() => {
-    const runAnimation = () => {
-      Animated.sequence([
-        Animated.timing(animatedValue, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]).start(() => runAnimation());
-    };
+    isMounted.current = true;
+    activeSkeletons++;
+    startGlobalAnimation();
 
-    runAnimation();
+    return () => {
+      if (isMounted.current) {
+        isMounted.current = false;
+        cleanupGlobalAnimation();
+      }
+    };
   }, []);
 
-  const opacity = animatedValue.interpolate({
+  const opacity = globalAnimatedValue.interpolate({
     inputRange: [0, 1],
     outputRange: [0.3, 0.7],
   });
