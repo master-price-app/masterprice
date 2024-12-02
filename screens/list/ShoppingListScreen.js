@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   SectionList,
   StyleSheet,
@@ -14,6 +13,7 @@ import {
   subscribeToShoppingList,
 } from "../../services/shoppingListService";
 import { getPriceImageUrl } from "../../services/priceService";
+import ShoppingListSkeleton from "../../components/skeleton/ShoppingListSkeleton";
 import PressableButton from "../../components/PressableButton";
 import ShoppingListItem from "../../components/ShoppingListItem";
 
@@ -206,11 +206,7 @@ export default function ShoppingListScreen({ navigation }) {
   };
 
   if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <ShoppingListSkeleton />;
   }
 
   if (shoppingList.length === 0) {
