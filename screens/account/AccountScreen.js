@@ -7,18 +7,16 @@ import {
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { signOut } from "firebase/auth";
 import { auth } from "../../services/firebaseSetup";
 import { useAuth } from "../../contexts/AuthContext";
 import {
-  getUserData,
   deleteUserData,
-  writeUserToDB,
   subscribeToUser,
 } from "../../services/userService";
+import AccountScreenSkeleton from "../../components/skeleton/AccountScreenSkeleton";
 
 export default function AccountScreen({ navigation }) {
   const { user } = useAuth();
@@ -152,11 +150,7 @@ export default function AccountScreen({ navigation }) {
   );
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <AccountScreenSkeleton />;
   }
 
   return (
