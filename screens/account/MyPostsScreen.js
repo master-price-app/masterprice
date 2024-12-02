@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -13,6 +12,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { getPriceImageUrl } from "../../services/priceService";
 import { subscribeToMartCycles } from "../../services/martService";
 import { isWithinCurrentCycle, isMasterPrice } from "../../utils/priceUtils";
+import MyPostsSkeleton from "../../components/skeleton/MyPostsSkeleton";
 import PricePostListItem from "../../components/PricePostListItem";
 
 export default function MyPostsScreen({ navigation }) {
@@ -118,11 +118,7 @@ export default function MyPostsScreen({ navigation }) {
   };
 
   if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <MyPostsSkeleton />;
   }
 
   if (posts.length === 0) {
