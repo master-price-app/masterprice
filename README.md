@@ -49,8 +49,9 @@ Group 22:
 ## Features
 
 - **Barcode Scanner**: Instantly check prices by scanning product barcodes
-<img src="https://github.com/user-attachments/assets/1bf5c7c1-8009-444a-8758-cbdd8002792e" width="200" alt="Search Screen"/>
+<img src="https://github.com/user-attachments/assets/80b276ca-8158-4504-93ab-56d29f8d2bed" width="200" alt="Search Screen"/>
 <img src="https://github.com/user-attachments/assets/bd99985d-c56f-4888-900a-6d8eb625e8f3" width="200" alt="Barcode Scanner Screen"/>
+
 
 <br><br>
 Try scanning this barcode:
@@ -63,9 +64,8 @@ Try scanning this barcode:
 
 Search and compare prices of products across multiple marts marked in an interative map (users can click locate to show location)
 
-<img src="https://github.com/user-attachments/assets/59848bd2-2bbb-4917-9a9c-56404b43a75c" width="200" alt="Search Screen"/>
-<img src="https://github.com/user-attachments/assets/7f536aac-d1f3-4750-aeb2-ecf5fa162d45" width="200" alt="Search Result Screen"/>
-<img src="https://github.com/user-attachments/assets/9ac10e5e-15a1-48f9-b8d6-8009cb769053" width="200"/>
+<img src="https://github.com/user-attachments/assets/97c34443-1eeb-42bd-b643-5ac2d5e225b3" width="200" alt="Search Result Screen"/>
+<img src="https://github.com/user-attachments/assets/f5cac00a-89ad-43e0-a4a7-4f165cbef811" width="200"/>
 
 <br><br>
 Sort the price by post date or price with 'Master Price' marked for users
@@ -78,31 +78,39 @@ Sort the price by post date or price with 'Master Price' marked for users
   
 - **Community-Driven Updates with camera use**: Share and comment on price information with image taking/uploading
 <img src="https://github.com/user-attachments/assets/06a0da7a-be4d-45e7-abdf-c8e9b3ccaa24" width="200" alt="Price Detail Screen"/>
-<img src="https://github.com/user-attachments/assets/b68260be-c65f-414e-962d-e2b8f2164902" width="200"/>
+<img src="https://github.com/user-attachments/assets/3551b4ef-a996-43be-ade4-91437f73aade" width="200"/>
 <img src="https://github.com/user-attachments/assets/3c0f4646-3005-458c-8927-e8813cddd062" width="200"/>
 
 <br><br>
 <br><br>
-
   
 - **Mart Browse and notification scheduling**: View mart location and schedule notifications for the chosen marts’ weekly deal reminder based on deal cycles
 <img src="https://github.com/user-attachments/assets/33ee346f-5410-4d7f-8b75-6eb43bb5a95d" width="200"/>
 <img src="https://github.com/user-attachments/assets/1a6d94cf-5399-4964-880f-3ab5f911022d" width="200"/>
 <img src="https://github.com/user-attachments/assets/9556ffca-5453-4d20-928e-e2d9f6d74ae4" width="200"/>
 
-
 <br><br>
 <br><br> 
 
-- **Shopping List Management**: Build and manage mart-specific grocery lists by adding/removing items on price detail screen
+- **Shopping List Management**:
+
+Build and manage mart-specific grocery lists by adding/removing items on price detail screen
+
 <img src="https://github.com/user-attachments/assets/547c48d0-3b25-4768-87c1-69678af6d66f" width="200" alt="Price Detail Screen"/>
 <img src="https://github.com/user-attachments/assets/c22d4c71-24f0-4acf-bd6e-ffb67e87780f" width="200" alt="Price Detail Screen"/>
-<img src="https://github.com/user-attachments/assets/dcda78ef-d085-4b3b-8137-7332eb847ed9" width="200" alt="Shopping List Screen"/>
+
+<br><br>
+
+Make budget and manage deletion for selected items
+
+<img src="https://github.com/user-attachments/assets/2e7486b0-7cb4-4f1e-ae23-973ce81a8ba3" width="200" alt="Shopping List Screen"/>
+<img src="https://github.com/user-attachments/assets/fd6d7ad6-d018-4361-b074-cc64abb7c541" width="200" alt="Shopping List Screen"/>
+
 <br><br>
 <br><br>
 
 - **My Post Management**: Manage user's posts of price sharing efficiently
-<img src="https://github.com/user-attachments/assets/54dd9baa-807b-4d46-87ec-efd4171bddb9" width="200" alt="My Post Screen"/>
+<img src="https://github.com/user-attachments/assets/065e6e01-6dcf-452b-9d30-c4c2b100dae7" width="200" alt="My Post Screen"/>
 <img src="https://github.com/user-attachments/assets/e4845a51-582e-414f-a829-a859f5973362" width="200" alt="Price Detail Screen"/>
 
 <br><br>
