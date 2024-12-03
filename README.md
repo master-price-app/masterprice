@@ -2,6 +2,10 @@
 
 MasterPrice is a community-driven mobile application designed to help shoppers find the best deals on their everyday items. The app enables users to share and compare prices across local marts, scan barcodes to check prices, and create optimized shopping lists.
 
+## App Video Demo
+
+https://drive.google.com/file/d/1PRKzcDZf6cJjwKYbCq6mhlE2EL1eSozC/view
+
 ## Target Users
 - City budget-conscious shoppers seeking to save on groceries.
 - Community-driven consumers who love to share and update sales prices.
